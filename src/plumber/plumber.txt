@@ -1,0 +1,166 @@
+    >>> from plumber import plumbing
+    >>> from plumber import Plumber
+
+Let's create a very simple plumbing object and class using it in its pipeline.
+::
+
+    >>> class Notifier(object):
+    ...     """Prints notifications before/after setting an item
+    ...     """
+    ...     @plumbing
+    ...     def __init__(cls, _next, self, notify=False, **kws):
+    ...         print "%s.__init__: begin with: %s." % (
+    ...                 cls, object.__repr__(self))
+    ...         self.notify = notify
+    ...         _next(self, **kws)
+    ...         print "%s.__init__: end." % (cls,)
+    ...
+    ...     @plumbing
+    ...     def __setitem__(cls, _next, self, key, val):
+    ...         print "%s.__setitem__: setting %s as %s for %s." % \
+    ...                 (cls, val, key, object.__repr__(self))
+    ...         _next(self, key, val)
+    ...         print "%s.__setitem__: done." % (cls,)
+    ...
+    ...     def foo():
+    ...         pass
+
+    >>> class NotifyDict(dict):
+    ...     """A dictionary that prints notification on __setitem__
+    ...     """
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Notifier, dict)
+
+    >>> ndict = NotifyDict(notify=True)
+    <class 'Notifier'>.__init__: begin with: <NotifyDict object at ...>.
+    <class 'Notifier'>.__init__: end.
+
+    >>> ndict['foo'] = 1
+    <class 'Notifier'>.__setitem__: setting 1 as foo for <NotifyDict object at ...>.
+    <class 'Notifier'>.__setitem__: done.
+
+    >>> ndict['foo']
+    1
+
+The call of _next corrsponds to calling super in case of subclassing.
+
+    >>> class Prefixer(object):
+    ...     """Prefixes keys
+    ...     """
+    ...     @plumbing
+    ...     def __init__(cls, _next, self, prefix=None, **kws):
+    ...         print "%s.__init__: begin with: %s." % (
+    ...                 cls, object.__repr__(self))
+    ...         self.prefix = prefix
+    ...         _next(self, **kws)
+    ...         print "%s.__init__: end." % (cls,)
+    ...
+    ...     @classmethod
+    ...     def prefix(cls, self, key):
+    ...         return self.prefix + key
+    ...
+    ...     @classmethod
+    ...     def unprefix(cls, self, key):
+    ...         if not key.startswith(self.prefix):
+    ...             raise KeyError(key)
+    ...         return key.lstrip(self.prefix)
+    ...
+    ...     @plumbing
+    ...     def __delitem__(cls, _next, self, key):
+    ...         _next(self, cls.unprefix(self, key))
+    ...
+    ...     @plumbing
+    ...     def __getitem__(cls, _next, self, key):
+    ...         return _next(self, cls.unprefix(self, key))
+    ...
+    ...     @plumbing
+    ...     def __iter__(cls, _next, self):
+    ...         for key in _next(self):
+    ...             yield cls.prefix(self, key)
+    ...
+    ...     @plumbing
+    ...     def __setitem__(cls, _next, self, key, val):
+    ...         print "%s.__setitem__: begin with: %s." % (
+    ...                 cls, object.__repr__(self))
+    ...         try:
+    ...             key = cls.unprefix(self, key)
+    ...         except KeyError:
+    ...             raise KeyError("Key '%s' does not match prefix '%s'." % \
+    ...               (key, self.prefix))
+    ...         _next(self, key, val)
+
+XXX: In __init__ we can put additional attributes onto a pipelined object.
+Should it be possible to add new methods? or do we want a subclass of the
+pipelined object in order to achieve that? Will see about that when dealing
+with attributed nodes.
+
+    >>> class NotifyPrefixDict(dict):
+    ...     """A dictionary that prints notifications and has prefixed keys
+    ...     """
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Notifier, Prefixer, dict)
+
+XXX: This collides with dict __init__ signature: dict(foo=1, bar=2)
+--> creating a subclass of dict that does __init__ translation might work:
+data=() - eventually a specialized plugin, but let's keep this simple for now.
+
+XXX: If __init__ would be defined here, when would that happen? Can you use
+super in __init__ and what is called by it?
+
+    >>> npdict = NotifyPrefixDict(prefix='pre-', notify=True)
+    <class 'Notifier'>.__init__: begin with: <NotifyPrefixDict object at ...>.
+    <class 'Prefixer'>.__init__: begin with: <NotifyPrefixDict object at ...>.
+    <class 'Prefixer'>.__init__: end.
+    <class 'Notifier'>.__init__: end.
+
+    >>> npdict['foo'] = 1
+    Traceback (most recent call last):
+    ...
+    KeyError: "Key 'foo' does not match prefix 'pre-'."
+
+    >>> npdict.keys()
+    []
+
+    >>> npdict['pre-foo'] = 1
+    <class 'Notifier'>.__setitem__: setting 1 as pre-foo for <NotifyPrefixDict object at ...>.
+    <class 'Prefixer'>.__setitem__: begin with: <NotifyPrefixDict object at ...>.
+    <class 'Notifier'>.__setitem__: done.
+
+    >>> npdict['pre-foo']
+    1
+
+    >>> [x for x in npdict]
+    ['pre-foo']
+
+keys() is not handle by the prefixer, the one provided by dict is used and
+therefore the internal key names are shown.
+
+    >>> npdict.keys()
+    ['foo']
+
+XXX: pipeline can be defined also on a subclass, in which case that defines a
+new pipeline. Curious whether this is going to work out-of-the-box or needs
+hacking.
+
+    >>> class PrefixNotifyDict(dict):
+    ...     """like NotifyPrefix, but different order
+    ...     """
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Prefixer, Notifier, dict)
+
+    >>> rev_npdict = PrefixNotifyDict(prefix='_pre-', notify=True)
+    <class 'Prefixer'>.__init__: begin with: <PrefixNotifyDict object at ...>.
+    <class 'Notifier'>.__init__: begin with: <PrefixNotifyDict object at ...>.
+    <class 'Notifier'>.__init__: end.
+    <class 'Prefixer'>.__init__: end.
+
+Notifier show now unprefixed key, as it is behind the prefixer
+
+    >>> rev_npdict['_pre-bar'] = 1
+    <class 'Prefixer'>.__setitem__: begin with: <PrefixNotifyDict object at ...>.
+    <class 'Notifier'>.__setitem__: setting 1 as bar for <PrefixNotifyDict object at ...>.
+    <class 'Notifier'>.__setitem__: done.
+
+
+    >>> rev_npdict['_pre-bar']
+    1
