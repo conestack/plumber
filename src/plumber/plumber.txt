@@ -1,8 +1,11 @@
+    >>> from plumber._plumber import Bases
     >>> from plumber import plumbing
     >>> from plumber import Plumber
 
 Let's create a very simple plumbing object and class using it in its pipeline.
 ::
+
+XXX: consider using plb instead of cls in plumbing methods
 
     >>> class Notifier(object):
     ...     """Prints notifications before/after setting an item
@@ -42,7 +45,7 @@ Let's create a very simple plumbing object and class using it in its pipeline.
     >>> ndict['foo']
     1
 
-The call of _next corrsponds to calling super in case of subclassing.
+The call of _next corresponds to calling super in case of subclassing.
 
     >>> class Prefixer(object):
     ...     """Prefixes keys
@@ -164,3 +167,66 @@ Notifier show now unprefixed key, as it is behind the prefixer
 
     >>> rev_npdict['_pre-bar']
     1
+
+XXX: Subclassing plumbing plugins is possible! super works as expected.
+
+What about defining code in the new class that is sitting in front of the
+plumbing. It could also mean that the code defined here is sitting behind the
+plumbing.
+
+#    >>> class Foo(dict):
+#    ...     __metaclass__ = Plumber
+#    ...     __pipeline__ = (Notifier, dict)
+#    ...
+#    ...     def __init__(self, foo=True):
+#    ...         super(Foo, self).__init__()
+#    ...         self.foo = foo
+
+Two possibilites:
+1. explicit subclassing:
+
+#   >>> class FooPlumbing(dict):
+#   ...     __metaclass__ = Plumber
+#   ...     __pipeline__ = (Notifier, dict)
+#
+#   >>> class Foo(FooPlumbing):
+#    ...     def __init__(self, foo=True):
+#    ...         super(Foo, self).__init__()
+#    ...         self.foo = foo
+
+2. flag for implicit creation of the plumbing and implicit subclassing of it
+
+Currently the exit point is defined by the last plugin in the pipeline.
+Normally one would just want to use normal inheritance resolution. However,
+this normal behaviour should also be explicitly defined.
+
+What can code defined in the plumbing class mean?
+
+@plumbing methods would be treated as in front of the plumbing
+
+normal methods instead are treated as behind the plumbing but in front of the
+bases
+
+Lets see this in action before thinking to much about it.
+
+
+Subclassing a plumbing class
+----------------------------
+
+    >>> class SubNotifyDict(NotifyDict):
+    ...     def __init__(self):
+    ...         print "SubNotifier.__init__ is called"
+    ...         super(SubNotifyDict, self).__init__(notify=True)
+
+    >>> snd = SubNotifyDict()
+    SubNotifier.__init__ is called
+
+XXX: It seems this does not really differ from declaring the code directly in
+the class defining the __pipeline__
+
+XXX: If we are using Bases as end point in NotifyDict.__pipeline__ with the
+current code in the Plumber, we get a recursion loop.
+
+
+Subclassing plumbing elements
+-----------------------------

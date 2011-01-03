@@ -45,15 +45,24 @@ def entrance(name, pipe):
     return plumbed_methods[0]
 
 
+class Bases(object):
+    """Singleton used as last pipeline element to indicate that normal mro is
+    used to find exit points
+    """
+
+
 class Plumber(type):
-    """Metaclass to create classes using pipelines
+    """Metaclass to create classes using a plumbing
 
-    Expects a __pipeline__ attribute on the class it is working on. The last
-    element of the pipeline needs to be something normal, without plumbing
-    methods.
+    First the Plumber will read the __pipeline__ attribute of the new class and
+    create a plumbing class accordingly based on the bases passed for the new
+    class. The new class will then have the plumbing class as its single base.
 
-    XXX: Introduce base class ?
-    
+    This results in the new class being a subclass of the specified bases as
+    well as the possibily to override new methods in the class and calling the
+    plumbing class via super.
+
+
     XXX: introduce Inherited pipeline plugin?
 
     XXX: introduce Self pipeline plugin?
@@ -63,19 +72,32 @@ class Plumber(type):
     def __init__(cls, name, bases, dct):
         super(Plumber, cls).__init__(name, bases, dct)
         # Gather all functions that are part of the plumbing and line up the
-        # pipelines for the individual methods
+        # pipelines for the individual methods. The last pipeline element is
+        # special. In contrast to the other pipeline elements it may not
+        # define plumbing methods, but only normal methods. It is ignored
+        # during the gathering and only methods that have corresponding
+        # plumbing methods will be used as exit points for these.
         pipelines = {}
-        for plugin in cls.__pipeline__:
+        for plugin in cls.__pipeline__[:-1]:
             for name, func in plugin.__dict__.items():
                 if not isinstance(func, plumbing):
                     continue
                 pipe = pipelines.setdefault(name, [])
                 pipe.append(getattr(plugin, name))
 
-        # For all pipelines started by plumbing methods we need normal methods
-        # as exit points. These are provided by the last plugin.
-        for name in pipelines:
-            pipelines[name].append(getattr(plugin, name))
+        # Check the last pipeline element. If it is Bases, we will create a
+        # temporary class based on the same bases as the new class in order to
+        # use the mro mechanism to give us the exit points. Finally we create
+        # an entrance method to the plumbing and set it on the new class.
+        if cls.__pipeline__[-1] is Bases:
+            final_element = type('Tmp', bases, {})
+        else:
+            final_element = cls.__pipeline__[-1]
         for name, pipe in pipelines.items():
-            # XXX: methods defined in the class are just killed
+            # XXX: probably we should catch AttributeErrors
+            exit_method = getattr(final_element, name)
+            pipe.append(exit_method)
+
+            # XXX: methods defined in the class are just killed - at least add
+            # a warning.
             setattr(cls, name, entrance(name, pipe))
