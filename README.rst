@@ -385,6 +385,7 @@ Discussions
 
 Where is the plumbing
 ~~~~~~~~~~~~~~~~~~~~~
+It is now in front of the class and its MRO.
 
 It would/could also be possible to use a plumbing for a class without base
 clases. That would mean that the code defined on the class that uses plumbing
@@ -404,7 +405,6 @@ plumbing to achieve exactly that.
 
 Signature of _next function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Currently ``self`` needs to be passed to the ``_next`` function. This could be
 wrapped, too. However, it might enable cool stuff, because you can decide to
 pass something else than self to be processed further.
@@ -412,7 +412,6 @@ pass something else than self to be processed further.
 
 Instances of plumbing elements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 At various points it felt tempting to be able to instantiate plumbing elements
 to configure them. For that we need ``__init__``, which woul mean that plumbing
 ``__init__`` would need a different name, eg. ``plb_``-prefix. Consequently
@@ -435,7 +434,6 @@ Therefore, I suggest to gather experience with the current approach first.
 
 Implicit subclass generation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Currently the whole plumbing system is implemented within one class that is
 based on the base classes defined in the class declaration. During class
 creation the plumber determines all functions involved in the plumbing,
@@ -449,7 +447,6 @@ is better.
 
 Positional arguments
 ~~~~~~~~~~~~~~~~~~~~
-
 Currently, it is not possible to pass positional arguments ``*args`` to
 plumbing methods and therefore everything behind the plumbing system. In
 python, this syntax is not valid ``def f(foo, *args, bar=1, **kws)``. If you
