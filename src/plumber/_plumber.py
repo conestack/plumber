@@ -39,7 +39,7 @@ def entrance(name, pipe):
     # In case there was only one method, no plumbing needs to be done.
     # Otherwise, we take the next method from the end of the pipe and plumb it
     # in front of the previously plumbed methods.
-    while pipe: 
+    while pipe:
         plumbed_methods.insert(0, plumb(pipe.pop(), plumbed_methods[0]))
 
     return plumbed_methods[0]
@@ -71,8 +71,13 @@ class Plumber(type):
     """
     def __init__(cls, name, bases, dct):
         super(Plumber, cls).__init__(name, bases, dct)
+        # The plumber will only get active if the class asks for explicitly. It
+        # is not enough that a class inherits the __metaclass__ declaration
+        # from one of its bases, but it needs to do so itself. This enables
+        # subclassing a class that uses a plumber.
         if cls.__dict__.get('__metaclass__') is None:
             return
+
         # Gather all functions that are part of the plumbing and line up the
         # pipelines for the individual methods. The last pipeline element is
         # special. In contrast to the other pipeline elements it may not
