@@ -24,11 +24,11 @@ The last method, the end point or exit of a pipeline is under discussion.
 
 
 ..note:: It is not possible to pass positional arguments to the plumbing system
-    and anything behind it, as this is not valid python
-    ``def f(foo, *args, bar=None, **kws)``.
+  and anything behind it, as this is not valid python
+  ``def f(foo, *args, bar=None, **kws)``.
 
-    XXX: Please correct me if I am wrong and we will see whether ``*args`` can
-    be supported (see also Discussion below).
+  XXX: Please correct me if I am wrong and we will see whether ``*args`` can
+  be supported (see also Discussion below).
 
 
 Nomenclature
