@@ -1,3 +1,4 @@
+=======
 Plumber
 =======
 
@@ -460,3 +461,25 @@ Currently, it is not possible to pass positional arguments ``*args`` to
 plumbing methods and therefore everything behind the plumbing system. In
 python, this syntax is not valid ``def f(foo, *args, bar=1, **kws)``. If you
 have any idea how to support positional arguments, pleas let us know.
+
+
+
+Contributors
+============
+
+- Florian Friesdorf <flo@chaoflow.net>
+- Robert Niederreiter <rnix@squarewave.at>
+- Attila Oláh
+- WSGI
+
+
+Changes
+=======
+
+- initial [chaoflow, 2011-01-04]
+
+
+TODO
+====
+
+...
