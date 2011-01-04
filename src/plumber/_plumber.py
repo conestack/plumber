@@ -71,6 +71,8 @@ class Plumber(type):
     """
     def __init__(cls, name, bases, dct):
         super(Plumber, cls).__init__(name, bases, dct)
+        if cls.__dict__.get('__metaclass__') is None:
+            return
         # Gather all functions that are part of the plumbing and line up the
         # pipelines for the individual methods. The last pipeline element is
         # special. In contrast to the other pipeline elements it may not

@@ -24,9 +24,6 @@ XXX: consider using plb instead of cls in plumbing methods
     ...                 (cls, val, key, object.__repr__(self))
     ...         _next(self, key, val)
     ...         print "%s.__setitem__: done." % (cls,)
-    ...
-    ...     def foo():
-    ...         pass
 
     >>> class NotifyDict(dict):
     ...     """A dictionary that prints notification on __setitem__
@@ -149,7 +146,7 @@ hacking.
     ...     """like NotifyPrefix, but different order
     ...     """
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Prefixer, Notifier, dict)
+    ...     __pipeline__ = (Prefixer, Notifier, Bases)
 
     >>> rev_npdict = PrefixNotifyDict(prefix='_pre-', notify=True)
     <class 'Prefixer'>.__init__: begin with: <PrefixNotifyDict object at ...>.
@@ -213,20 +210,46 @@ Lets see this in action before thinking to much about it.
 Subclassing a plumbing class
 ----------------------------
 
-    >>> class SubNotifyDict(NotifyDict):
+Subclassing a class that uses a plumber is working normally. Without a call to
+super, the inherited method is just overwritten.
+::
+
+    >>> class SubNotifyDict(PrefixNotifyDict):
     ...     def __init__(self):
-    ...         print "SubNotifier.__init__ is called"
-    ...         super(SubNotifyDict, self).__init__(notify=True)
+    ...         print "SubNotifier.__init__ is called."
 
     >>> snd = SubNotifyDict()
-    SubNotifier.__init__ is called
+    SubNotifier.__init__ is called.
 
-XXX: It seems this does not really differ from declaring the code directly in
-the class defining the __pipeline__
+And with a call to super the plumbing methods will be called. The Plumber
+metaclass achieves this behaviour by only working on classes that have
+__metaclass__ = 'Plumber' in their cls.__dict__, i.e. it will be called also
+for the SubNotifyDict, but it will just leave the job to ``type`` and then
+return, as ``SubNotifyDict`` does not ask for the plumber itself.
+::
 
-XXX: If we are using Bases as end point in NotifyDict.__pipeline__ with the
-current code in the Plumber, we get a recursion loop.
+    >>> class SubNotifyDict(PrefixNotifyDict):
+    ...     def __init__(self):
+    ...         print "SubNotifier.__init__ is called."
+    ...         super(SubNotifyDict, self).__init__(notify=True)
+    ...         print "SubNotifier.__init__ finishes."
+
+    >>> snd = SubNotifyDict()
+    SubNotifier.__init__ is called.
+    <class 'Prefixer'>.__init__: begin with: <SubNotifyDict object at ...>.
+    <class 'Notifier'>.__init__: begin with: <SubNotifyDict object at ...>.
+    <class 'Notifier'>.__init__: end.
+    <class 'Prefixer'>.__init__: end.
+    SubNotifier.__init__ finishes.
+
+
+Using plumbing on multiple inheritance levels.
+----------------------------------------------
+
 
 
 Subclassing plumbing elements
 -----------------------------
+
+
+
