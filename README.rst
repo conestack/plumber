@@ -256,24 +256,12 @@ A prefixer plumbing
     ...               (key, self.prefix))
     ...         _next(self, key, val)
 
-XXX: In __init__ we can put additional attributes onto a pipelined object.
-Should it be possible to add new methods? or do we want a subclass of the
-pipelined object in order to achieve that? Currently all methods of the
-plumbing needs one end point on the final plumbing element (also inherited is
-possible) and it is not possible to use a plumbing element to add normal
-methods. In the above example it would not be possible for a subclass of
-NotifyPrefixDict to override the prefix and unprefix methods as they are not
-in NotifyPrefixDict's MRO but are defined on the plumbing element and called
-via plumbing methods. It feels, that for such purposes no classmethods on the
-plumbing element should be used, but that the plumbing element is able to put
-new methods on the class.
-
-As a plumbing element cannot know whether other elements defined methods with
-the same name, it needs to stick to plumbing methods with calls to _next. It is
-the job of the plumber to figure out what to do, in case there is no method
-defined in the end point. In that case a special _next method could be passed
-which raises NotImplemented and a plumbing element that knows what it is doing
-(e.g. above with prefix and unprefix) would just not call _next.
+In the above example it would not be possible for a subclass of
+NotifyPrefixDict to override the prefix and unprefix methods as they are not in
+NotifyPrefixDict's MRO but are defined on the plumbing class and called via
+plumbing methods. It feels, that for such purposes no classmethods on the
+plumbing element should be used. By that it is possible for somebody
+subclassing us, to override these methods.
 
     >>> class NotifyPrefixDict(dict):
     ...     """A dictionary that prints notifications and has prefixed keys
@@ -284,9 +272,6 @@ which raises NotImplemented and a plumbing element that knows what it is doing
 XXX: This collides with dict __init__ signature: dict(foo=1, bar=2)
 --> creating a subclass of dict that does __init__ translation might work:
 data=() - eventually a specialized plugin, but let's keep this simple for now.
-
-XXX: If __init__ would be defined here, when would that happen? Can you use
-super in __init__ and what is called by it?
 
     >>> npdict = NotifyPrefixDict(prefix='pre-', notify=True)
     <class 'Notifier'>.__init__: begin with: <NotifyPrefixDict object at ...>.
@@ -341,47 +326,6 @@ Notifier show now unprefixed key, as it is behind the prefixer
 
     >>> rev_npdict['_pre-bar']
     1
-
-What about defining code in the new class that is sitting in front of the
-plumbing. It could also mean that the code defined here is sitting behind the
-plumbing.
-::
-
-    #    >>> class Foo(dict):
-    #    ...     __metaclass__ = Plumber
-    #    ...     __pipeline__ = (Notifier, dict)
-    #    ...
-    #    ...     def __init__(self, foo=True):
-    #    ...         super(Foo, self).__init__()
-    #    ...         self.foo = foo
-
-Two possibilites:
-1. explicit subclassing:
-::
-
-    #   >>> class FooPlumbing(dict):
-    #   ...     __metaclass__ = Plumber
-    #   ...     __pipeline__ = (Notifier, dict)
-    #
-    #   >>> class Foo(FooPlumbing):
-    #    ...     def __init__(self, foo=True):
-    #    ...         super(Foo, self).__init__()
-    #    ...         self.foo = foo
-
-2. flag for implicit creation of the plumbing and implicit subclassing of it
-
-Currently the exit point is defined by the last plugin in the pipeline.
-Normally one would just want to use normal inheritance resolution. However,
-this normal behaviour should also be explicitly defined.
-
-What can code defined in the plumbing class mean?
-
-@plumbing methods would be treated as in front of the plumbing
-
-normal methods instead are treated as behind the plumbing but in front of the
-bases
-
-Lets see this in action before thinking to much about it.
 
 
 Subclassing
@@ -445,18 +389,17 @@ Where is the plumbing
 It would/could also be possible to use a plumbing for a class without base
 clases. That would mean that the code defined on the class that uses plumbing
 is sitting behind the plumbing and as usual in front of the base clases.
-
-Now is it better to be able to use plumbing for a class that has no bases or
-more likely that one wants to define code on the class that uses plumbing which
-is meant to be sitting in front of the plumbing.
+This is exactly what is implemented now!
 
 We could made this explicitly configurable by putting Self as a special
 __pipeline__ element, valid at the very beginning or at the end. To enable it
 at the beginning we probably need to create another class that uses the
 plumbing which will be put between the bases and the newly created class.
 
-rnix idea: if a plumbing class has a non-decorated method it builds an end
-point
+By default it is now behind the plumbing. Whether we want a configuration
+option to put it in front of the plumbing, we will see. However, it adds
+complexity and one really can just create a subclass of the class using the
+plumbing to achieve exactly that.
 
 
 Signature of _next function
@@ -465,7 +408,6 @@ Signature of _next function
 Currently ``self`` needs to be passed to the ``_next`` function. This could be
 wrapped, too. However, it might enable cool stuff, because you can decide to
 pass something else than self to be processed further.
-
 
 
 Instances of plumbing elements
