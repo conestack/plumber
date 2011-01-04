@@ -26,7 +26,7 @@ def plumb(plumbing_method, next_method):
 
 
 def entrance(name, pipe):
-    """Create an entrance to the plumbing
+    """Create an entrance to the plumbing, and the whole pipeline behind it
     """
     # The last method may not be a plumbing method, as there is nothing to pass
     # to it as _next.
@@ -43,12 +43,6 @@ def entrance(name, pipe):
         plumbed_methods.insert(0, plumb(pipe.pop(), plumbed_methods[0]))
 
     return plumbed_methods[0]
-
-
-class Bases(object):
-    """Singleton used as last pipeline element to indicate that normal mro is
-    used to find exit points
-    """
 
 
 class Plumber(type):
@@ -79,32 +73,44 @@ class Plumber(type):
             return
 
         # Gather all functions that are part of the plumbing and line up the
-        # pipelines for the individual methods. The last pipeline element is
-        # special. In contrast to the other pipeline elements it may not
-        # define plumbing methods, but only normal methods. It is ignored
-        # during the gathering and only methods that have corresponding
-        # plumbing methods will be used as exit points for these.
+        # pipelines for the individual methods. Only methods that are decorated
+        # with the plumning decorator are taken in.
         pipelines = {}
-        for plugin in cls.__pipeline__[:-1]:
+        for plugin in cls.__pipeline__:
             for name, func in plugin.__dict__.items():
                 if not isinstance(func, plumbing):
                     continue
                 pipe = pipelines.setdefault(name, [])
                 pipe.append(getattr(plugin, name))
 
-        # Check the last pipeline element. If it is Bases, we will create a
-        # temporary class based on the same bases as the new class in order to
-        # use the mro mechanism to give us the exit points. Finally we create
-        # an entrance method to the plumbing and set it on the new class.
-        if cls.__pipeline__[-1] is Bases:
-            final_element = type('Tmp', bases, {})
-        else:
-            final_element = cls.__pipeline__[-1]
         for name, pipe in pipelines.items():
-            # XXX: probably we should catch AttributeErrors
-            exit_method = getattr(final_element, name)
-            pipe.append(exit_method)
+            # For each pipeline we will now ask the MRO to give us a method to
+            # be used as an endpoint. An endpoint is therefore a normal method
+            # and not a plumbing anymore. Apart from that, any plumbing method
+            # can decide not to use its _next and just be the innermost method
+            # being called. In case the MRO does not give us a method, i.e. we
+            # get an AttributeError, we will provide a method that raises a
+            # NotImplementedError. By that, it is possible for the class to be
+            # built, but in order for a runtime call to succeed there needs to
+            # be a plumbing method in front, which will not make use of its
+            # _next method and therefore build the end point. So plumbing
+            # methods can extend a class with new functionality and even make a
+            # super call, just as if the method would be defined on the class.
+            def notimplemented(*args, **kws):
+                raise NotImplementedError
+            end_point = getattr(cls, name, notimplemented)
+            pipe.append(end_point)
 
-            # XXX: methods defined in the class are just killed - at least add
-            # a warning.
-            setattr(cls, name, entrance(name, pipe))
+            # Finally ``entrance`` will plumb the methods together and return
+            # us an entrance method, that can be set on the class and will
+            # result in a normal bound method when being retrieved by
+            # getattr().
+            entrance_method = entrance(name, pipe)
+
+            # If there is a method with same name as a pipe, it is now part of
+            # the the pipe as innermost method and will be overwritten on the
+            # class. It lives on by being referenced in the pipeline as the
+            # innermost method and end point of the pipeline. Via super it can
+            # call the next method in the MRO, but anyway it is the end point
+            # of the plumbing.
+            setattr(cls, name, entrance_method)

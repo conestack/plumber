@@ -75,10 +75,6 @@ Example
 
 Global imports
 ~~~~~~~~~~~~~~
-XXX: Bases is experimental, well, even more than the rest.
-::
-
-    >>> from plumber._plumber import Bases
 
 Import of the plumbing decorator for the plumbing methods and the Plumber
 metaclass.
@@ -131,15 +127,38 @@ stuff were you pass something else on to be self. (see Discussion below)
     ...         _next(self, key, val)
     ...         if self.notify:
     ...             print "%s.__setitem__: done." % (cls,)
+    ...
+    ...     @plumbing
+    ...     def foo(cls, _next, self):
+    ...         # the base classes do not provide an end point, but we are.
+    ...         return "Notifier.foo is end point."
+    ...
+    ...     @plumbing
+    ...     def bar(cls, _next, self):
+    ...         # bar is not an end point and will result in
+    ...         # NotImplementedError, as the base classes will not provide an
+    ...         # end point
+    ...         _next(self)
 
     >>> class NotifyDict(dict):
     ...     """A dictionary that prints notification on __setitem__
     ...     """
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Notifier, dict)
+    ...     __pipeline__ = (Notifier,)
+    ...
+    ...     def __init__(self):
+    ...         print "%s.__init__: begin" % (self.__class__,)
+    ...         super(NotifyDict, self).__init__()
+    ...         print "%s.__init__: end" % (self.__class__,)
+
+The methods defined on the class directly, in this case ``__init__`` are called
+as the innermost methods and build the end point of a pipeline.
+::
 
     >>> ndict = NotifyDict(notify=True)
     <class 'Notifier'>.__init__: begin with: <NotifyDict object at ...>.
+    <class 'NotifyDict'>.__init__: begin
+    <class 'NotifyDict'>.__init__: end
     <class 'Notifier'>.__init__: end.
 
 The paremeter set by the plumbing __init__ made it onto the created object.
@@ -147,6 +166,13 @@ The paremeter set by the plumbing __init__ made it onto the created object.
 
     >>> ndict.notify
     True
+
+If a method is not present on the class itself, it will be looked up on the
+base classes, actually ``getattr`` on the class is used, before the plumbing
+system is installed. If that getattr fails and no plumbing class provided an
+end point, a ``NotImplementedError`` will be raised (see below in case of
+``ndict.foo`` and ``ndict.bar``.
+::
 
     >>> ndict['foo'] = 1
     <class 'Notifier'>.__setitem__: setting 1 as foo for <NotifyDict object at ...>.
@@ -164,6 +190,27 @@ to print notifications.
     >>> ndict['bar']
     2
 
+Even though the base class ``dict`` does not provide an end point for ``foo``,
+the Notifier plumbing class does and we cann call ``ndict.foo()``.
+::
+
+    >>> ndict.foo()
+    'Notifier.foo is end point.'
+
+The base class ``dict`` does not provide an end point for ``bar`` and neither
+does our plumbing class.
+::
+
+    >>> ndict.bar()
+    Traceback (most recent call last):
+    ...
+    NotImplementedError
+
+
+A prefixer plumbing
+-------------------
+
+::
     >>> class Prefixer(object):
     ...     """Prefixes keys
     ...     """
@@ -232,7 +279,7 @@ which raises NotImplemented and a plumbing element that knows what it is doing
     ...     """A dictionary that prints notifications and has prefixed keys
     ...     """
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Notifier, Prefixer, dict)
+    ...     __pipeline__ = (Notifier, Prefixer)
 
 XXX: This collides with dict __init__ signature: dict(foo=1, bar=2)
 --> creating a subclass of dict that does __init__ translation might work:
@@ -276,7 +323,7 @@ therefore the internal key names are shown.
     ...     """like NotifyPrefix, but different order
     ...     """
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Prefixer, Notifier, Bases)
+    ...     __pipeline__ = (Prefixer, Notifier)
 
     >>> rev_npdict = PrefixNotifyDict(prefix='_pre-', notify=True)
     <class 'Prefixer'>.__init__: begin with: <PrefixNotifyDict object at ...>.
@@ -408,6 +455,9 @@ __pipeline__ element, valid at the very beginning or at the end. To enable it
 at the beginning we probably need to create another class that uses the
 plumbing which will be put between the bases and the newly created class.
 
+rnix idea: if a plumbing class has a non-decorated method it builds an end
+point
+
 
 Signature of _next function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -472,6 +522,7 @@ Contributors
 - Robert Niederreiter <rnix@squarewave.at>
 - Attila Oláh
 - WSGI
+- #python
 
 
 Changes
@@ -483,4 +534,5 @@ Changes
 TODO
 ----
 
-...
+- traceback should show in which plumbing class we are, not something inside
+  the plumber. yafowil is doing it. jensens: would you be so kind.
