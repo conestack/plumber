@@ -336,10 +336,10 @@ Lets see this in action before thinking to much about it.
 
 
 Subclassing
-===========
+-----------
 
 Subclass of a class that uses a plumber
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Subclassing a class that uses a plumber is working normally. Without a call to
 super, the inherited method is just overwritten.
@@ -378,20 +378,20 @@ declare ``__metaclass__ = Plumber`` themselves, i.e. it is in their
 
 
 Multiple inheritance and plumbers all over
-------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 Subclassing plumbing elements
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 Discussions
-===========
+-----------
 
 Where is the plumbing
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 It would/could also be possible to use a plumbing for a class without base
 clases. That would mean that the code defined on the class that uses plumbing
@@ -408,7 +408,7 @@ plumbing which will be put between the bases and the newly created class.
 
 
 Signature of _next function
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Currently ``self`` needs to be passed to the ``_next`` function. This could be
 wrapped, too. However, it might enable cool stuff, because you can decide to
@@ -417,7 +417,7 @@ pass something else than self to be processed further.
 
 
 Instances of plumbing elements
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 At various points it felt tempting to be able to instantiate plumbing elements
 to configure them. For that we need ``__init__``, which woul mean that plumbing
@@ -440,7 +440,7 @@ Therefore, I suggest to gather experience with the current approach first.
 
 
 Implicit subclass generation
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Currently the whole plumbing system is implemented within one class that is
 based on the base classes defined in the class declaration. During class
@@ -454,7 +454,7 @@ is better.
 
 
 Positional arguments
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 Currently, it is not possible to pass positional arguments ``*args`` to
 plumbing methods and therefore everything behind the plumbing system. In
@@ -464,7 +464,7 @@ have any idea how to support positional arguments, pleas let us know.
 
 
 Contributors
-============
+------------
 
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
@@ -473,12 +473,12 @@ Contributors
 
 
 Changes
-=======
+-------
 
 - initial [chaoflow, 2011-01-04]
 
 
 TODO
-====
+----
 
 ...
