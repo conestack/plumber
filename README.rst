@@ -298,26 +298,28 @@ Notifier show now unprefixed key, as it is behind the prefixer
 What about defining code in the new class that is sitting in front of the
 plumbing. It could also mean that the code defined here is sitting behind the
 plumbing.
+::
 
-#    >>> class Foo(dict):
-#    ...     __metaclass__ = Plumber
-#    ...     __pipeline__ = (Notifier, dict)
-#    ...
-#    ...     def __init__(self, foo=True):
-#    ...         super(Foo, self).__init__()
-#    ...         self.foo = foo
+    #    >>> class Foo(dict):
+    #    ...     __metaclass__ = Plumber
+    #    ...     __pipeline__ = (Notifier, dict)
+    #    ...
+    #    ...     def __init__(self, foo=True):
+    #    ...         super(Foo, self).__init__()
+    #    ...         self.foo = foo
 
 Two possibilites:
 1. explicit subclassing:
+::
 
-#   >>> class FooPlumbing(dict):
-#   ...     __metaclass__ = Plumber
-#   ...     __pipeline__ = (Notifier, dict)
-#
-#   >>> class Foo(FooPlumbing):
-#    ...     def __init__(self, foo=True):
-#    ...         super(Foo, self).__init__()
-#    ...         self.foo = foo
+    #   >>> class FooPlumbing(dict):
+    #   ...     __metaclass__ = Plumber
+    #   ...     __pipeline__ = (Notifier, dict)
+    #
+    #   >>> class Foo(FooPlumbing):
+    #    ...     def __init__(self, foo=True):
+    #    ...         super(Foo, self).__init__()
+    #    ...         self.foo = foo
 
 2. flag for implicit creation of the plumbing and implicit subclassing of it
 
