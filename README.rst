@@ -87,8 +87,13 @@ can alter arguments before passing them on to the next plumbing method
 (preprocessing the request) and alter the return value of the next plumbing
 method (postprocessing the response) before returning it further.
 
-The last method, the end point or exit of a pipeline is under discussion.
-
+The normal endpoint is determined by ``getattr`` on the class without the
+plumbing system. If neither the class itself nor its base classes implement a
+corresponding method, a method is created that raises a
+``NotImplementedError``. A plumbing method can serve as an endpoint by just not
+calling ``_next``, by that it basically implements a new method for the class,
+as it were defined on the class. A super call to the class' bases can be made
+``super(self.__class__, self).name(**kws)``.
 
 ..note:: It is not possible to pass positional arguments to the plumbing system
   and anything behind it, as this is not valid python
