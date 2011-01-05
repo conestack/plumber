@@ -4,6 +4,73 @@ Plumber
 A plumber is a metaclass that implements a plumbing system which works
 orthogonal to subclassing.
 
+
+A quick example
+---------------
+
+Import of the plumbing decorator for the plumbing methods and the Plumber
+metaclass.
+::
+
+    >>> from plumber import plumbing
+    >>> from plumber import Plumber
+
+A base clase
+::
+
+    >>> class Base(object):
+    ...     def foo(self):
+    ...         print "Base.foo"
+
+Two plugins for the plumbing. The decorator makes the methods part of the
+plumbing. They are classmethods of the plugin. Via _next they can call the next
+plumbing method in the pipeline.
+::
+
+    >>> class Plugin1(object):
+    ...     @plumbing
+    ...     def foo(cls, _next, self):
+    ...         print "Plugin1.foo start"
+    ...         _next(self)
+    ...         print "Plugin1.foo stop"
+
+    >>> class Plugin2(object):
+    ...     @plumbing
+    ...     def foo(cls, _next, self):
+    ...         print "Plugin2.foo start"
+    ...         _next(self)
+    ...         print "Plugin2.foo stop"
+
+A class using a plumbing and having Base as base class. The Plumber metaclass
+creates the plumbing according to the ``__pipeline__`` attribute.
+::
+
+    >>> class ClassWithPlumbing(Base):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...
+    ...     def foo(self):
+    ...         print "ClassWithPlumbing.foo start"
+    ...         super(ClassWithPlumbing, self).foo()
+    ...         print "ClassWithPlumbing.foo stop"
+
+The plumbing sits in front of the class and its base classes
+::
+
+    >>> cwp = ClassWithPlumbing()
+    >>> cwp.foo()
+    Plugin1.foo start
+    Plugin2.foo start
+    ClassWithPlumbing.foo start
+    Base.foo
+    ClassWithPlumbing.foo stop
+    Plugin2.foo stop
+    Plugin1.foo stop
+
+
+A more lengthy explanation
+--------------------------
+
 A plumbing consists of plumbing elements that define methods to be used as part
 of the plumbing. An object using a plumbing system, declares the Plumber as its
 metaclass and a ``__pipeline__`` defining the order of plumbing elements to be
@@ -72,17 +139,6 @@ XXX: we need a name for a class that uses a plumbing system.
 
 Example
 -------
-
-Global imports
-~~~~~~~~~~~~~~
-
-Import of the plumbing decorator for the plumbing methods and the Plumber
-metaclass.
-::
-
-    >>> from plumber import plumbing
-    >>> from plumber import Plumber
-
 
 Notify plumbing class
 ---------------------
