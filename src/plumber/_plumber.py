@@ -1,3 +1,11 @@
+# If zope.interfaces is available we are aware of interfaces implemented on
+# plumbing classes and will make the factored class implement them, too.
+try:
+    from zope.interface import classImplements
+except ImportError:
+    classImplements = None
+
+
 class plumbing(classmethod):
     """Decorator that makes a function part of the plumbing
 
@@ -82,6 +90,16 @@ class Plumber(type):
                     continue
                 pipe = pipelines.setdefault(name, [])
                 pipe.append(getattr(plugin, name))
+
+            # If zope.interface is available, we check the plugins for
+            # implemented interfaces and make the new class implement these,
+            # too.
+            if classImplements is not None:
+                interfaces = getattr(plugin, "__implemented__", None)
+                if interfaces is not None:
+                    import pdb;pdb.set_trace()
+                    interfaces = list(interfaces)
+                    classImplements(cls, *interfaces)
 
         for name, pipe in pipelines.items():
             # For each pipeline we will now ask the MRO to give us a method to

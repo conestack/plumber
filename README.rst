@@ -445,10 +445,13 @@ zope.interface support
 
 The plumber does not depend on ``zope.interface`` but is aware of it. That
 means it will try to import it and if available it will check plumbing classes
-for interfaces and will make the new class implement them.
+for implemented interfaces and will make the new class implement them.
 
     >>> from zope.interface import Interface
     >>> from zope.interface import implements
+
+A base class with an interface.
+::
 
     >>> class IBase(Interface):
     ...     pass
@@ -456,17 +459,30 @@ for interfaces and will make the new class implement them.
     >>> class Base(object):
     ...     implements(IBase)
 
+Two plugins with intefaces, one with a base class that also implements an
+interface.
+::
+
+    >>> class IPlugin1Base(Interface):
+    ...     pass
+
+    >>> class Plugin1Base(object):
+    ...     implements(IPlugin1Base)
+
     >>> class IPlugin1(Interface):
     ...     pass
 
-    >>> class Plugin1(object):
+    >>> class Plugin1(Plugin1Base):
     ...     implements(IPlugin1)
 
     >>> class IPlugin2(Interface):
     ...     pass
 
     >>> class Plugin2(object):
-    ...     implements(IPlugin1)
+    ...     implements(IPlugin2)
+
+Our class, which also implements an interface itself
+::
 
     >>> class IUs(Interface):
     ...     pass
@@ -474,52 +490,58 @@ for interfaces and will make the new class implement them.
     >>> class Us(Base):
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = (Plugin1, Plugin2)
-    ...     implements(IUs)
+
+#    ...     implements(IUs)
+
+All classes used for our class implement the interfaces as expected
+::
 
     >>> IBase.implementedBy(Base)
     True
     >>> IPlugin1.implementedBy(Plugin1)
     True
+    >>> IPlugin1Base.implementedBy(Plugin1)
+    True
     >>> IPlugin2.implementedBy(Plugin2)
     True
 
-    >>> IUs.implementedBy(Us)
-    True
-    >>> IBase.implementedBy(Us)
-    True
+And our class implements the usual interfaces plus the interfaces implemented
+by plumbing classes it uses
+::
+
+#    >>> IUs.implementedBy(Us)
+#    True
+
+#    >>> IBase.implementedBy(Us)
+#    True
+
     >>> IPlugin1.implementedBy(Us)
+    True
+    >>> IPlugin1Base.implementedBy(Us)
     True
     >>> IPlugin2.implementedBy(Us)
     True
 
-or:
+An instance of our class provides the interfaces.
+::
 
-    >>> class IPlugin1Behaviour(Interface):
-    ...     pass
+    >>> us = Us()
 
-    >>> class Plugin1(object):
-    ...     implements(IPlugin1)
-    ...     interfaces = (IPlugin1Behaviour,)
+#    >>> IUs.providedBy(Us)
+#    True
+#    >>> IBase.providedBy(Us)
+#    True
 
-    >>> class IPlugin2(Interface):
-    ...     pass
-
-    >>> class Plugin2(object):
-    ...     implements(IPlugin2)
-    ...     interfaces = (IPlugin2Behaviour,)
-
-    >>> IUs.implementedBy(Us)
+    >>> IPlugin1.providedBy(Us)
     True
-    >>> IBase.implementedBy(Us)
+    >>> IPlugin1Base.providedBy(Us)
     True
-    >>> IPlugin1.implementedBy(Us)
-    False
-    >>> IPlugin2.implementedBy(Us)
-    False
-    >>> IPlugin1Behaviour.implementedBy(Us)
-    False
-    >>> IPlugin2Behaviour.implementedBy(Us)
-    False
+    >>> IPlugin2.providedBy(Us)
+    True
+
+The reasoning behind this is, that the plumbing classes are behaving as close
+as possible to base classes of our class, but without using subclassing.
+For an additional maybe future approach see Discussion.
 
 
 Discussions
@@ -527,23 +549,11 @@ Discussions
 
 Where is the plumbing
 ~~~~~~~~~~~~~~~~~~~~~
-It is now in front of the class and its MRO.
-
-It would/could also be possible to use a plumbing for a class without base
-clases. That would mean that the code defined on the class that uses plumbing
-is sitting behind the plumbing and as usual in front of the base clases.
-This is exactly what is implemented now!
-
-We could made this explicitly configurable by putting Self as a special
-__pipeline__ element, valid at the very beginning or at the end. To enable it
-at the beginning we probably need to create another class that uses the
-plumbing which will be put between the bases and the newly created class.
-
-By default it is now behind the plumbing. Whether we want a configuration
-option to put it in front of the plumbing, we will see. However, it adds
-complexity and one really can just create a subclass of the class using the
-plumbing to achieve exactly that.
-
+It is in front of the class and its MRO. If you feel it should be between the
+class and its base classes, consider subclassing the class that uses the
+plumbing system and put your code there. If you have a strong point why this is
+not a solution, please let us know. However, the point must be stronger than
+saving 3 lines of which two are pep8-conform whitespace.
 
 Signature of _next function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -551,8 +561,10 @@ Currently ``self`` needs to be passed to the ``_next`` function. This could be
 wrapped, too. However, it might enable cool stuff, because you can decide to
 pass something else than self to be processed further.
 
+Implementation of this would slightly increase the complexity in the plumber,
+result in less flexibility, but save passing ``self`` to ``_next``.
 
-Instances of plumbing elements
+Instance based plumbing system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 At various points it felt tempting to be able to instantiate plumbing elements
 to configure them. For that we need ``__init__``, which woul mean that plumbing
@@ -569,10 +581,47 @@ never directly. Configuration of plumbing elements can either be achieved by
 subclassing them or by putting the configuration on the objects/class they are
 used for.
 
-Last but not least, in case we decide to prefix all plumbing methods, this can
-be introduced while being backwards compatible with the current setup.
-Therefore, I suggest to gather experience with the current approach first.
+The current system is slim, clear and easy to use. An instance based plumbing
+system would be far more complex. It could be implemented to exist alongside
+the current system. But it won't be implemented by us, without seeing a real use
+case first.
 
+Different zope.interface.Interfaces for plumbing and created class
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A different approach to the currently implemented system is having different
+interfaces for the plugins and the class that is created.
+::
+
+    #    >>> class IPlugin1Behaviour(Interface):
+    #    ...     pass
+    #
+    #    >>> class Plugin1(object):
+    #    ...     implements(IPlugin1)
+    #    ...     interfaces = (IPlugin1Behaviour,)
+    #
+    #    >>> class IPlugin2(Interface):
+    #    ...     pass
+    #
+    #    >>> class Plugin2(object):
+    #    ...     implements(IPlugin2)
+    #    ...     interfaces = (IPlugin2Behaviour,)
+    #
+    #    >>> IUs.implementedBy(Us)
+    #    True
+    #    >>> IBase.implementedBy(Us)
+    #    True
+    #    >>> IPlugin1.implementedBy(Us)
+    #    False
+    #    >>> IPlugin2.implementedBy(Us)
+    #    False
+    #    >>> IPlugin1Behaviour.implementedBy(Us)
+    #    False
+    #    >>> IPlugin2Behaviour.implementedBy(Us)
+    #    False
+
+Same reasoning as before: up to now unnecessary complexity. It could make sense
+in combination with an instance based plumbing system and could be implemented
+as part of it alongside the current class based system.
 
 Implicit subclass generation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -586,14 +635,12 @@ and create a subclass chain. However, I currently don't know how this could be
 achieved, believe that it is not possible and think that the current approach
 is better.
 
-
 Positional arguments
 ~~~~~~~~~~~~~~~~~~~~
 Currently, it is not possible to pass positional arguments ``*args`` to
 plumbing methods and therefore everything behind the plumbing system. In
 python, this syntax is not valid ``def f(foo, *args, bar=1, **kws)``. If you
 have any idea how to support positional arguments, pleas let us know.
-
 
 
 Contributors
