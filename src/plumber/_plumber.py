@@ -86,11 +86,10 @@ class Plumber(type):
             # If zope.interface is available (see import at the beginning of
             # file), we check the plugins for implemented interfaces and make
             # the new class implement these, too.
-            if ziface is None:
-                continue
-            ifaces = ziface.implementedBy(plugin)
-            if ifaces is not None:
-                ziface.classImplements(cls, *list(ifaces))
+            if ziface is not None:
+                ifaces = ziface.implementedBy(plugin)
+                if ifaces is not None:
+                    ziface.classImplements(cls, *list(ifaces))
 
         for name, pipe in pipelines.items():
             # For each pipeline we will now ask the MRO to give us a method to
