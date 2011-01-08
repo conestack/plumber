@@ -22,17 +22,19 @@ def plumb(plumbing_method, next_method):
     The first method is expected to be a plumbing method, i.e. a method defined
     in a class with the plumbing decorator. ``next_method`` can be an arbitrary
     function, though typically it will at least accept one argument (self).
+
+    The result is what plumbing methods receive as the ``_next`` argument.
     """
-    def plumbed_method(self, *args, **kws):
+    def _next(self, *args, **kws):
         """A normal method, plumbed to the next normal method
         """
         return plumbing_method(next_method, self, *args, **kws)
 
-    return plumbed_method
+    return _next
 
 
 def entrance(name, pipe):
-    """Create an entrance to the plumbing, and the whole pipeline behind it
+    """Plumbs all methods of a pipeline together and returns the entrance.
     """
     # The last method may not be a plumbing method, as there is nothing to pass
     # to it as _next.
@@ -40,8 +42,9 @@ def entrance(name, pipe):
     plumbed_methods = [exit_method]
 
     # In case there was only one method, no plumbing needs to be done.
-    # Otherwise, we take the next method from the end of the pipe and plumb it
-    # in front of the previously plumbed methods.
+    # Otherwise, we take the next method from the end of the remaining pipe and
+    # plumb it in front of the previously plumbed methods. The pipeline is
+    # plumbed from the end to the beginning.
     while pipe:
         plumbed_methods.insert(0, plumb(pipe.pop(), plumbed_methods[0]))
 
@@ -51,13 +54,13 @@ def entrance(name, pipe):
 class Plumber(type):
     """Metaclass to create classes using a plumbing
 
-    First the Plumber will read the __pipeline__ attribute of the new class and
-    create a plumbing class accordingly based on the bases passed for the new
-    class. The new class will then have the plumbing class as its single base.
+    First the normal new-style metaclass ``type()`` is called to construct the
+    class with ``name``, ``bases``, ``dct``.
 
-    This results in the new class being a subclass of the specified bases as
-    well as the possibily to override new methods in the class and calling the
-    plumbing class via super.
+    Then, if the class declares a ``__pipeline__`` attribute, the plumber
+    creates a plumbing system accordingly and puts it in front of the class.
+    Methods defined on the class itself or inherited via base classes serve as
+    end points for the plumbing system.
     """
     def __init__(cls, name, bases, dct):
         super(Plumber, cls).__init__(name, bases, dct)
@@ -76,6 +79,9 @@ class Plumber(type):
                 if not isinstance(func, plumbing):
                     continue
                 pipe = pipelines.setdefault(name, [])
+                # plumbing methods are class methods. By retrieving them via
+                # ``getattr`` from the class we receive methods bound to the
+                # class.
                 pipe.append(getattr(plugin, name))
 
             # If zope.interface is available (see import at the beginning of
@@ -114,6 +120,6 @@ class Plumber(type):
             # the the pipe as innermost method and will be overwritten on the
             # class. It lives on by being referenced in the pipeline as the
             # innermost method and end point of the pipeline. Via super it can
-            # call the next method in the MRO, but anyway it is the end point
-            # of the plumbing.
+            # call the next method in the MRO, but anyway it is the default end
+            # point of the plumbing.
             setattr(cls, name, entrance_method)

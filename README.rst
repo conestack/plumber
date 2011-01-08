@@ -110,6 +110,110 @@ declares a ``__pipeline__`` itself and otherwise just calls ``type``, the
 default metaclass for new-style classes.
 
 
+zope.interface support
+----------------------
+
+The plumber does not depend on ``zope.interface`` but is aware of it. That
+means it will try to import it and if available will check plumbing classes
+for implemented interfaces and will make the new class implement them, too.
+
+    >>> from zope.interface import Interface
+    >>> from zope.interface import implements
+
+A base class with an interface.
+::
+
+    >>> class IBase(Interface):
+    ...     pass
+
+    >>> class Base(object):
+    ...     implements(IBase)
+
+    >>> IBase.implementedBy(Base)
+    True
+
+Two plugins with corresponding interfaces, one with a base class that also
+implements an interface.
+::
+
+    >>> class IPlugin1(Interface):
+    ...     pass
+
+    >>> class Plugin1(object):
+    ...     implements(IPlugin1)
+
+    >>> class IPlugin2Base(Interface):
+    ...     pass
+
+    >>> class Plugin2Base(object):
+    ...     implements(IPlugin2Base)
+
+    >>> class IPlugin2(Interface):
+    ...     pass
+
+    >>> class Plugin2(Plugin2Base):
+    ...     implements(IPlugin2)
+
+    >>> IPlugin1.implementedBy(Plugin1)
+    True
+    >>> IPlugin2Base.implementedBy(Plugin2Base)
+    True
+    >>> IPlugin2Base.implementedBy(Plugin2)
+    True
+    >>> IPlugin2.implementedBy(Plugin2)
+    True
+
+A class based on ``Base`` using a plumbing of ``Plugin1`` and ``Plugin2`` and
+implementing ``IClassWithPlumbing``.
+::
+
+    >>> class IClassWithPlumbing(Interface):
+    ...     pass
+
+    >>> class ClassWithPlumbing(Base):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...     implements(IClassWithPlumbing)
+
+The directly declared and inherited interfaces are implemented.
+::
+
+    >>> IClassWithPlumbing.implementedBy(ClassWithPlumbing)
+    True
+    >>> IBase.implementedBy(ClassWithPlumbing)
+    True
+
+The interfaces implemented by the used plumbing classes are also implemented.
+::
+
+    >>> IPlugin1.implementedBy(ClassWithPlumbing)
+    True
+    >>> IPlugin2.implementedBy(ClassWithPlumbing)
+    True
+    >>> IPlugin2Base.implementedBy(ClassWithPlumbing)
+    True
+
+An instance of the class provides the interfaces.
+::
+
+    >>> cwp = ClassWithPlumbing()
+
+    >>> IClassWithPlumbing.providedBy(cwp)
+    True
+    >>> IBase.providedBy(cwp)
+    True
+    >>> IPlugin1.providedBy(cwp)
+    True
+    >>> IPlugin2.providedBy(cwp)
+    True
+    >>> IPlugin2Base.providedBy(cwp)
+    True
+
+The reasoning behind this is: the plumbing classes are behaving as close as
+possible to base classes of our class, but without using subclassing.  For an
+additional maybe future approach see Discussion.
+
+
 A more lengthy explanation
 --------------------------
 
@@ -428,111 +532,6 @@ Notifier show now unprefixed key, as it is behind the prefixer
 
 Subclassing plumbing elements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-zope.interface support
-----------------------
-
-The plumber does not depend on ``zope.interface`` but is aware of it. That
-means it will try to import it and if available will check plumbing classes
-for implemented interfaces and will make the new class implement them.
-
-    >>> from zope.interface import Interface
-    >>> from zope.interface import classImplements
-    >>> from zope.interface import implements
-
-A base class with an interface.
-::
-
-    >>> class IBase(Interface):
-    ...     pass
-
-    >>> class Base(object):
-    ...     implements(IBase)
-
-    >>> IBase.implementedBy(Base)
-    True
-
-Two plugins with corresponding interfaces, one with a base class that also
-implements an interface.
-::
-
-    >>> class IPlugin1(Interface):
-    ...     pass
-
-    >>> class Plugin1(object):
-    ...     implements(IPlugin1)
-
-    >>> class IPlugin2Base(Interface):
-    ...     pass
-
-    >>> class Plugin2Base(object):
-    ...     implements(IPlugin2Base)
-
-    >>> class IPlugin2(Interface):
-    ...     pass
-
-    >>> class Plugin2(Plugin2Base):
-    ...     implements(IPlugin2)
-
-    >>> IPlugin1.implementedBy(Plugin1)
-    True
-    >>> IPlugin2Base.implementedBy(Plugin2Base)
-    True
-    >>> IPlugin2Base.implementedBy(Plugin2)
-    True
-    >>> IPlugin2.implementedBy(Plugin2)
-    True
-
-A class based on ``Base`` using a plumbing of ``Plugin1`` and ``Plugin2`` and
-implementing ``IClassWithPlumbing``.
-::
-
-    >>> class IClassWithPlumbing(Interface):
-    ...     pass
-
-    >>> class ClassWithPlumbing(Base):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1, Plugin2)
-    ...     implements(IClassWithPlumbing)
-
-The directly declared and inherited interfaces are implemented.
-::
-
-    >>> IClassWithPlumbing.implementedBy(ClassWithPlumbing)
-    True
-    >>> IBase.implementedBy(ClassWithPlumbing)
-    True
-
-The interfaces implemented by the used plumbing classes are also implemented.
-::
-
-    >>> IPlugin1.implementedBy(ClassWithPlumbing)
-    True
-    >>> IPlugin2.implementedBy(ClassWithPlumbing)
-    True
-    >>> IPlugin2Base.implementedBy(ClassWithPlumbing)
-    True
-
-An instance of the class provides the interfaces.
-::
-
-    >>> cwp = ClassWithPlumbing()
-
-    >>> IClassWithPlumbing.providedBy(cwp)
-    True
-    >>> IBase.providedBy(cwp)
-    True
-    >>> IPlugin1.providedBy(cwp)
-    True
-    >>> IPlugin2.providedBy(cwp)
-    True
-    >>> IPlugin2Base.providedBy(cwp)
-    True
-
-The reasoning behind this is, that the plumbing classes are behaving as close
-as possible to base classes of our class, but without using subclassing.
-For an additional maybe future approach see Discussion.
 
 
 Discussions
