@@ -104,10 +104,10 @@ A class that uses plumbing can be subclassed as usual.
     SubOfClassWithPlumbing.foo stop
 
 ..note:: A class inherits the ``__metaclass__`` declaration from base classes.
-The ``Plumber`` metaclass will is called for ``ClassWithPlumbing`` **and**
+The ``Plumber`` metaclass is called for ``ClassWithPlumbing`` **and**
 ``SubOfClassWithPlumbing``. However, it will only get active for a class that
-declares the metaclass itself and otherwise just calls ``type``, the default
-metaclass for new-style classes.
+declares a ``__pipeline__`` itself and otherwise just calls ``type``, the
+default metaclass for new-style classes.
 
 
 A more lengthy explanation
