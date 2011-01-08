@@ -67,6 +67,21 @@ The plumbing sits in front of the class and its base classes
     Plugin2.foo stop
     Plugin1.foo stop
 
+The plumbing classes are not part of a class' method resolution order.
+::
+
+    >>> ClassWithPlumbing.__mro__
+    (<class 'ClassWithPlumbing'>,
+     <class 'Base'>,
+     <type 'object'>)
+
+    >>> issubclass(ClassWithPlumbing, Base)
+    True
+    >>> issubclass(ClassWithPlumbing, Plugin1)
+    False
+    >>> issubclass(ClassWithPlumbing, Plugin2)
+    False
+
 A class that uses plumbing can be subclassed as usual.
 ::
 
@@ -88,10 +103,10 @@ A class that uses plumbing can be subclassed as usual.
     Plugin1.foo stop
     SubOfClassWithPlumbing.foo stop
 
-..not:: A class inherits the ``__metaclass__`` declaration from base classes.
-So the ``Plumber`` metaclass will also be called for
+..note:: A class inherits the ``__metaclass__`` declaration from base classes.
+The ``Plumber`` metaclass will is called for ``ClassWithPlumbing`` **and**
 ``SubOfClassWithPlumbing``. However, it will only get active for a class that
-declares the metaclass itself and otherwise just call ``type``, the normal
+declares the metaclass itself and otherwise just calls ``type``, the default
 metaclass for new-style classes.
 
 
@@ -414,11 +429,6 @@ Notifier show now unprefixed key, as it is behind the prefixer
 
     >>> rev_npdict['_pre-bar']
     1
-
-
-Multiple inheritance and plumbers all over
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 
 Subclassing plumbing elements
