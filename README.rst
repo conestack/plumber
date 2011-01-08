@@ -67,6 +67,33 @@ The plumbing sits in front of the class and its base classes
     Plugin2.foo stop
     Plugin1.foo stop
 
+A class that uses plumbing can be subclassed as usual.
+::
+
+    >>> class SubOfClassWithPlumbing(ClassWithPlumbing):
+    ...     def foo(self):
+    ...         print "SubOfClassWithPlumbing.foo start"
+    ...         super(SubOfClassWithPlumbing, self).foo()
+    ...         print "SubOfClassWithPlumbing.foo stop"
+
+    >>> subofcwp = SubOfClassWithPlumbing()
+    >>> subofcwp.foo()
+    SubOfClassWithPlumbing.foo start
+    Plugin1.foo start
+    Plugin2.foo start
+    ClassWithPlumbing.foo start
+    Base.foo
+    ClassWithPlumbing.foo stop
+    Plugin2.foo stop
+    Plugin1.foo stop
+    SubOfClassWithPlumbing.foo stop
+
+..not:: A class inherits the ``__metaclass__`` declaration from base classes.
+So the ``Plumber`` metaclass will also be called for
+``SubOfClassWithPlumbing``. However, it will only get active for a class that
+declares the metaclass itself and otherwise just call ``type``, the normal
+metaclass for new-style classes.
+
 
 A more lengthy explanation
 --------------------------
@@ -389,48 +416,6 @@ Notifier show now unprefixed key, as it is behind the prefixer
     1
 
 
-Subclassing
------------
-
-Subclass of a class that uses a plumber
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Subclassing a class that uses a plumber is working normally. Without a call to
-super, the inherited method is just overwritten.
-::
-
-    >>> class SubNotifyDict(PrefixNotifyDict):
-    ...     def __init__(self):
-    ...         print "SubNotifier.__init__ is called."
-
-    >>> snd = SubNotifyDict()
-    SubNotifier.__init__ is called.
-
-And with a call to super the plumbing methods will be called.
-::
-
-    >>> class SubNotifyDict(PrefixNotifyDict):
-    ...     def __init__(self):
-    ...         print "SubNotifier.__init__ is called."
-    ...         super(SubNotifyDict, self).__init__(notify=True)
-    ...         print "SubNotifier.__init__ finishes."
-
-    >>> snd = SubNotifyDict()
-    SubNotifier.__init__ is called.
-    <class 'Prefixer'>.__init__: begin with: <SubNotifyDict object at ...>.
-    <class 'Notifier'>.__init__: begin with: <SubNotifyDict object at ...>.
-    <class 'Notifier'>.__init__: end.
-    <class 'Prefixer'>.__init__: end.
-    SubNotifier.__init__ finishes.
-
-The Plumber metaclass achieves this behaviour by only working on classes that
-declare ``__metaclass__ = Plumber`` themselves, i.e. it is in their
-``cls.__dict__``. The plumber will be called to create ``SubNotifyDict`` as
-``SubNotifyDict`` inherits the ``__metaclass__`` declaration from
-``PrefixNotifyDict``, but the plumber will just leave the job to ``type``.
-
-
-
 Multiple inheritance and plumbers all over
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -458,10 +443,10 @@ __pipeline__ element, valid at the very beginning or at the end. To enable it
 at the beginning we probably need to create another class that uses the
 plumbing which will be put between the bases and the newly created class.
 
-By default it is now behind the plumbing. Whether we want a configuration
-option to put it in front of the plumbing, we will see. However, it adds
-complexity and one really can just create a subclass of the class using the
-plumbing to achieve exactly that.
+By default the plumbing is now in fron of the class. Whether we want a
+configuration option to put it in front of the plumbing, we will see. However,
+it adds complexity and one really can just create a subclass of the class using
+the plumbing to achieve exactly that.
 
 
 Signature of _next function
