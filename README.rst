@@ -1,8 +1,8 @@
 Plumber
 =======
 
-A plumber is a metaclass that implements a plumbing system which works
-orthogonal to subclassing.
+Plumber is a metaclass that implements a plumbing system which works orthogonal
+to subclassing.
 
 
 A quick example
@@ -138,11 +138,9 @@ as it were defined on the class. A super call to the class' bases can be made
 ``super(self.__class__, self).name(**kws)``.
 
 ..note:: It is not possible to pass positional arguments to the plumbing system
-  and anything behind it, as this is not valid python
-  ``def f(foo, *args, bar=None, **kws)``.
-
-  XXX: Please correct me if I am wrong and we will see whether ``*args`` can
-  be supported (see also Discussion below).
+  and anything behind it, as ``def f(foo, *args, bar=None, **kws)`` is not
+  valid python and ``def f(foo, bar=None, *args, **kws)`` makes ``bar`` a
+  positional which will be filled before ``*args``.
 
 
 Nomenclature
@@ -199,13 +197,10 @@ the next plumbing method of a pipeline and ``self`` is an instance of the class
 that uses the plumbing, just what you would expect to be ``self`` in a method
 of a normal class.
 
-..attention:: ``self`` is not an instance of the plumbing class, but of the
-  class using the plumbing system. The system is designed so the code you write
-  in plumbing methods looks as similar as possible to the code you would write
-  directly in the class.
-
-XXX: we could wrap self, too (less to write). However, it might enable weird
-stuff were you pass something else on to be self. (see Discussion below)
+..attention:: ``self`` is not an instance of the plumbing class, but an
+  instance of the class using the plumbing system. The system is designed so
+  the code you write in plumbing methods looks as similar as possible to the
+  code you would write directly in the class.
 
 ::
 

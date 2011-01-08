@@ -13,8 +13,6 @@ class plumbing(classmethod):
     second argument it expects the next plumbing method, typically called
     _next. The third argument is the object that for normal methods would be
     the first argument, typically named self.
-
-    XXX: rename to plumbingmethod?
     """
 
 
@@ -38,9 +36,6 @@ def entrance(name, pipe):
     """
     # The last method may not be a plumbing method, as there is nothing to pass
     # to it as _next.
-    #
-    # XXX: We may support automatic creation of that exit method, but like this
-    # it is explicit and it feels better this way.
     exit_method = pipe.pop()
     plumbed_methods = [exit_method]
 
