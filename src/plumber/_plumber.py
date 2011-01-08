@@ -1,9 +1,9 @@
 # If zope.interfaces is available we are aware of interfaces implemented on
 # plumbing classes and will make the factored class implement them, too.
 try:
-    from zope.interface import classImplements
+    import zope.interface as ziface
 except ImportError:
-    classImplements = None
+    ziface = None
 
 
 class plumbing(classmethod):
@@ -63,21 +63,13 @@ class Plumber(type):
     This results in the new class being a subclass of the specified bases as
     well as the possibily to override new methods in the class and calling the
     plumbing class via super.
-
-
-    XXX: introduce Inherited pipeline plugin?
-
-    XXX: introduce Self pipeline plugin?
-
-    XXX: call to super as exit node would also be easy
     """
     def __init__(cls, name, bases, dct):
         super(Plumber, cls).__init__(name, bases, dct)
-        # The plumber will only get active if the class asks for explicitly. It
-        # is not enough that a class inherits the __metaclass__ declaration
-        # from one of its bases, but it needs to do so itself. This enables
-        # subclassing a class that uses a plumber.
-        if cls.__dict__.get('__metaclass__') is None:
+        # The metaclass is inherited.
+        # The plumber will only get active if the class it produces defines a
+        # __pipeline__.
+        if cls.__dict__.get('__pipeline__') is None:
             return
 
         # Gather all functions that are part of the plumbing and line up the
@@ -91,15 +83,14 @@ class Plumber(type):
                 pipe = pipelines.setdefault(name, [])
                 pipe.append(getattr(plugin, name))
 
-            # If zope.interface is available, we check the plugins for
-            # implemented interfaces and make the new class implement these,
-            # too.
-            if classImplements is not None:
-                interfaces = getattr(plugin, "__implemented__", None)
-                if interfaces is not None:
-                    import pdb;pdb.set_trace()
-                    interfaces = list(interfaces)
-                    classImplements(cls, *interfaces)
+            # If zope.interface is available (see import at the beginning of
+            # file), we check the plugins for implemented interfaces and make
+            # the new class implement these, too.
+            if ziface is None:
+                continue
+            ifaces = ziface.implementedBy(plugin)
+            if ifaces is not None:
+                ziface.classImplements(cls, *list(ifaces))
 
         for name, pipe in pipelines.items():
             # For each pipeline we will now ask the MRO to give us a method to
