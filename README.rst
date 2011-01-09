@@ -15,7 +15,7 @@ metaclass.
     >>> from plumber import plumbing
     >>> from plumber import Plumber
 
-A base clase
+A class that will serve base.
 ::
 
     >>> class Base(object):
@@ -121,7 +121,7 @@ for implemented interfaces and will make the new class implement them, too.
     >>> from zope.interface import Interface
     >>> from zope.interface import implements
 
-A base class with an interface.
+A class with an interface that will serve as base.
 ::
 
     >>> class IBase(Interface):
