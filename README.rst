@@ -116,6 +116,7 @@ zope.interface support
 The plumber does not depend on ``zope.interface`` but is aware of it. That
 means it will try to import it and if available will check plumbing classes
 for implemented interfaces and will make the new class implement them, too.
+::
 
     >>> from zope.interface import Interface
     >>> from zope.interface import implements
