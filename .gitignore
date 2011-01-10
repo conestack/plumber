@@ -1,6 +1,5 @@
 # /
 *.pyc
-/bda.ldap.egg-info
 /coverage
 /dist
 /bin
@@ -11,7 +10,6 @@
 /eggs
 
 # /src/
-/src/bda.ldap.egg-info
-/src/node.egg-info
+/src/plumber.egg-info
 
 .mrsd
