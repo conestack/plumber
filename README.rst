@@ -269,8 +269,7 @@ plumbing class, plugin, element
 
 plumbing decorator
     The plumbing decorator marks a method to be part of the plumbing and makes
-    it a classmethod of the class defining it. (See Discussion below for
-    plumbing based on non-class methods, i.e. instantiated plumbing classes).
+    it a classmethod of the class defining it.
 
 plumbing (method)
     A plumbing method is a classmethod marked by the plumbing decorator.
@@ -634,6 +633,12 @@ plumbing methods and therefore everything behind the plumbing system. In
 python, this syntax is not valid ``def f(foo, *args, bar=1, **kws)``. If you
 have any idea how to support positional arguments, pleas let us know.
 
+Dynamics Plumbing
+~~~~~~~~~~~~~~~~~
+The plumber could replace the ``__pipeline__`` attribute with a property of the
+same name. Changing the attribute during runtime would result in a plumbing
+specific to the object. A plumbing cache could further be used to reduce the
+number of plumbing chains in case of many dynamic plumbings.
 
 Contributors
 ------------
@@ -656,3 +661,5 @@ TODO
 
 - traceback should show in which plumbing class we are, not something inside
   the plumber. yafowil is doing it. jensens: would you be so kind.
+- verify behaviour with pickling
+- verify behaviour with ZODB persistence
