@@ -18,7 +18,11 @@ def test_suite():
             optionflags=optionflags,
             globs={'interact': interact,
                    'pprint': pprint},
-        ) for file in TESTFILES
+            ) for file in TESTFILES
+        ]+[
+        doctest.DocTestSuite(
+            'plumber._globalmetaclasstest',
+            )
     ])
 
 if __name__ == '__main__':
