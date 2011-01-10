@@ -15,7 +15,7 @@ metaclass.
     >>> from plumber import plumbing
     >>> from plumber import Plumber
 
-A class that will serve base.
+A class that will serve as base.
 ::
 
     >>> class Base(object):
@@ -23,8 +23,9 @@ A class that will serve base.
     ...         print "Base.foo"
 
 Two plugins for the plumbing. The decorator makes the methods part of the
-plumbing. They are classmethods of the plugin. Via _next they can call the next
-plumbing method in the pipeline.
+plumbing. They are classmethods of the plugin ``cls``, via ``_next`` they can
+call the next plumbing method in the pipeline and ``self`` is an instance of
+the class using the plumbing.
 ::
 
     >>> class Plugin1(object):
