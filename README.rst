@@ -800,7 +800,7 @@ it fish them out of kws
 
     >>> class ArgsPlugin1(object):
     ...     @plumbing(p1=None)
-    ...     def foo(cls, _next, self, huhu=1, *args, **kws):
+    ...     def foo(cls, _next, self, *args, **kws):
     ...         print "p1=%s" % (p1,)
     ...         print "args=%s" % (args,)
     ...         print "kws=%s" % (kws,)
@@ -822,7 +822,21 @@ it fish them out of kws
 
     >>> foo = Foo()
     >>> foo.foo()
+    p1=None
+    args=()
+    kws={}
+    p2=None
+    args=()
+    kws={}
+
     >>> foo.foo('blub')
+    p1=None
+    args=('blub',)
+    kws={}
+    p2=None
+    args=('blub',)
+    kws={}
+
     >>> foo.foo('blub', p1='p1', p2='p2')
     p1=p1
     args=('blub',)

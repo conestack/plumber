@@ -62,7 +62,6 @@ class plumbing(classmethod):
 
     def __call__(self, func):
         func.__globals__.update(self.kws)
-        import pdb;pdb.set_trace()
         return self.__class__(func)
 
 
