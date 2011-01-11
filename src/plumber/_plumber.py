@@ -13,6 +13,8 @@ class plumbing(classmethod):
     second argument it expects the next plumbing method, typically called
     _next. The third argument is the object that for normal methods would be
     the first argument, typically named self.
+
+    XXX:
     """
     def __init__(self, *args, **kws):
         # We are either called as decorator and receive a single positional
@@ -26,7 +28,13 @@ class plumbing(classmethod):
             self.kws = kws
 
     def __call__(self, func):
-        return self.__class__(func)
+        defaults = self.kws.get('defaults', [])
+        def wrap(cls, _next, self, *args, **kws):
+            args = defaults + args
+            return func(cls, _next, self, *args, **kws)
+        wrap.__name__ = func.__name__
+        wrap.__doc__ = func.__doc__
+        return self.__class__(wrap)
 
 
 def plumb(plumbing_method, next_method):
