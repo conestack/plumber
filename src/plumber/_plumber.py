@@ -6,7 +6,7 @@ except ImportError:
     ziface = None
 
 
-# WIP: for abandoned approach of @plumbing(defaults=((k, v),))
+# WIP: for abandoned approach of an initialized plumbing decorator
 #
 #class plumbing(classmethod):
 #    """Decorator that makes a function part of the plumbing
@@ -46,23 +46,7 @@ class plumbing(classmethod):
     second argument it expects the next plumbing method, typically called
     _next. The third argument is the object that for normal methods would be
     the first argument, typically named self.
-
-    XXX:
     """
-    def __init__(self, *args, **kws):
-        # We are either called as decorator and receive a single positional
-        # argument, which is the function we are decorating, or we are called
-        # to define parameters, in which case our __call__ method will be
-        # called next to return the decorated function.
-        if args:
-            func = args[0]
-            super(plumbing, self).__init__(func)
-        else:
-            self.kws = kws
-
-    def __call__(self, func):
-        func.__globals__.update(self.kws)
-        return self.__class__(func)
 
 
 def plumb(plumbing_method, next_method):

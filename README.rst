@@ -816,52 +816,52 @@ possible but needs runtime closure creation.
 
 ::
 
-    >>> class ArgsPlugin1(object):
-    ...     @plumbing(p1=None)
-    ...     def foo(cls, _next, self, *args, **kws):
-    ...         print "p1=%s" % (p1,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
-
-    >>> class ArgsPlugin2(object):
-    ...     @plumbing(p2=None)
-    ...     def foo(cls, _next, self, *args, **kws):
-    ...         print "p2=%s" % (p2,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
-
-    >>> class Foo(object):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
-    ...     def foo(self, *args, **kws):
-    ...         pass
-
-    >>> foo = Foo()
-    >>> foo.foo()
-    p1=None
-    args=()
-    kws={}
-    p2=None
-    args=()
-    kws={}
-
-    >>> foo.foo('blub')
-    p1=None
-    args=('blub',)
-    kws={}
-    p2=None
-    args=('blub',)
-    kws={}
-
-    >>> foo.foo('blub', p1='p1', p2='p2')
-    p1=p1
-    args=('blub',)
-    kws={'p2': 'p2'}
-    p2=p2
-    args=('blub',)
-    kws={}
+#    >>> class ArgsPlugin1(object):
+#    ...     @plumbing(p1=None)
+#    ...     def foo(cls, _next, self, *args, **kws):
+#    ...         print "p1=%s" % (p1,)
+#    ...         print "args=%s" % (args,)
+#    ...         print "kws=%s" % (kws,)
+#    ...         _next(self, *args, **kws)
+#
+#    >>> class ArgsPlugin2(object):
+#    ...     @plumbing(p2=None)
+#    ...     def foo(cls, _next, self, *args, **kws):
+#    ...         print "p2=%s" % (p2,)
+#    ...         print "args=%s" % (args,)
+#    ...         print "kws=%s" % (kws,)
+#    ...         _next(self, *args, **kws)
+#
+#    >>> class Foo(object):
+#    ...     __metaclass__ = Plumber
+#    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
+#    ...     def foo(self, *args, **kws):
+#    ...         pass
+#
+#    >>> foo = Foo()
+#    >>> foo.foo()
+#    p1=None
+#    args=()
+#    kws={}
+#    p2=None
+#    args=()
+#    kws={}
+#
+#    >>> foo.foo('blub')
+#    p1=None
+#    args=('blub',)
+#    kws={}
+#    p2=None
+#    args=('blub',)
+#    kws={}
+#
+#    >>> foo.foo('blub', p1='p1', p2='p2')
+#    p1=p1
+#    args=('blub',)
+#    kws={'p2': 'p2'}
+#    p2=p2
+#    args=('blub',)
+#    kws={}
 
 Solution 4
 ^^^^^^^^^^
@@ -871,13 +871,13 @@ confuse people.
 
 ::
 
-    >>> class ArgsPlugin1(object):
-    ...     @plumbing
-    ...     def foo(cls, _next, self, p1=None, *args, **kws):
-    ...         print "p1=%s" % (p1,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
+#    >>> class ArgsPlugin1(object):
+#    ...     @plumbing
+#    ...     def foo(cls, _next, self, p1=None, *args, **kws):
+#    ...         print "p1=%s" % (p1,)
+#    ...         print "args=%s" % (args,)
+#    ...         print "kws=%s" % (kws,)
+#    ...         _next(self, *args, **kws)
 
 The plumber change pythons normal behaviour of filling function arguments in
 that it would first check if it is in keywords and move it in front of args
