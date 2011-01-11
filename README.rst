@@ -20,6 +20,8 @@ A class that will serve as base.
 
     >>> class Base(object):
     ...     def foo(self):
+    ...         """Base.foo doc
+    ...         """
     ...         print "Base.foo"
 
 Two plugins for the plumbing. The decorator makes the methods part of the
@@ -31,6 +33,8 @@ the class using the plumbing.
     >>> class Plugin1(object):
     ...     @plumbing
     ...     def foo(cls, _next, self):
+    ...         """Plugin1.foo doc
+    ...         """
     ...         print "Plugin1.foo start"
     ...         _next(self)
     ...         print "Plugin1.foo stop"
@@ -38,6 +42,8 @@ the class using the plumbing.
     >>> class Plugin2(object):
     ...     @plumbing
     ...     def foo(cls, _next, self):
+    ...         """Plugin2.foo doc
+    ...         """
     ...         print "Plugin2.foo start"
     ...         _next(self)
     ...         print "Plugin2.foo stop"
@@ -51,6 +57,8 @@ creates the plumbing according to the ``__pipeline__`` attribute.
     ...     __pipeline__ = (Plugin1, Plugin2)
     ...
     ...     def foo(self):
+    ...         """ClassWithPlumbing.foo doc
+    ...         """
     ...         print "ClassWithPlumbing.foo start"
     ...         super(ClassWithPlumbing, self).foo()
     ...         print "ClassWithPlumbing.foo stop"
@@ -109,6 +117,18 @@ The ``Plumber`` metaclass is called for ``ClassWithPlumbing`` **and**
 ``SubOfClassWithPlumbing``. However, it will only get active for a class that
 declares a ``__pipeline__`` itself and otherwise just calls ``type``, the
 default metaclass for new-style classes.
+
+
+The docstring is assembled from the innermost method to the first plugin.
+::
+
+    >>> print cwp.foo.__doc__
+    ClassWithPlumbing.foo doc
+    <BLANKLINE>
+    Plugin2.foo doc
+    <BLANKLINE>
+    Plugin1.foo doc
+    <BLANKLINE>
 
 
 zope.interface support

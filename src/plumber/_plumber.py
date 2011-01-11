@@ -1,3 +1,5 @@
+import os
+
 # If zope.interfaces is available we are aware of interfaces implemented on
 # plumbing classes and will make the factored class implement them, too.
 try:
@@ -78,9 +80,15 @@ def entrance(name, pipe):
     # Otherwise, we take the next method from the end of the remaining pipe and
     # plumb it in front of the previously plumbed methods. The pipeline is
     # plumbed from the end to the beginning.
+    # The docstring of the method looks like innermost+...+outermost.
+    doc = exit_method.__doc__ or ''
     while pipe:
-        plumbed_methods.insert(0, plumb(pipe.pop(), plumbed_methods[0]))
-
+        method = pipe.pop()
+        if method.__doc__:
+            doc = os.linesep.join((doc, method.__doc__))
+        plumbed_methods.insert(0, plumb(method, plumbed_methods[0]))
+    if doc:
+        plumbed_methods[0].__doc__ = doc
     return plumbed_methods[0]
 
 
