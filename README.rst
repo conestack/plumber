@@ -747,52 +747,54 @@ it fish them out of kws
 
 ::
 
-    >>> class ArgsPlugin1(object):
-    ...     @plumbing(defaults=(('p2', None),))
-    ...     def foo(cls, _next, self, p1, *args, **kws):
-    ...         print "p1=%s" % (p1,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
-
-    >>> class ArgsPlugin2(object):
-    ...     @plumbing(defaults=(('p2', None),))
-    ...     def foo(cls, _next, self, p2, *args, **kws):
-    ...         print "p2=%s" % (p2,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
-
-    >>> class Foo(object):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
-    ...     def foo(self, *args, **kws):
-    ...         pass
-
-    >>> foo = Foo()
-    >>> foo.foo()
-    p1=None
-    args=()
-    kws={}
-    p2=None
-    args=()
-    kws={}
-
-    >>> foo.foo('blub')
-    p1=None
-    args=('blub',)
-    kws={}
-    p2=None
-    args=('blub',)
-    kws={}
-
-    >>> foo.foo('blub', p1='p1', p2='p2')
-    p1=p1
-    args=('blub',)
-    kws={'p2': 'p2'}
-    p2=p2
-    args=('blub',)
-    kws={}
+# Abandoned approach, messy code in plumber and during runtime needed
+#
+#    >>> class ArgsPlugin1(object):
+#    ...     @plumbing(defaults=(('p2', None),))
+#    ...     def foo(cls, _next, self, p1, *args, **kws):
+#    ...         print "p1=%s" % (p1,)
+#    ...         print "args=%s" % (args,)
+#    ...         print "kws=%s" % (kws,)
+#    ...         _next(self, *args, **kws)
+#
+#    >>> class ArgsPlugin2(object):
+#    ...     @plumbing(defaults=(('p2', None),))
+#    ...     def foo(cls, _next, self, p2, *args, **kws):
+#    ...         print "p2=%s" % (p2,)
+#    ...         print "args=%s" % (args,)
+#    ...         print "kws=%s" % (kws,)
+#    ...         _next(self, *args, **kws)
+#
+#    >>> class Foo(object):
+#    ...     __metaclass__ = Plumber
+#    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
+#    ...     def foo(self, *args, **kws):
+#    ...         pass
+#
+#    >>> foo = Foo()
+#    >>> foo.foo()
+#    p1=None
+#    args=()
+#    kws={}
+#    p2=None
+#    args=()
+#    kws={}
+#
+#    >>> foo.foo('blub')
+#    p1=None
+#    args=('blub',)
+#    kws={}
+#    p2=None
+#    args=('blub',)
+#    kws={}
+#
+#    >>> foo.foo('blub', p1='p1', p2='p2')
+#    p1=p1
+#    args=('blub',)
+#    kws={'p2': 'p2'}
+#    p2=p2
+#    args=('blub',)
+#    kws={}
 
 Nicer would be not to declare them but have the decorator detect them in the
 function signature and fish them automatically. However, that magic might
