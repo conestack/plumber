@@ -629,12 +629,139 @@ is better.
 Positional arguments
 ~~~~~~~~~~~~~~~~~~~~
 Currently, it is not possible to pass positional arguments ``*args`` to
-plumbing methods and therefore everything behind the plumbing system. In
-python, this syntax is not valid ``def f(foo, *args, bar=1, **kws)``. If you
-have any idea how to support positional arguments, pleas let us know.
+plumbing methods and therefore everything behind the plumbing system.
 
-Dynamics Plumbing
-~~~~~~~~~~~~~~~~~
+In order to pass parameters to be processed by a plumbing method, we chose
+keyword arguments, because with positional arguments different plumbing methods
+in a pipeline would need to agree on the position they receive their parameter
+and the parameter would not be optional.
+
+Keyword arguements are needed for passing optional parameters to plumbing
+methods. In python, ``def f(foo, *args, bar=1, **kws)`` is invalid syntax and
+``def f(foo, bar=1, *args, **kws)`` makes ``bar`` effectively a positional
+optional argument. It does not need to be filled, but if somebody provides
+``args`` it will be filled.
+
+Two plugins trying to use positional arguments.
+
+::
+
+    >>> class ArgsPlugin1(object):
+    ...     @plumbing
+    ...     def foo(cls, _next, self, p1=None, *args, **kws):
+    ...         print "p1=%s" % (p1,)
+    ...         print "args=%s" % (args,)
+    ...         print "kws=%s" % (kws,)
+    ...         _next(self, *args, **kws)
+
+    >>> class ArgsPlugin2(object):
+    ...     @plumbing
+    ...     def foo(cls, _next, self, p2=None, *args, **kws):
+    ...         print "p2=%s" % (p2,)
+    ...         print "args=%s" % (args,)
+    ...         print "kws=%s" % (kws,)
+    ...         _next(self, *args, **kws)
+
+    >>> class Foo(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
+    ...     def foo(self, *args, **kws):
+    ...         pass
+
+Calling without arguments
+::
+
+    >>> foo = Foo()
+    >>> foo.foo()
+    p1=None
+    args=()
+    kws={}
+    p2=None
+    args=()
+    kws={}
+
+Supplying arguments meant for the plumbing methods
+::
+    >>> foo.foo(p1='p1', p2='p2')
+    p1=p1
+    args=()
+    kws={'p2': 'p2'}
+    p2=p2
+    args=()
+    kws={}
+
+Trying to pass positional arguments along with the keyword arguments for the
+plumbing methods.
+::
+    >>> foo.foo('blub', p1='p1', p2='p2')
+    Traceback (most recent call last):
+    ...
+    TypeError: foo() got multiple values for keyword argument 'p1'
+
+    >>> foo.foo(p1='p1', p2='p2', 'blub')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: non-keyword arg after keyword arg ...
+
+
+It would be possible to support positional arguments, but then the plumbing
+methods may not declare keyword arguments but must extract them from ``**kws``
+
+::
+
+    >>> class ArgsPlugin1(object):
+    ...     @plumbing
+    ...     def foo(cls, _next, self, *args, **kws):
+    ...         p1 = kws.pop('p1', None)
+    ...         print "p1=%s" % (p1,)
+    ...         print "args=%s" % (args,)
+    ...         print "kws=%s" % (kws,)
+    ...         _next(self, *args, **kws)
+
+    >>> class ArgsPlugin2(object):
+    ...     @plumbing
+    ...     def foo(cls, _next, self, *args, **kws):
+    ...         p2 = kws.pop('p2', None)
+    ...         print "p2=%s" % (p2,)
+    ...         print "args=%s" % (args,)
+    ...         print "kws=%s" % (kws,)
+    ...         _next(self, *args, **kws)
+
+    >>> class Foo(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
+    ...     def foo(self, *args, **kws):
+    ...         pass
+
+    >>> foo = Foo()
+    >>> foo.foo('blub', p1='p1', p2='p2')
+    p1=p1
+    args=('blub',)
+    kws={'p2': 'p2'}
+    p2=p2
+    args=('blub',)
+    kws={}
+
+A solution would be to declare the parameters also for the decorator and make
+it fish them out of kws
+
+::
+
+#    >>> class ArgsPlugin1(object):
+#    ...     @plumbing(p1=None)
+#    ...     def foo(cls, _next, self, p1, *args, **kws):
+#    ...         print "p1=%s" % (p1,)
+#    ...         print "args=%s" % (args,)
+#    ...         print "kws=%s" % (kws,)
+#    ...         _next(self, *args, **kws)
+
+Nicer would be not to declare them but have the decorator detect them in the
+function signature and fish them automatically. However, that magic might
+confuse people.
+
+
+Dynamic Plumbing
+~~~~~~~~~~~~~~~~
 The plumber could replace the ``__pipeline__`` attribute with a property of the
 same name. Changing the attribute during runtime would result in a plumbing
 specific to the object. A plumbing cache could further be used to reduce the
