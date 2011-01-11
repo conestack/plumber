@@ -6,6 +6,39 @@ except ImportError:
     ziface = None
 
 
+# WIP: for abandoned approach of @plumbing(defaults=((k, v),))
+#
+#class plumbing(classmethod):
+#    """Decorator that makes a function part of the plumbing
+#
+#    A plumbing method is a classmethod bound to the class defining it. As
+#    second argument it expects the next plumbing method, typically called
+#    _next. The third argument is the object that for normal methods would be
+#    the first argument, typically named self.
+#
+#    XXX:
+#    """
+#    def __init__(self, *args, **kws):
+#        # We are either called as decorator and receive a single positional
+#        # argument, which is the function we are decorating, or we are called
+#        # to define parameters, in which case our __call__ method will be
+#        # called next to return the decorated function.
+#        if args:
+#            func = args[0]
+#            super(plumbing, self).__init__(func)
+#        else:
+#            self.kws = kws
+#
+#    def __call__(self, func):
+#        defaults = self.kws.get('defaults', [])
+#        def wrap(cls, _next, self, *args, **kws):
+#            args = defaults + args
+#            return func(cls, _next, self, *args, **kws)
+#        wrap.__name__ = func.__name__
+#        wrap.__doc__ = func.__doc__
+#        return self.__class__(wrap)
+
+
 class plumbing(classmethod):
     """Decorator that makes a function part of the plumbing
 
@@ -28,13 +61,9 @@ class plumbing(classmethod):
             self.kws = kws
 
     def __call__(self, func):
-        defaults = self.kws.get('defaults', [])
-        def wrap(cls, _next, self, *args, **kws):
-            args = defaults + args
-            return func(cls, _next, self, *args, **kws)
-        wrap.__name__ = func.__name__
-        wrap.__doc__ = func.__doc__
-        return self.__class__(wrap)
+        func.__globals__.update(self.kws)
+        import pdb;pdb.set_trace()
+        return self.__class__(func)
 
 
 def plumb(plumbing_method, next_method):

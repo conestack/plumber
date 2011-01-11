@@ -796,6 +796,41 @@ it fish them out of kws
 #    args=('blub',)
 #    kws={}
 
+::
+
+    >>> class ArgsPlugin1(object):
+    ...     @plumbing(p1=None)
+    ...     def foo(cls, _next, self, huhu=1, *args, **kws):
+    ...         print "p1=%s" % (p1,)
+    ...         print "args=%s" % (args,)
+    ...         print "kws=%s" % (kws,)
+    ...         _next(self, *args, **kws)
+
+    >>> class ArgsPlugin2(object):
+    ...     @plumbing(p2=None)
+    ...     def foo(cls, _next, self, *args, **kws):
+    ...         print "p2=%s" % (p2,)
+    ...         print "args=%s" % (args,)
+    ...         print "kws=%s" % (kws,)
+    ...         _next(self, *args, **kws)
+
+    >>> class Foo(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
+    ...     def foo(self, *args, **kws):
+    ...         pass
+
+    >>> foo = Foo()
+    >>> foo.foo()
+    >>> foo.foo('blub')
+    >>> foo.foo('blub', p1='p1', p2='p2')
+    p1=p1
+    args=('blub',)
+    kws={'p2': 'p2'}
+    p2=p2
+    args=('blub',)
+    kws={}
+
 Nicer would be not to declare them but have the decorator detect them in the
 function signature and fish them automatically. However, that magic might
 confuse people.
