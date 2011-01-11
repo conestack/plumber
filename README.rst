@@ -747,13 +747,13 @@ it fish them out of kws
 
 ::
 
-#    >>> class ArgsPlugin1(object):
-#    ...     @plumbing(p1=None)
-#    ...     def foo(cls, _next, self, p1, *args, **kws):
-#    ...         print "p1=%s" % (p1,)
-#    ...         print "args=%s" % (args,)
-#    ...         print "kws=%s" % (kws,)
-#    ...         _next(self, *args, **kws)
+    >>> class ArgsPlugin1(object):
+    ...     @plumbing(p1=None)
+    ...     def foo(cls, _next, self, p1, *args, **kws):
+    ...         print "p1=%s" % (p1,)
+    ...         print "args=%s" % (args,)
+    ...         print "kws=%s" % (kws,)
+    ...         _next(self, *args, **kws)
 
 Nicer would be not to declare them but have the decorator detect them in the
 function signature and fish them automatically. However, that magic might

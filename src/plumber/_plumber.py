@@ -14,6 +14,19 @@ class plumbing(classmethod):
     _next. The third argument is the object that for normal methods would be
     the first argument, typically named self.
     """
+    def __init__(self, *args, **kws):
+        # We are either called as decorator and receive a single positional
+        # argument, which is the function we are decorating, or we are called
+        # to define parameters, in which case our __call__ method will be
+        # called next to return the decorated function.
+        if args:
+            func = args[0]
+            super(plumbing, self).__init__(func)
+        else:
+            self.kws = kws
+
+    def __call__(self, func):
+        return self.__class__(func)
 
 
 def plumb(plumbing_method, next_method):
