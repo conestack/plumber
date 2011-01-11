@@ -642,6 +642,8 @@ methods. In python, ``def f(foo, *args, bar=1, **kws)`` is invalid syntax and
 optional argument. It does not need to be filled, but if somebody provides
 ``args`` it will be filled.
 
+Failing approach 1
+^^^^^^^^^^^^^^^^^^
 Two plugins trying to use positional arguments.
 
 ::
@@ -704,6 +706,9 @@ plumbing methods.
     SyntaxError: non-keyword arg after keyword arg ...
 
 
+Solution 1
+^^^^^^^^^^
+
 It would be possible to support positional arguments, but then the plumbing
 methods may not declare keyword arguments but must extract them from ``**kws``
 
@@ -742,6 +747,10 @@ methods may not declare keyword arguments but must extract them from ``**kws``
     args=('blub',)
     kws={}
 
+
+Solution 2
+^^^^^^^^^^
+
 A solution would be to declare the parameters also for the decorator and make
 it fish them out of kws
 
@@ -750,7 +759,7 @@ it fish them out of kws
 # Abandoned approach, messy code in plumber and during runtime needed
 #
 #    >>> class ArgsPlugin1(object):
-#    ...     @plumbing(defaults=(('p2', None),))
+#    ...     @plumbing(defaults=(None,))
 #    ...     def foo(cls, _next, self, p1, *args, **kws):
 #    ...         print "p1=%s" % (p1,)
 #    ...         print "args=%s" % (args,)
@@ -758,7 +767,7 @@ it fish them out of kws
 #    ...         _next(self, *args, **kws)
 #
 #    >>> class ArgsPlugin2(object):
-#    ...     @plumbing(defaults=(('p2', None),))
+#    ...     @plumbing(defaults=(None,))
 #    ...     def foo(cls, _next, self, p2, *args, **kws):
 #    ...         print "p2=%s" % (p2,)
 #    ...         print "args=%s" % (args,)
@@ -795,6 +804,15 @@ it fish them out of kws
 #    p2=p2
 #    args=('blub',)
 #    kws={}
+
+Solution 3
+^^^^^^^^^^
+This would mean it will pop a keyword named p1 from kws and make it available
+as a variable to the function, saving the p1 = kws.pop('p1', None) in the
+function. If the keyword is not in kws it will use the default value specified
+when initializing the decorator.
+
+possible but needs runtime closure creation.
 
 ::
 
@@ -845,9 +863,39 @@ it fish them out of kws
     args=('blub',)
     kws={}
 
+Solution 4
+^^^^^^^^^^
 Nicer would be not to declare them but have the decorator detect them in the
 function signature and fish them automatically. However, that magic might
 confuse people.
+
+::
+
+    >>> class ArgsPlugin1(object):
+    ...     @plumbing
+    ...     def foo(cls, _next, self, p1=None, *args, **kws):
+    ...         print "p1=%s" % (p1,)
+    ...         print "args=%s" % (args,)
+    ...         print "kws=%s" % (kws,)
+    ...         _next(self, *args, **kws)
+
+The plumber change pythons normal behaviour of filling function arguments in
+that it would first check if it is in keywords and move it in front of args
+and otherwise use the default value there.
+
+Python decided for one algorithm of assigning arguments. I think we should not
+change that or implement a new one.
+
+I'm in favor of solution 1.
+It does not involve any code changes, it supports positional arguments and we
+most of the time would anyway not change the signature of a function we are
+putting a plumbing in front, eg. __getitem__. Only really relevant when
+plumbing __init__. Parameters picked from kws should be documented in __doc__
+as if they were normal positional parameters including their default value
+later assigned in the code.
+
+Now looking at using the __doc__ of all plumbing methods to create the __doc__
+of the entrance.
 
 
 Dynamic Plumbing
