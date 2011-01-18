@@ -54,12 +54,16 @@ class plumb(classmethod):
     the pipeline, the class itself or one of its base classes.
     """
 
+
 def merge_doc(first, *args):
     if first.__doc__ is None:
         return None
     if not args:
         return first.__doc__
-    return os.linesep.join((first.__doc__, merge_doc(*args)))
+    rest = merge_doc(*args)
+    if rest is None:
+        return first.__doc__
+    return os.linesep.join((first.__doc__, rest))
 
 
 def entrance(name, pipe):

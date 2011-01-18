@@ -750,6 +750,181 @@ possible to base classes of our class, but without using subclassing.  For an
 additional maybe future approach see Discussion.
 
 
+plumbing and properties
+-----------------------
+
+A closer look at properties without plumbing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Properties with named functions, non-decorated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
+    >>> class Base(object):
+    ...     def get_a(self):
+    ...         return self._a
+    ...     def set_a(self, val):
+    ...         self._a = val
+    ...     def del_a(self):
+    ...         del self._a
+    ...     a = property(get_a, set_a, del_a)
+
+    >>> class ClassInheritingProperty(Base):
+    ...     pass
+
+    >>> cip = ClassInheritingProperty()
+    >>> hasattr(cip, '_a')
+    False
+    >>> cip.a = 1
+    >>> cip._a
+    1
+    >>> cip.a
+    1
+    >>> del cip.a
+    >>> hasattr(cip, '_a')
+    False
+
+A property is realised by a property descriptor object in the ``__dict__`` of
+the class defining it:
+::
+    >>> Base.__dict__['a']
+    <property object at 0x...>
+
+    >>> Base.__dict__['a'].fset(cip, 2)
+    >>> Base.__dict__['a'].fget(cip)
+    2
+    >>> Base.__dict__['a'].fdel(cip)
+
+From now on we skip the deleter.
+
+If you want to change an aspect of a property, you need to redefine it, except
+if it uses lambda abstraction (see below). As the function used as getter is
+also in the Base class' ``__dict__`` we can use it, saving some overhead.
+::
+    >>> class ClassOverridingProperty(Base):
+    ...     def get_a(self):
+    ...         return 2 * super(ClassOverridingProperty, self).get_a()
+    ...     a = property(get_a, Base.set_a)
+
+    >>> cop = ClassOverridingProperty()
+    >>> cop.a = 5
+    >>> cop.a
+    10
+
+Properties with decorated or unnamed getter
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In case the property is realised by a decorated function or a single lambda -
+both cases result in a read-only property - the function used as getter is not
+anymore in the class' ``__dict__``.
+::
+
+    >>> class PropWithoutDictFuncBase(object):
+    ...     @property
+    ...     def a(self):
+    ...         return self._a
+    ...     b = property(lambda self: self._b)
+
+    >>> class PropWithoutDictFunc(PropWithoutDictFuncBase):
+    ...     @property
+    ...     def a(self):
+    ...         return 2 * super(PropWithoutDictFunc, self).a
+    ...     b = property(lambda self: 3 * super(PropWithoutDictFunc, self).b)
+
+    >>> pwdf = PropWithoutDictFunc()
+    >>> pwdf._a = 2
+    >>> pwdf._b = 2
+    >>> pwdf.a
+    4
+    >>> pwdf.b
+    6
+
+Lambda abstraction
+^^^^^^^^^^^^^^^^^^
+If a base class uses lambdas to add a layer of abstraction it is easier to
+override a single aspect, but adds another call (see Benchmarking below).
+::
+
+    >>> class LambdaBase(object):
+    ...     def get_a(self):
+    ...         return self._a
+    ...     def set_a(self, val):
+    ...         self._a = val
+    ...     a = property(
+    ...             lambda self: self.get_a(),
+    ...             lambda self, val: self.set_a(val),
+    ...             )
+
+    >>> class ClassInheritingLambdaProperty(LambdaBase):
+    ...     def get_a(self):
+    ...         return 3 * super(ClassInheritingLambdaProperty, self).get_a()
+
+    >>> cilp = ClassInheritingLambdaProperty()
+    >>> cilp.a = 2
+    >>> cilp.a
+    6
+
+Plumbing of properties
+~~~~~~~~~~~~~~~~~~~~~~
+
+Plumbing of a property that uses lambda abstraction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Aspects of a property that uses lambda abstraction are easily plumbed
+::
+    >>> class LambdaBase(object):
+    ...     def get_a(self):
+    ...         return self._a
+    ...     def set_a(self, val):
+    ...         self._a = val
+    ...     a = property(
+    ...             lambda self: self.get_a(),
+    ...             lambda self, val: self.set_a(val),
+    ...             )
+
+    >>> class PropertyPlumbing(object):
+    ...     @plumb
+    ...     def get_a(cls, _next, self):
+    ...         return 4 * _next(self)
+
+    >>> class PlumbedLambdaProperty(LambdaBase):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (PropertyPlumbing,)
+
+    >>> plp = PlumbedLambdaProperty()
+    >>> plp.a = 4
+    >>> plp.a
+    16
+
+Plumbing of a property that does not use lambda abstraction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+It is not possible to decorate ``a = property(...)``. Either, we treat all
+properties defined on a plumbing as properties to be put on the class being
+plumbed or we introduce ``@plumbgproperty`` or we just don't support it and
+go with the lambda abstraction properties.
+
+
+
+Extending a class with a property
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WIP
+#    >>> class AddDecoratorProperty(object):
+#    ...     @plumb
+#    ...     @property
+#    ...     def a(self):
+#    ...         return self._a
+
+
+
+Benchmarking
+~~~~~~~~~~~~
+XXX: The various solutions for properties themselves and properties in
+combination with plumbing need benchmarking. If the overhead is small enough, I
+think we should solely use properties with lambda abstraction.
+
+get, set, del for all:
+- Property using lambda abstraction
+- super(Klass, self).a
+- super(Klass, self).get_a()
+- Klass.__dict__['a'].fget(self) or even more direct?
+
+
 Nomenclature
 ------------
 
