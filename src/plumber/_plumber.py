@@ -1,95 +1,85 @@
+import exceptions
 import os
+import types
 
 # If zope.interfaces is available we are aware of interfaces implemented on
 # plumbing classes and will make the factored class implement them, too.
 try:
-    import zope.interface as ziface
+    from zope.interface import classImplements
+    from zope.interface import implementedBy
+    ZOPE_INTERFACE_AVAILABLE = True
 except ImportError:
-    ziface = None
+    ZOPE_INTERFACE_AVAILABLE = False
 
 
-# WIP: for abandoned approach of an initialized plumbing decorator
-#
-#class plumbing(classmethod):
-#    """Decorator that makes a function part of the plumbing
-#
-#    A plumbing method is a classmethod bound to the class defining it. As
-#    second argument it expects the next plumbing method, typically called
-#    _next. The third argument is the object that for normal methods would be
-#    the first argument, typically named self.
-#
-#    XXX:
-#    """
-#    def __init__(self, *args, **kws):
-#        # We are either called as decorator and receive a single positional
-#        # argument, which is the function we are decorating, or we are called
-#        # to define parameters, in which case our __call__ method will be
-#        # called next to return the decorated function.
-#        if args:
-#            func = args[0]
-#            super(plumbing, self).__init__(func)
-#        else:
-#            self.kws = kws
-#
-#    def __call__(self, func):
-#        defaults = self.kws.get('defaults', [])
-#        def wrap(cls, _next, self, *args, **kws):
-#            args = defaults + args
-#            return func(cls, _next, self, *args, **kws)
-#        wrap.__name__ = func.__name__
-#        wrap.__doc__ = func.__doc__
-#        return self.__class__(wrap)
+class PlumbingCollision(RuntimeError):
+    pass
 
 
-class plumbing(classmethod):
-    """Decorator that makes a function part of the plumbing
-
-    A plumbing method is a classmethod bound to the class defining it. As
-    second argument it expects the next plumbing method, typically called
-    _next. The third argument is the object that for normal methods would be
-    the first argument, typically named self.
+class plumberitem(classmethod):
+    """An item the plumber will recognize and use
     """
 
 
-def plumb(plumbing_method, next_method):
-    """plumbs two methods together
+class extend(object):
+    """Instructs the plumber to just copy an item into the class' ``__dict__``.
 
-    The first method is expected to be a plumbing method, i.e. a method defined
-    in a class with the plumbing decorator. ``next_method`` can be an arbitrary
-    function, though typically it will at least accept one argument (self).
-
-    The result is what plumbing methods receive as the ``_next`` argument.
+    If an item with the same name already exists, a PlumbingCollision is raised.
     """
-    def _next(self, *args, **kws):
-        """A normal method, plumbed to the next normal method
-        """
-        return plumbing_method(next_method, self, *args, **kws)
+    def __init__(self, item):
+        self.item = item
 
-    return _next
+
+class plumb(plumberitem):
+    """Instructs the plumber to plumb a method or property into the plumbing
+
+    XXX
+
+    A plumbing method is a classmethod bound to the plugin class defining it
+    (``plb``), as second argument it expects the next plumbing method
+    (``_next``) and the third argument (``self``) is the object that for normal
+    methods would be the first argument.
+
+    The signature of the function is:
+    ``def foo(plb, _next, self, *args, **kws)``
+
+    In order to plumb a method there needs to be a non-plumbing method behind
+    it, provided by: a plumbing plugin via extend later in the pipeline, the
+    class itself or one of its base classes.
+    """
 
 
 def entrance(name, pipe):
     """Plumbs all methods of a pipeline together and returns the entrance.
-    """
-    # The last method may not be a plumbing method, as there is nothing to pass
-    # to it as _next.
-    exit_method = pipe.pop()
-    plumbed_methods = [exit_method]
 
-    # In case there was only one method, no plumbing needs to be done.
-    # Otherwise, we take the next method from the end of the remaining pipe and
-    # plumb it in front of the previously plumbed methods. The pipeline is
-    # plumbed from the end to the beginning.
-    # The docstring of the method looks like innermost+...+outermost.
-    doc = exit_method.__doc__ or ''
-    while pipe:
-        method = pipe.pop()
-        if method.__doc__:
-            doc = os.linesep.join((doc, method.__doc__))
-        plumbed_methods.insert(0, plumb(method, plumbed_methods[0]))
-    if doc:
-        plumbed_methods[0].__doc__ = doc
-    return plumbed_methods[0]
+    recursively:
+    - pop first method
+    - create entrance to the rest of the pipe as _next
+    - wrap method passing it _next, if not last method
+    - return last method as is
+    """
+    # If only one element is left in the pipe, it is a normal method that does
+    # not expect a ``_next`` parameter.
+    if len(pipe) is 1:
+        return pipe[0]
+
+    # XXX: traceback supplement for pdb, probably more than just name is needed
+
+    plumbing_method = pipe.pop(0)
+    _next = entrance(name, pipe)
+    def _entrance(self, *args, **kw):
+        return plumbing_method(_next, self, *args, **kw)
+    if _next.__doc__ is not None:
+        _entrance.__doc__ = os.linesep.join((
+                _next.__doc__,
+                plumbing_method.__doc__ or ''
+                ))
+    return _entrance
+
+
+class CLOSED(object):
+    """used for marking a pipeline as closed
+    """
 
 
 class Plumber(type):
@@ -111,29 +101,41 @@ class Plumber(type):
         if cls.__dict__.get('__pipeline__') is None:
             return
 
-        # Gather all functions that are part of the plumbing and line up the
-        # pipelines for the individual methods. Only methods that are decorated
-        # with the plumning decorator are taken in.
+        # Gather all things decorated either with ``extend`` or ``plumb`` and
+        # line up plumbing functions with the same name in pipelines.
         pipelines = {}
         for plugin in cls.__pipeline__:
-            for name, func in plugin.__dict__.items():
-                if not isinstance(func, plumbing):
+            for name, item in plugin.__dict__.items():
+                if not isinstance(item, (extend, plumb)):
                     continue
                 pipe = pipelines.setdefault(name, [])
-                # plumbing methods are class methods. By retrieving them via
-                # ``getattr`` from the class we receive methods bound to the
-                # class.
-                pipe.append(getattr(plugin, name))
+                if isinstance(item, extend):
+                    if name in cls.__dict__:
+                        # XXX: provide more info what is colliding
+                        raise PlumbingCollision(name)
+                    # just copy the item that was passed to the extend
+                    # decorator and mark the pipeline as closed, i.e. adding
+                    # further methods to it, will raise an error.
+                    cls.__dict__[name] = item.item
+                    pipe.append(CLOSED)
+                elif isinstance(item, plumb):
+                    if pipe and pipe[-1] is CLOSED:
+                        raise PlumbingCollision(name)
+                    # plumbing methods are class methods bound to the plumbing
+                    # plugin class, ``getattr`` on the class in combination
+                    # with being a classmethod, does this for us.
+                    pipe.append(getattr(plugin, name))
 
             # If zope.interface is available (see import at the beginning of
             # file), we check the plugins for implemented interfaces and make
             # the new class implement these, too.
-            if ziface is not None:
-                ifaces = ziface.implementedBy(plugin)
+            if ZOPE_INTERFACE_AVAILABLE:
+                ifaces = implementedBy(plugin)
                 if ifaces is not None:
-                    ziface.classImplements(cls, *list(ifaces))
+                    classImplements(cls, *list(ifaces))
 
         for name, pipe in pipelines.items():
+            # XXX
             # For each pipeline we will now ask the MRO to give us a method to
             # be used as an endpoint. An endpoint is therefore a normal method
             # and not a plumbing anymore. Apart from that, any plumbing method
@@ -146,9 +148,10 @@ class Plumber(type):
             # _next method and therefore build the end point. So plumbing
             # methods can extend a class with new functionality and even make a
             # super call, just as if the method would be defined on the class.
-            def notimplemented(*args, **kws):
-                raise NotImplementedError
-            end_point = getattr(cls, name, notimplemented)
+            # XXX
+            #def notimplemented(*args, **kws):
+            #    raise NotImplementedError
+            end_point = getattr(cls, name)
             pipe.append(end_point)
 
             # Finally ``entrance`` will plumb the methods together and return

@@ -1,19 +1,20 @@
 Plumber
 =======
 
+**XXX: reworking and adjusting to changes in progress**
+
 Plumber is a metaclass that implements a plumbing system which works orthogonal
 to subclassing.
-
 
 A quick example
 ---------------
 
-Import of the plumbing decorator for the plumbing methods and the Plumber
+Import of the plumbg decorator for the plumbing methods and the Plumber
 metaclass.
 ::
 
-    >>> from plumber import plumbing
     >>> from plumber import Plumber
+    >>> from plumber import plumb
 
 A class that will serve as base.
 ::
@@ -31,7 +32,7 @@ the class using the plumbing.
 ::
 
     >>> class Plugin1(object):
-    ...     @plumbing
+    ...     @plumb
     ...     def foo(cls, _next, self):
     ...         """Plugin1.foo doc
     ...         """
@@ -40,7 +41,7 @@ the class using the plumbing.
     ...         print "Plugin1.foo stop"
 
     >>> class Plugin2(object):
-    ...     @plumbing
+    ...     @plumb
     ...     def foo(cls, _next, self):
     ...         """Plugin2.foo doc
     ...         """
@@ -310,11 +311,14 @@ XXX: we need a name for a class that uses a plumbing system.
 Example
 -------
 
+XXX
+
 Notify plumbing class
 ---------------------
 
+XXX:
 A plumbing element that prints notifications for its ``__init__`` and
-``__setitem__`` methods. A plumbing method is decorated with the ``@plumbing``
+``__setitem__`` methods. A plumbing method is decorated with the ``@plumb``
 decorator, its general signature is ``def foo(cls, _next, self, **kws)``.
 All plumbing methods are classmethods, the plumbing class is passed as the
 first argument ``cls`` to its methods. The second method ``_next`` wraps the
@@ -327,157 +331,10 @@ of a normal class.
   the code you write in plumbing methods looks as similar as possible to the
   code you would write directly in the class.
 
-::
-
-    >>> class Notifier(object):
-    ...     """Prints notifications before/after setting an item
-    ...     """
-    ...     @plumbing
-    ...     def __init__(cls, _next, self, notify=False, **kws):
-    ...         if notify:
-    ...             print "%s.__init__: begin with: %s." % \
-    ...                     (cls, object.__repr__(self))
-    ...         self.notify = notify
-    ...         _next(self, **kws)
-    ...         if notify:
-    ...             print "%s.__init__: end." % (cls,)
-    ...
-    ...     @plumbing
-    ...     def __setitem__(cls, _next, self, key, val):
-    ...         if self.notify:
-    ...             print "%s.__setitem__: setting %s as %s for %s." % \
-    ...                     (cls, val, key, object.__repr__(self))
-    ...         _next(self, key, val)
-    ...         if self.notify:
-    ...             print "%s.__setitem__: done." % (cls,)
-    ...
-    ...     @plumbing
-    ...     def foo(cls, _next, self):
-    ...         # the base classes do not provide an end point, but we are.
-    ...         return "Notifier.foo is end point."
-    ...
-    ...     @plumbing
-    ...     def bar(cls, _next, self):
-    ...         # bar is not an end point and will result in
-    ...         # NotImplementedError, as the base classes will not provide an
-    ...         # end point
-    ...         _next(self)
-
-    >>> class NotifyDict(dict):
-    ...     """A dictionary that prints notification on __setitem__
-    ...     """
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Notifier,)
-    ...
-    ...     def __init__(self):
-    ...         print "%s.__init__: begin" % (self.__class__,)
-    ...         super(NotifyDict, self).__init__()
-    ...         print "%s.__init__: end" % (self.__class__,)
-
-The methods defined on the class directly, in this case ``__init__`` are called
-as the innermost methods and build the end point of a pipeline.
-::
-
-    >>> ndict = NotifyDict(notify=True)
-    <class 'Notifier'>.__init__: begin with: <NotifyDict object at ...>.
-    <class 'NotifyDict'>.__init__: begin
-    <class 'NotifyDict'>.__init__: end
-    <class 'Notifier'>.__init__: end.
-
-The paremeter set by the plumbing __init__ made it onto the created object.
-::
-
-    >>> ndict.notify
-    True
-
-If a method is not present on the class itself, it will be looked up on the
-base classes, actually ``getattr`` on the class is used, before the plumbing
-system is installed. If that getattr fails and no plumbing class provided an
-end point, a ``NotImplementedError`` will be raised (see below in case of
-``ndict.foo`` and ``ndict.bar``.
-::
-
-    >>> ndict['foo'] = 1
-    <class 'Notifier'>.__setitem__: setting 1 as foo for <NotifyDict object at ...>.
-    <class 'Notifier'>.__setitem__: done.
-
-    >>> ndict['foo']
-    1
-
-And it is really the one used by the plumbing __setitem__ to determine whether
-to print notifications.
-::
-
-    >>> ndict.notify = False
-    >>> ndict['bar'] = 2
-    >>> ndict['bar']
-    2
-
-Even though the base class ``dict`` does not provide an end point for ``foo``,
-the Notifier plumbing class does and we cann call ``ndict.foo()``.
-::
-
-    >>> ndict.foo()
-    'Notifier.foo is end point.'
-
-The base class ``dict`` does not provide an end point for ``bar`` and neither
-does our plumbing class.
-::
-
-    >>> ndict.bar()
-    Traceback (most recent call last):
-    ...
-    NotImplementedError
-
 
 A prefixer plumbing
 -------------------
 
-::
-    >>> class Prefixer(object):
-    ...     """Prefixes keys
-    ...     """
-    ...     @plumbing
-    ...     def __init__(cls, _next, self, prefix=None, **kws):
-    ...         print "%s.__init__: begin with: %s." % (
-    ...                 cls, object.__repr__(self))
-    ...         self.prefix = prefix
-    ...         _next(self, **kws)
-    ...         print "%s.__init__: end." % (cls,)
-    ...
-    ...     @classmethod
-    ...     def prefix(cls, self, key):
-    ...         return self.prefix + key
-    ...
-    ...     @classmethod
-    ...     def unprefix(cls, self, key):
-    ...         if not key.startswith(self.prefix):
-    ...             raise KeyError(key)
-    ...         return key.lstrip(self.prefix)
-    ...
-    ...     @plumbing
-    ...     def __delitem__(cls, _next, self, key):
-    ...         _next(self, cls.unprefix(self, key))
-    ...
-    ...     @plumbing
-    ...     def __getitem__(cls, _next, self, key):
-    ...         return _next(self, cls.unprefix(self, key))
-    ...
-    ...     @plumbing
-    ...     def __iter__(cls, _next, self):
-    ...         for key in _next(self):
-    ...             yield cls.prefix(self, key)
-    ...
-    ...     @plumbing
-    ...     def __setitem__(cls, _next, self, key, val):
-    ...         print "%s.__setitem__: begin with: %s." % (
-    ...                 cls, object.__repr__(self))
-    ...         try:
-    ...             key = cls.unprefix(self, key)
-    ...         except KeyError:
-    ...             raise KeyError("Key '%s' does not match prefix '%s'." % \
-    ...               (key, self.prefix))
-    ...         _next(self, key, val)
 
 In the above example it would not be possible for a subclass of
 NotifyPrefixDict to override the prefix and unprefix methods as they are not in
@@ -486,69 +343,17 @@ plumbing methods. It feels, that for such purposes no classmethods on the
 plumbing element should be used. By that it is possible for somebody
 subclassing us, to override these methods.
 
-    >>> class NotifyPrefixDict(dict):
-    ...     """A dictionary that prints notifications and has prefixed keys
-    ...     """
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Notifier, Prefixer)
 
 XXX: This collides with dict __init__ signature: dict(foo=1, bar=2)
 --> creating a subclass of dict that does __init__ translation might work:
 data=() - eventually a specialized plugin, but let's keep this simple for now.
 
-    >>> npdict = NotifyPrefixDict(prefix='pre-', notify=True)
-    <class 'Notifier'>.__init__: begin with: <NotifyPrefixDict object at ...>.
-    <class 'Prefixer'>.__init__: begin with: <NotifyPrefixDict object at ...>.
-    <class 'Prefixer'>.__init__: end.
-    <class 'Notifier'>.__init__: end.
-
-    >>> npdict['foo'] = 1
-    Traceback (most recent call last):
-    ...
-    KeyError: "Key 'foo' does not match prefix 'pre-'."
-
-    >>> npdict.keys()
-    []
-
-    >>> npdict['pre-foo'] = 1
-    <class 'Notifier'>.__setitem__: setting 1 as pre-foo for <NotifyPrefixDict object at ...>.
-    <class 'Prefixer'>.__setitem__: begin with: <NotifyPrefixDict object at ...>.
-    <class 'Notifier'>.__setitem__: done.
-
-    >>> npdict['pre-foo']
-    1
-
-    >>> [x for x in npdict]
-    ['pre-foo']
 
 keys() is not handle by the prefixer, the one provided by dict is used and
 therefore the internal key names are shown.
 
-    >>> npdict.keys()
-    ['foo']
-
-    >>> class PrefixNotifyDict(dict):
-    ...     """like NotifyPrefix, but different order
-    ...     """
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Prefixer, Notifier)
-
-    >>> rev_npdict = PrefixNotifyDict(prefix='_pre-', notify=True)
-    <class 'Prefixer'>.__init__: begin with: <PrefixNotifyDict object at ...>.
-    <class 'Notifier'>.__init__: begin with: <PrefixNotifyDict object at ...>.
-    <class 'Notifier'>.__init__: end.
-    <class 'Prefixer'>.__init__: end.
 
 Notifier show now unprefixed key, as it is behind the prefixer
-
-    >>> rev_npdict['_pre-bar'] = 1
-    <class 'Prefixer'>.__setitem__: begin with: <PrefixNotifyDict object at ...>.
-    <class 'Notifier'>.__setitem__: setting 1 as bar for <PrefixNotifyDict object at ...>.
-    <class 'Notifier'>.__setitem__: done.
-
-
-    >>> rev_npdict['_pre-bar']
-    1
 
 
 Subclassing plumbing elements
@@ -669,7 +474,7 @@ Two plugins trying to use positional arguments.
 ::
 
     >>> class ArgsPlugin1(object):
-    ...     @plumbing
+    ...     @plumb
     ...     def foo(cls, _next, self, p1=None, *args, **kws):
     ...         print "p1=%s" % (p1,)
     ...         print "args=%s" % (args,)
@@ -677,7 +482,7 @@ Two plugins trying to use positional arguments.
     ...         _next(self, *args, **kws)
 
     >>> class ArgsPlugin2(object):
-    ...     @plumbing
+    ...     @plumb
     ...     def foo(cls, _next, self, p2=None, *args, **kws):
     ...         print "p2=%s" % (p2,)
     ...         print "args=%s" % (args,)
@@ -735,7 +540,7 @@ methods may not declare keyword arguments but must extract them from ``**kws``
 ::
 
     >>> class ArgsPlugin1(object):
-    ...     @plumbing
+    ...     @plumb
     ...     def foo(cls, _next, self, *args, **kws):
     ...         p1 = kws.pop('p1', None)
     ...         print "p1=%s" % (p1,)
@@ -744,7 +549,7 @@ methods may not declare keyword arguments but must extract them from ``**kws``
     ...         _next(self, *args, **kws)
 
     >>> class ArgsPlugin2(object):
-    ...     @plumbing
+    ...     @plumb
     ...     def foo(cls, _next, self, *args, **kws):
     ...         p2 = kws.pop('p2', None)
     ...         print "p2=%s" % (p2,)
@@ -779,7 +584,7 @@ it fish them out of kws
 # Abandoned approach, messy code in plumber and during runtime needed
 #
 #    >>> class ArgsPlugin1(object):
-#    ...     @plumbing(defaults=(None,))
+#    ...     @plumb(defaults=(None,))
 #    ...     def foo(cls, _next, self, p1, *args, **kws):
 #    ...         print "p1=%s" % (p1,)
 #    ...         print "args=%s" % (args,)
@@ -787,7 +592,7 @@ it fish them out of kws
 #    ...         _next(self, *args, **kws)
 #
 #    >>> class ArgsPlugin2(object):
-#    ...     @plumbing(defaults=(None,))
+#    ...     @plumb(defaults=(None,))
 #    ...     def foo(cls, _next, self, p2, *args, **kws):
 #    ...         print "p2=%s" % (p2,)
 #    ...         print "args=%s" % (args,)
@@ -837,7 +642,7 @@ possible but needs runtime closure creation.
 ::
 
 #    >>> class ArgsPlugin1(object):
-#    ...     @plumbing(p1=None)
+#    ...     @plumb(p1=None)
 #    ...     def foo(cls, _next, self, *args, **kws):
 #    ...         print "p1=%s" % (p1,)
 #    ...         print "args=%s" % (args,)
@@ -845,7 +650,7 @@ possible but needs runtime closure creation.
 #    ...         _next(self, *args, **kws)
 #
 #    >>> class ArgsPlugin2(object):
-#    ...     @plumbing(p2=None)
+#    ...     @plumb(p2=None)
 #    ...     def foo(cls, _next, self, *args, **kws):
 #    ...         print "p2=%s" % (p2,)
 #    ...         print "args=%s" % (args,)
@@ -892,7 +697,7 @@ confuse people.
 ::
 
 #    >>> class ArgsPlugin1(object):
-#    ...     @plumbing
+#    ...     @plumb
 #    ...     def foo(cls, _next, self, p1=None, *args, **kws):
 #    ...         print "p1=%s" % (p1,)
 #    ...         print "args=%s" % (args,)
