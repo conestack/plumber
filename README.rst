@@ -1154,9 +1154,11 @@ Detailed
 XXX: Would this be sane to have here? Include coverage files as preformatted.
 
 
-Contributors
-------------
+About
+-----
 
+Contributors
+~~~~~~~~~~~~
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
 - Attila Oláh
@@ -1165,17 +1167,21 @@ Contributors
 
 
 Changes
--------
-
+~~~~~~~
 - plb instead of cls [chaoflow, rnix 2011-01-19
 - default, extend, plumb [chaoflow, rnix 2011-01-19]
 - initial [chaoflow, 2011-01-04]
 
 
 TODO
-----
-
+~~~~
 - traceback should show in which plumbing class we are, not something inside
   the plumber. yafowil is doing it. jensens: would you be so kind.
 - verify behaviour with pickling
 - verify behaviour with ZODB persistence
+
+
+Disclaimer
+~~~~~~~~~~
+
+TODO
