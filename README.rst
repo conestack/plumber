@@ -27,12 +27,18 @@ XXX: write about property support
 XXX: use reStructured section references, does something like that exist?
 
 .. contents::
+    :backlinks: entry
+    :depth: 2
 
 
 Plumbing chains
 ---------------
 
 XXX: diagram how a plumbing chain works
+
+.. contents::
+    :backlinks: entry
+    :local:
 
 Plumbing chains and usual subclassing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
