@@ -379,16 +379,63 @@ Aspects of a property that uses lambda abstraction are easily plumbed::
     >>> plp.a
     16
 
-Plumbing of a property that does not use lambda abstraction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Plumbing properties that do not use lambda abstraction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
+    >>> def set_a(self, val):
+    ...     self._a = val
 
-TODO
+    >>> def del_a(self):
+    ...     del self._a
+
+    >>> class Base(object):
+    ...     a = property(lambda self: self._a, set_a, del_a)
+
+    >>> class Notify(object):
+    ...     def get_a(_next, self):
+    ...         print "Getting a"
+    ...         return _next(self)
+    ...     def set_a(_next, self, val):
+    ...         print "Setting a"
+    ...         _next(self, val)
+    ...     def del_a(_next, self):
+    ...         print "Deleting a"
+    ...         _next(self)
+    ...     a = plumb(property(get_a, set_a, del_a))
+
+    >>> class Multiply(object):
+    ...     def get_a(_next, self):
+    ...         return _next(self) * 2
+    ...     def set_a(_next, self, val):
+    ...         _next(self, val)
+    ...     def del_a(_next, self):
+    ...         _next(self)
+    ...     a = plumb(property(get_a, set_a, del_a))
+
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = Notify, Multiply
+
+    >>> plumbing = Plumbing()
+    >>> hasattr(plumbing, '_a')
+    False
+    >>> plumbing.a = 8
+    Setting a
+    >>> plumbing.a
+    Getting a
+    16
+    >>> hasattr(plumbing, '_a')
+    True
+    >>> del plumbing.a
+    Deleting a
+    >>> hasattr(plumbing, '_a')
+    False
 
 
 Extending classes through plumbing, an alternative to mixins
 ------------------------------------------------------------
 
-Why? It's faster - yet to be proven.
+Why? It's more fun.
 
 .. contents::
     :backlinks: entry
