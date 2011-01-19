@@ -537,7 +537,7 @@ should enable setting these parameters through a ``__init__`` plumbing method::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Plugin1,
+    ...     __pipeline__ = Plugin1
     ...     def __init__(self, bar=None):
     ...         self.bar = bar
 
