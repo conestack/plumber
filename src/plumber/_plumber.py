@@ -166,33 +166,20 @@ def prepare_property(item, plugin):
     return item
 
 
-class Plumber(type):
-    """Metaclass for plumbing creation
-
-    First the normal new-style metaclass ``type()`` is called to construct the
-    class with ``name``, ``bases``, ``dct``.
-
-    Then, if the class declares a ``__pipeline__`` attribute, the plumber
-    will create a plumbing system accordingly. Attributes declared with
-    ``default``, ``extend`` and ``plumb`` will be used in the plumbing.
+class RealPlumber(object):
+    """Does all the work for the Plumber metaclass
     """
-    def __init__(cls, name, bases, dct):
-        super(Plumber, cls).__init__(name, bases, dct)
-        # The metaclass is inherited.
-        # The plumber will only get active if the class it produces defines a
-        # __pipeline__.
-        if cls.__dict__.get('__pipeline__') is None:
-            return
-        if type(cls.__pipeline__) is not tuple:
-            cls.__pipeline__ = (cls.__pipeline__,)
+    def __call__(self, plb):
+        if type(plb.__pipeline__) is not tuple:
+            plb.__pipeline__ = (plb.__pipeline__,)
 
         # generate docstrings from all plugin classes
-        cls.__doc__ = merge_doc(cls, *reversed(cls.__pipeline__))
+        plb.__doc__ = merge_doc(plb, *reversed(plb.__pipeline__))
 
         # Follow ``default``, ``extend`` and ``plumb`` declarations.
         pipelines = {}
         defaulted = {}
-        for plugin in cls.__pipeline__:
+        for plugin in plb.__pipeline__:
             for name, item in plugin.__dict__.items():
                 if isinstance(item, extensiondecor):
                     pipe = pipelines.setdefault(name, [])
@@ -203,18 +190,18 @@ class Plumber(type):
                     if isinstance(item, extend):
                         # collide with an attr that is on the class already,
                         # except if provided by default
-                        if name in cls.__dict__ \
+                        if name in plb.__dict__ \
                           and name not in defaulted:
                             # XXX: provide more info what is colliding
                             raise PlumbingCollision(name)
                         # put the original attribute on the class
-                        setattr(cls, name, item.attr)
+                        setattr(plb, name, item.attr)
                         # remove potential defaulted flag
                         defaulted.pop(name, None)
                     elif isinstance(item, default):
                         # set default attribute if there is none yet
-                        if not name in cls.__dict__:
-                            setattr(cls, name, item.attr)
+                        if not name in plb.__dict__:
+                            setattr(plb, name, item.attr)
                             defaulted[name] = None
                 elif name in pipelines and pipelines[name][-1] is CLOSED:
                     raise PlumbingCollision(name)
@@ -238,7 +225,7 @@ class Plumber(type):
             if ZOPE_INTERFACE_AVAILABLE:
                 ifaces = implementedBy(plugin)
                 if ifaces is not None:
-                    classImplements(cls, *list(ifaces))
+                    classImplements(plb, *list(ifaces))
 
         for name, pipe in pipelines.items():
             # Remove CLOSED pipe marker.
@@ -251,11 +238,33 @@ class Plumber(type):
             # 2. the plumbing class itself declared it
             # 3. a plumbing plugin provided a ``default`` value
             # 4. a base class provides the attribute
-            end_point = getattr(cls, name)
+            end_point = getattr(plb, name)
             pipe.append(end_point)
 
             # Finally ``entrance`` will plumb the methods together and return
             # an entrance function, that is set on the plumbing class be and
             # will result in a normal bound method when being retrieved by
             # getattr().
-            setattr(cls, name, entrance(name, pipe))
+            setattr(plb, name, entrance(name, pipe))
+
+plumber = RealPlumber()
+
+
+class Plumber(type):
+    """Metaclass for plumbing creation
+
+    First the normal new-style metaclass ``type()`` is called to construct the
+    class with ``name``, ``bases``, ``dct``.
+
+    Then, if the class declares a ``__pipeline__`` attribute, the plumber
+    will create a plumbing system accordingly. Attributes declared with
+    ``default``, ``extend`` and ``plumb`` will be used in the plumbing.
+    """
+    def __init__(cls, name, bases, dct):
+        super(Plumber, cls).__init__(name, bases, dct)
+
+        # The metaclass is inherited.
+        # The plumber will only get active if the class it produces defines a
+        # __pipeline__.
+        if cls.__dict__.get('__pipeline__') is not None:
+            plumber(plb=cls)
