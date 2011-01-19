@@ -15,7 +15,17 @@ class PlumbingCollision(RuntimeError):
     pass
 
 
-class default(object):
+class attrdecorator(object):
+    def __init__(self, attr):
+        self.attr = self.unwrap(attr)
+
+    def unwrap(self, attr):
+        if not isinstance(attr, attrdecorator):
+            return attr
+        return unwrap(attr.attr)
+
+
+class default(attrdecorator):
     """Provide a default value for something
 
     The first plugin with a default value wins the first round: its value is
@@ -24,18 +34,14 @@ class default(object):
     Attributes set with the ``extend`` decorator overrule ``default``
     attributes (see ``extend`` decorator).
     """
-    def __init__(self, attr):
-        self.attr = attr
 
 
-class extend(object):
+class extend(attrdecorator):
     """Declare an attribute on the plumning as if it was defined on it.
 
     Attribute set with the ``extend`` decorator overrule ``default``
     attributes. Two ``extend`` attributes in a chain raise a PlumbingCollision.
     """
-    def __init__(self, attr):
-        self.attr = attr
 
 
 class plumb(classmethod):
