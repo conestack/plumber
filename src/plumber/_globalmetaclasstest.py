@@ -9,32 +9,36 @@ from zope.interface import Interface
 from zope.interface import implements
 
 from plumber import Plumber
+from plumber import PlumbingPart
 
 __metaclass__ = Plumber
 
 
-class IPlugin1(Interface):
+class IPart1(Interface):
     """
     A zope.interface.Interface is not affected by the global ``__metaclass__``.
     ::
-        >>> IPlugin1.__class__
+        >>> IPart1.__class__
         <class 'zope.interface.interface.InterfaceClass'>
     """
     pass
 
 
-class Plugin1:
+class Foo:
     """
     A global meta-class declaration makes all classes at least new-style
     classes, even when not subclassing subclasses.
     ::
-        >>> Plugin1.__class__
+        >>> Foo.__class__
         <class 'plumber._plumber.Plumber'>
 
-        >>> issubclass(Plugin1, object)
+        >>> issubclass(Foo, object)
         True
     """
-    implements(IPlugin1)
+
+
+class Part1(PlumbingPart):
+    implements(IPart1)
 
 
 class ClassMaybeUsingAPlumbing(object):
@@ -54,7 +58,7 @@ class ClassReallyUsingAPlumbing:
         >>> issubclass(ClassReallyUsingAPlumbing, object)
         True
 
-        >>> IPlugin1.implementedBy(ClassReallyUsingAPlumbing)
+        >>> IPart1.implementedBy(ClassReallyUsingAPlumbing)
         True
     """
-    __pipeline__ = (Plugin1,)
+    __pipeline__ = Part1

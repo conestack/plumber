@@ -16,6 +16,11 @@ class PlumbingCollision(RuntimeError):
     pass
 
 
+class PlumbingPart(object):
+    """Base class for writing plumbing parts
+    """
+
+
 class extensiondecor(object):
     """A marker for attributes to be copied to the plumbing class' __dict__
 
@@ -180,6 +185,8 @@ class RealPlumber(object):
         pipelines = {}
         defaulted = {}
         for part in plb.__pipeline__:
+            if not issubclass(part, PlumbingPart):
+                continue
             for name, item in part.__dict__.items():
                 if isinstance(item, extensiondecor):
                     pipe = pipelines.setdefault(name, [])
@@ -267,4 +274,4 @@ class Plumber(type):
         # The plumber will only get active if the class it produces defines a
         # __pipeline__.
         if cls.__dict__.get('__pipeline__') is not None:
-            plumber(plb=cls)
+            plumber(cls)
