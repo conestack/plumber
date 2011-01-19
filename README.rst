@@ -1151,8 +1151,9 @@ Summary of the test coverage report.
     lines   cov%   module   (path)
         4   100%   plumber.__init__
        16   100%   plumber._globalmetaclasstest
-       76    97%   plumber._plumber
+       79    97%   plumber._plumber
        15    93%   plumber.tests
+
 
 Detailed
 ~~~~~~~~
