@@ -1,134 +1,539 @@
 Plumber
 =======
 
-**XXX: reworking and adjusting to changes in progress**
-
 Plumber is a metaclass that implements a plumbing system which works orthogonal
-to subclassing.
+to subclassing. A class declares the plumber as its metaclass and a pipeline of
+plugins that form the plumbing system. Plugins can extend classes as if the
+code was declared on the class itself (``extend`` decorator), provide default
+values for class variables (``default`` decorator) and form chains of methods
+(``plumb`` decorator) that pre-process parameters before passing them to the
+next method and post-process results before passing them to the previous method
+(similar to WSGI pipelines).
 
-A quick example
----------------
+Why not just use sub-classing? see Motivation.
 
-Import of the plumbg decorator for the plumbing methods and the Plumber
-metaclass.
 ::
-
     >>> from plumber import Plumber
+    >>> from plumber import default
+    >>> from plumber import extend
     >>> from plumber import plumb
 
-A class that will serve as base.
-::
+The plumber is aware of ``zope.interface`` but does not require it (see
+``zope.interface support``)
 
+XXX: write about property support
+
+XXX: use reStructured section references, does something like that exist?
+
+
+Plumbing chains
+---------------
+
+XXX: diagram how a plumbing chain works
+
+Plumbing chains and usual subclassing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A class that will serve as normal base class for our plumbing.
+::
     >>> class Base(object):
     ...     def foo(self):
-    ...         """Base.foo doc
-    ...         """
     ...         print "Base.foo"
 
-Two plugins for the plumbing. The decorator makes the methods part of the
-plumbing. They are classmethods of the plugin ``cls``, via ``_next`` they can
-call the next plumbing method in the pipeline and ``self`` is an instance of
-the class using the plumbing.
-::
+Two plugins for the plumbing: the ``plumb`` decorator makes the methods part of
+the plumbing, they are classmethods of the plugin declaring them ``plb``, via
+``_next`` they call the next method and ``self`` is an instance of the
+plumbing.
 
+..attention:: ``self`` is not an instance of the plugin class, but an
+  instance of plumbing class. The system is designed so the code you write in
+  plumbing methods looks as similar as possible to the code you would write
+  directly on the class.
+
+::
     >>> class Plugin1(object):
     ...     @plumb
-    ...     def foo(cls, _next, self):
-    ...         """Plugin1.foo doc
-    ...         """
+    ...     def foo(plb, _next, self):
     ...         print "Plugin1.foo start"
     ...         _next(self)
     ...         print "Plugin1.foo stop"
 
     >>> class Plugin2(object):
     ...     @plumb
-    ...     def foo(cls, _next, self):
-    ...         """Plugin2.foo doc
-    ...         """
+    ...     def foo(plb, _next, self):
     ...         print "Plugin2.foo start"
     ...         _next(self)
     ...         print "Plugin2.foo stop"
 
-A class using a plumbing and having Base as base class. The Plumber metaclass
-creates the plumbing according to the ``__pipeline__`` attribute.
+A plumbing based on ``Base`` and using the plugins ``Plugin1`` and ``Plugin2``.
 ::
-
-    >>> class ClassWithPlumbing(Base):
+    >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = (Plugin1, Plugin2)
     ...
     ...     def foo(self):
-    ...         """ClassWithPlumbing.foo doc
-    ...         """
-    ...         print "ClassWithPlumbing.foo start"
-    ...         super(ClassWithPlumbing, self).foo()
-    ...         print "ClassWithPlumbing.foo stop"
+    ...         print "PlumbingClass.foo start"
+    ...         super(PlumbingClass, self).foo()
+    ...         print "PlumbingClass.foo stop"
 
-The plumbing sits in front of the class and its base classes
+Methods provided by the plugins sit in front of methods declared by the class
+and its base classes.
 ::
-
-    >>> cwp = ClassWithPlumbing()
-    >>> cwp.foo()
+    >>> plumbing = PlumbingClass()
+    >>> plumbing.foo()
     Plugin1.foo start
     Plugin2.foo start
-    ClassWithPlumbing.foo start
+    PlumbingClass.foo start
     Base.foo
-    ClassWithPlumbing.foo stop
+    PlumbingClass.foo stop
     Plugin2.foo stop
     Plugin1.foo stop
 
-The plumbing classes are not part of a class' method resolution order.
+The plugins are not in the class' method resolution order.
 ::
-
-    >>> ClassWithPlumbing.__mro__
-    (<class 'ClassWithPlumbing'>,
+    >>> PlumbingClass.__mro__
+    (<class 'PlumbingClass'>,
      <class 'Base'>,
      <type 'object'>)
 
-    >>> issubclass(ClassWithPlumbing, Base)
+    >>> issubclass(PlumbingClass, Base)
     True
-    >>> issubclass(ClassWithPlumbing, Plugin1)
+    >>> issubclass(PlumbingClass, Plugin1)
     False
-    >>> issubclass(ClassWithPlumbing, Plugin2)
+    >>> issubclass(PlumbingClass, Plugin2)
     False
 
-A class that uses plumbing can be subclassed as usual.
+The plumbing can be subclassed like a normal class.
 ::
-
-    >>> class SubOfClassWithPlumbing(ClassWithPlumbing):
+    >>> class SubOfPlumbingClass(PlumbingClass):
     ...     def foo(self):
-    ...         print "SubOfClassWithPlumbing.foo start"
-    ...         super(SubOfClassWithPlumbing, self).foo()
-    ...         print "SubOfClassWithPlumbing.foo stop"
+    ...         print "SubOfPlumbingClass.foo start"
+    ...         super(SubOfPlumbingClass, self).foo()
+    ...         print "SubOfPlumbingClass.foo stop"
 
-    >>> subofcwp = SubOfClassWithPlumbing()
-    >>> subofcwp.foo()
-    SubOfClassWithPlumbing.foo start
+    >>> subofplumbing = SubOfPlumbingClass()
+    >>> subofplumbing.foo()
+    SubOfPlumbingClass.foo start
     Plugin1.foo start
     Plugin2.foo start
-    ClassWithPlumbing.foo start
+    PlumbingClass.foo start
     Base.foo
-    ClassWithPlumbing.foo stop
+    PlumbingClass.foo stop
     Plugin2.foo stop
     Plugin1.foo stop
-    SubOfClassWithPlumbing.foo stop
+    SubOfPlumbingClass.foo stop
 
 ..note:: A class inherits the ``__metaclass__`` declaration from base classes.
-The ``Plumber`` metaclass is called for ``ClassWithPlumbing`` **and**
-``SubOfClassWithPlumbing``. However, it will only get active for a class that
-declares a ``__pipeline__`` itself and otherwise just calls ``type``, the
-default metaclass for new-style classes.
+  The ``Plumber`` metaclass is called for ``PlumbingClass`` **and**
+  ``SubOfPlumbingClass``. However, it will only get active for a class that
+  declares a ``__pipeline__`` itself and otherwise just calls ``type``, the
+  default metaclass for new-style classes.
 
 
-The docstring is assembled from the innermost method to the first plugin.
+End-points for plumbing chains
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Plumbing chains need a normal method to serve as end-point.
 ::
+    >>> class Plugin1(object):
+    ...     @plumb
+    ...     def foo(plb, _next, self):
+    ...         pass
 
-    >>> print cwp.foo.__doc__
-    ClassWithPlumbing.foo doc
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1,)
+    Traceback (most recent call last):
+      ...
+    AttributeError: type object 'PlumbingClass' has no attribute 'foo'
+
+It is looked up on the class with ``getattr``, after the plumbing pipeline is
+processed, but before it is installed on the class.
+
+It can be provided by the plumbing class itself.
+::
+    >>> class Plugin1(object):
+    ...     @plumb
+    ...     def foo(plb, _next, self):
+    ...         print "Plugin1.foo start"
+    ...         _next(self)
+    ...         print "Plugin1.foo stop"
+
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1,)
+    ...
+    ...     def foo(self):
+    ...         print "PlumbingClass.foo"
+
+    >>> plumbing = PlumbingClass().foo()
+    Plugin1.foo start
+    PlumbingClass.foo
+    Plugin1.foo stop
+
+It can be provided by a base class of the plumbing class.
+::
+    >>> class Base(object):
+    ...     def foo(self):
+    ...         print "Base.foo"
+
+    >>> class Plugin1(object):
+    ...     @plumb
+    ...     def foo(plb, _next, self):
+    ...         print "Plugin1.foo start"
+    ...         _next(self)
+    ...         print "Plugin1.foo stop"
+
+    >>> class PlumbingClass(Base):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1,)
+
+    >>> plumbing = PlumbingClass().foo()
+    Plugin1.foo start
+    Base.foo
+    Plugin1.foo stop
+
+Further it can be provided by a plumbing plugin with the ``default`` or
+``extend`` decorators (see Extending classes, an alternative to mixins), it
+will be put on the plumbing class, before the end point it looked up and
+therefore behaves exactly like the method would be declared on the class
+itself.
+
+
+XXX: Properties
+~~~~~~~~~~~~~~~
+
+
+Extending classes through plumbing, an alternative to mixins
+------------------------------------------------------------
+
+Why? It's faster - yet to be proven.
+
+Extending a class
+~~~~~~~~~~~~~~~~~
+A plugin can put arbitrary attributes onto a class as if they were declared on it.
+::
+    >>> class Plugin1(object):
+    ...     foo = extend(False)
+
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1,)
+
+The attribute is defined on the class, setting it on an instance will store the
+value in the instance's ``__dict__``.
+::
+    >>> PlumbingClass.foo
+    False
+    >>> plumbing = PlumbingClass()
+    >>> plumbing.foo
+    False
+    >>> plumbing.foo = True
+    >>> plumbing.foo
+    True
+    >>> PlumbingClass.foo
+    False
+
+If the attribute collides with one already declared on the class, an exception
+is raised.
+::
+    >>> class Plugin1(object):
+    ...     foo = extend(False)
+
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1,)
+    ...     foo = False
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision: foo
+
+XXX: increase verbosity of exception
+
+Also, if two plugins try to extend an attribute with the same name, an
+exception is raised. The situation before processing the second plugin is
+exactly as if the method was declared on the class itself.
+::
+    >>> class Plugin1(object):
+    ...     foo = extend(False)
+
+    >>> class Plugin2(object):
+    ...     foo = extend(False)
+
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1, Plugin2)
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision: foo
+
+Extended methods close pipelines, adding a plumbing method afterwards raises an
+exception.
+::
+    >>> class Plugin1(object):
+    ...     @extend
+    ...     def foo(self):
+    ...         pass
+
+    >>> class Plugin2(object):
+    ...     @plumb
+    ...     def foo(plb, _next, self):
+    ...         pass
+
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1, Plugin2)
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision: foo
+
+Extending a method needed by a plugin earlier in the chain works.
+::
+    >>> class Plugin1(object):
+    ...     @plumb
+    ...     def foo(plb, _next, self):
+    ...         print "Plugin1.foo start"
+    ...         _next(self)
+    ...         print "Plugin1.foo stop"
+
+    >>> class Plugin2(object):
+    ...     @extend
+    ...     def foo(self):
+    ...         print "Plugin2.foo"
+
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1, Plugin2)
+
+    >>> PlumbingClass().foo()
+    Plugin1.foo start
+    Plugin2.foo
+    Plugin1.foo stop
+
+It is possible to make super calls from within the method added by the plugin.
+::
+    >>> class Base(object):
+    ...     def foo(self):
+    ...         print "Base.foo"
+
+    >>> class Plugin1(object):
+    ...     @extend
+    ...     def foo(self):
+    ...         print "Plugin1.foo start"
+    ...         super(self.__class__, self).foo()
+    ...         print "Plugin1.foo stop"
+
+    >>> class PlumbingClass(Base):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1,)
+
+    >>> plumbing = PlumbingClass()
+    >>> plumbing.foo()
+    Plugin1.foo start
+    Base.foo
+    Plugin1.foo stop
+
+Extension is used if a plugin relies on a specific attribute value, most common
+the case with functions. If a plugin provides a setting it uses a default
+value (see next section).
+
+Default attributes
+~~~~~~~~~~~~~~~~~~
+Plugins that use parameters, provide defaults that are overridable. Further it
+should enable setting these parameters through a ``__init__`` plumbing method.
+
+::
+    >>> class Plugin1(object):
+    ...     foo = default(False)
+    ...     @plumb
+    ...     def __init__(plb, _next, self, *args, **kw):
+    ...         if 'foo' in kw:
+    ...             self.foo = kw.pop('foo')
+    ...         _next(self, *args, **kw)
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1,)
+    ...     def __init__(self, bar=None):
+    ...         self.bar = bar
+
+The default value is set in the class' ``__dict__``.
+::
+    >>> Plumbing.foo
+    False
+    >>> plumbing = Plumbing()
+    >>> plumbing.foo
+    False
+    >>> 'foo' in plumbing.__dict__
+    False
+
+Setting the value on the instance is persistent and the class' value is
+untouched.
+::
+    >>> plumbing.foo = True
+    >>> plumbing.foo
+    True
+    >>> Plumbing.foo
+    False
+
+Values can be provided to ``__init__``.
+::
+    >>> plumbing = Plumbing(bar=42, foo=True)
+    >>> plumbing.foo
+    True
+    >>> Plumbing.foo
+    False
+    >>> plumbing.bar
+    42
+
+The first plugin prodiving a default value is taken, later defaults are
+ignored.
+::
+    >>> class One(object):
+    ...     foo = default(1)
+
+    >>> class Two(object):
+    ...     foo = default(2)
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (One, Two)
+
+    >>> Plumbing.foo
+    1
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Two, One)
+
+    >>> Plumbing.foo
+    2
+
+An attribute declared on the class overwrites ``default`` attributes.
+::
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (One, Two)
+    ...     foo = None
+
+    >>> print Plumbing.foo
+    None
+
+``Extend`` overrules ``default``.
+::
+    >>> class Default(object):
+    ...     foo = default('default')
+
+    >>> class Extend(object):
+    ...     foo = extend('extend')
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Extend, Default)
+
+    >>> Plumbing.foo
+    'extend'
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Default, Extend)
+
+    >>> Plumbing.foo
+    'extend'
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Default, Extend, Default)
+
+    >>> Plumbing.foo
+    'extend'
+
+``default`` does not interfere with ``extend`` collision detection.
+::
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Default, Extend, Default, Extend, Default)
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision: foo
+
+``plumb`` and either ``default`` or ``extend`` collide.
+::
+    >>> class Default(object):
+    ...     foo = default(None)
+
+    >>> class Extend(object):
+    ...     foo = extend(None)
+
+    >>> class Plumb(object):
+    ...     @plumb
+    ...     def foo(plb, _next, self):
+    ...         pass
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Default, Plumb)
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision: foo
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Extend, Plumb)
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision: foo
+
+
+Docstrings of plumbing methods and plugins
+------------------------------------------
+
+Two plugins and a plumbing using them, one plumbing chain and ``__doc__``
+declared on the classes and the classes' methdods.
+::
+    >>> class P1(object):
+    ...     """P1
+    ...     """
+    ...     @plumb
+    ...     def foo(plb, _next, self):
+    ...         """P1.foo
+    ...         """
+
+    >>> class P2(object):
+    ...     """P2
+    ...     """
+    ...     @plumb
+    ...     def foo(plb, _next, self):
+    ...         """P2.foo
+    ...         """
+
+    >>> class Plumbing(object):
+    ...     """Plumbing
+    ...     """
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (P1, P2)
+    ...
+    ...     def foo(self):
+    ...         """Plumbing.foo
+    ...         """
+
+The class' docstring is generated from the ``__doc__`` declared on the plumbing
+class followed by plugin classes' ``__doc__`` in reverse order.
+::
+    >>> print Plumbing.__doc__
+    Plumbing
     <BLANKLINE>
-    Plugin2.foo doc
+    P2
     <BLANKLINE>
-    Plugin1.foo doc
+    P1
+    <BLANKLINE>
+
+Docstrings for plumbing chains are generated alike.
+::
+    >>> print Plumbing.foo.__doc__
+    Plumbing.foo
+    <BLANKLINE>
+    P2.foo
+    <BLANKLINE>
+    P1.foo
     <BLANKLINE>
 
 
@@ -187,49 +592,49 @@ implements an interface.
     True
 
 A class based on ``Base`` using a plumbing of ``Plugin1`` and ``Plugin2`` and
-implementing ``IClassWithPlumbing``.
+implementing ``IPlumbingClass``.
 ::
 
-    >>> class IClassWithPlumbing(Interface):
+    >>> class IPlumbingClass(Interface):
     ...     pass
 
-    >>> class ClassWithPlumbing(Base):
+    >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = (Plugin1, Plugin2)
-    ...     implements(IClassWithPlumbing)
+    ...     implements(IPlumbingClass)
 
 The directly declared and inherited interfaces are implemented.
 ::
 
-    >>> IClassWithPlumbing.implementedBy(ClassWithPlumbing)
+    >>> IPlumbingClass.implementedBy(PlumbingClass)
     True
-    >>> IBase.implementedBy(ClassWithPlumbing)
+    >>> IBase.implementedBy(PlumbingClass)
     True
 
 The interfaces implemented by the used plumbing classes are also implemented.
 ::
 
-    >>> IPlugin1.implementedBy(ClassWithPlumbing)
+    >>> IPlugin1.implementedBy(PlumbingClass)
     True
-    >>> IPlugin2.implementedBy(ClassWithPlumbing)
+    >>> IPlugin2.implementedBy(PlumbingClass)
     True
-    >>> IPlugin2Base.implementedBy(ClassWithPlumbing)
+    >>> IPlugin2Base.implementedBy(PlumbingClass)
     True
 
 An instance of the class provides the interfaces.
 ::
 
-    >>> cwp = ClassWithPlumbing()
+    >>> plumbing = PlumbingClass()
 
-    >>> IClassWithPlumbing.providedBy(cwp)
+    >>> IPlumbingClass.providedBy(plumbing)
     True
-    >>> IBase.providedBy(cwp)
+    >>> IBase.providedBy(plumbing)
     True
-    >>> IPlugin1.providedBy(cwp)
+    >>> IPlugin1.providedBy(plumbing)
     True
-    >>> IPlugin2.providedBy(cwp)
+    >>> IPlugin2.providedBy(plumbing)
     True
-    >>> IPlugin2Base.providedBy(cwp)
+    >>> IPlugin2Base.providedBy(plumbing)
     True
 
 The reasoning behind this is: the plumbing classes are behaving as close as
@@ -240,6 +645,7 @@ additional maybe future approach see Discussion.
 A more lengthy explanation
 --------------------------
 
+XXX:
 A plumbing consists of plumbing elements that define methods to be used as part
 of the plumbing. An object using a plumbing system, declares the Plumber as its
 metaclass and a ``__pipeline__`` defining the order of plumbing elements to be
@@ -268,7 +674,7 @@ as it were defined on the class. A super call to the class' bases can be made
   and anything behind it, as ``def f(foo, *args, bar=None, **kws)`` is not
   valid python and ``def f(foo, bar=None, *args, **kws)`` makes ``bar`` a
   positional which will be filled before ``*args``.
-
+XXX:
 
 Nomenclature
 ------------
@@ -279,85 +685,43 @@ Plumber
     The plumber is the metaclass creating a plumbing system.
 
 plumbing (system)
-    The plumbing system is the result of what the Plumber produces. It consists
-    of pipelines containing wrapped plumbing methods and is made from plumbing
-    classes that are lined up according to the ``__pipeline__`` attribute of a
-    class asking for a plumbing system.
+    A plumbing is the result of what the Plumber produces. It is built of
+    methods declared on base classes, the plumbing class and plumbing plugins
+    according to ``default``, ``extend`` and ``plumb`` directives. Plugins
+    involved are listed in a class' ``__pipeline__`` attribute.
 
-plumbing class, plugin, element
-    A plumbing class defines plumbing methods and therefore can be used as part
-    of a plumbing system.
+plumbing class
+    Synonymous for plumbing system, but sometimes also only the class that asks
+    to be turned into a plumbing, esp. when referring to attributes declared on
+    it.
 
-plumbing decorator
-    The plumbing decorator marks a method to be part of the plumbing and makes
-    it a classmethod of the class defining it.
+(plumbing) plugin / plugin class
+    A plumbing plugin provides attributes to be used for the plumbing through
+    ``default``, ``extend`` and ``plumb`` declarations.
 
-plumbing (method)
-    A plumbing method is a classmethod marked by the plumbing decorator.
-    Plumbing methods (of different plumbing classes) with the same name form a
-    pipeline. The plumber plumbs them together in the order defined by the
-    ``__pipeline__`` attribute defined on a class asking for a plumbing system.
+``default`` decorator
+    Instruct the plumber to set a default value: first default wins, ``extend``
+    and declaration on plumbing class takes precedence.
+
+``extend`` decorator
+    Instruct the plumber to set an attribute on the plumbing: ``extend``
+    overrides ``default``, two ``extend`` collide.
+
+``plumb`` decorator
+    Instruct the plumber to make a function part of a plumbing chain and turns
+    the function into a classmethod bound to the plumbing plugin declaring it
+    and having a signature of: ``def foo(plb, _next, self, *args, **kw)``.
+    ``plb`` is the plugin class declaring it, ``_next`` a wrapper for the next
+    method in chain and ``self`` and instance of the plumbing
+
+plumbing chain
+    The methods of a pipeline with the same name plumbed together. The entrance
+    and end-point have the signature of normal methods: ``def foo(self, *args,
+    **kw)``
 
 pipeline attribute
     The attribute a class uses to define the order of plumbing class to be used
     to create the plumbing.
-
-pipeline
-    A row of plumbing methods of the same name.
-
-XXX: we need a name for a class that uses a plumbing system.
-
-
-Example
--------
-
-XXX
-
-Notify plumbing class
----------------------
-
-XXX:
-A plumbing element that prints notifications for its ``__init__`` and
-``__setitem__`` methods. A plumbing method is decorated with the ``@plumb``
-decorator, its general signature is ``def foo(cls, _next, self, **kws)``.
-All plumbing methods are classmethods, the plumbing class is passed as the
-first argument ``cls`` to its methods. The second method ``_next`` wraps the
-the next plumbing method of a pipeline and ``self`` is an instance of the class
-that uses the plumbing, just what you would expect to be ``self`` in a method
-of a normal class.
-
-..attention:: ``self`` is not an instance of the plumbing class, but an
-  instance of the class using the plumbing system. The system is designed so
-  the code you write in plumbing methods looks as similar as possible to the
-  code you would write directly in the class.
-
-
-A prefixer plumbing
--------------------
-
-
-In the above example it would not be possible for a subclass of
-NotifyPrefixDict to override the prefix and unprefix methods as they are not in
-NotifyPrefixDict's MRO but are defined on the plumbing class and called via
-plumbing methods. It feels, that for such purposes no classmethods on the
-plumbing element should be used. By that it is possible for somebody
-subclassing us, to override these methods.
-
-
-XXX: This collides with dict __init__ signature: dict(foo=1, bar=2)
---> creating a subclass of dict that does __init__ translation might work:
-data=() - eventually a specialized plugin, but let's keep this simple for now.
-
-
-keys() is not handle by the prefixer, the one provided by dict is used and
-therefore the internal key names are shown.
-
-
-Notifier show now unprefixed key, as it is behind the prefixer
-
-
-Subclassing plumbing elements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Discussions
@@ -722,7 +1086,6 @@ later assigned in the code.
 Now looking at using the __doc__ of all plumbing methods to create the __doc__
 of the entrance.
 
-
 Dynamic Plumbing
 ~~~~~~~~~~~~~~~~
 The plumber could replace the ``__pipeline__`` attribute with a property of the
@@ -730,19 +1093,28 @@ same name. Changing the attribute during runtime would result in a plumbing
 specific to the object. A plumbing cache could further be used to reduce the
 number of plumbing chains in case of many dynamic plumbings.
 
+Class methods of the plumbing plugins
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Attribute declared with ``default``, ``extend`` and ``plumb`` are used for the
+class. Further, it is possible to access other class variables vie ``plb``.
+
+XXX: this should move up and just be documented
+
 Contributors
 ------------
 
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
 - Attila Oláh
-- WSGI
-- #python
+- thanks to WSGI for the concept
+- thanks to #python for trying to block stupid ideas
 
 
 Changes
 -------
 
+- plb instead of cls [chaoflow, rnix 2011-01-19
+- default, extend, plumb [chaoflow, rnix 2011-01-19]
 - initial [chaoflow, 2011-01-04]
 
 

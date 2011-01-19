@@ -1,9 +1,8 @@
-import exceptions
 import os
-import types
 
-# If zope.interfaces is available we are aware of interfaces implemented on
-# plumbing classes and will make the factored class implement them, too.
+# We are aware of ``zope.interface.Interface``: if zope.interfaces is available
+# we check interfaces implemented on the plumbing plugins and will make the
+# plumbing implement them, too.
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
@@ -16,47 +15,61 @@ class PlumbingCollision(RuntimeError):
     pass
 
 
-class plumberitem(classmethod):
-    """An item the plumber will recognize and use
+class default(object):
+    """Provide a default value for something
+
+    The first plugin with a default value wins the first round: its value is
+    set on the plumbing as if it was declared there.
+
+    Attributes set with the ``extend`` decorator overrule ``default``
+    attributes (see ``extend`` decorator).
     """
+    def __init__(self, attr):
+        self.attr = attr
 
 
 class extend(object):
-    """Instructs the plumber to just copy an item into the class' ``__dict__``.
+    """Declare an attribute on the plumning as if it was defined on it.
 
-    If an item with the same name already exists, a PlumbingCollision is raised.
+    Attribute set with the ``extend`` decorator overrule ``default``
+    attributes. Two ``extend`` attributes in a chain raise a PlumbingCollision.
     """
-    def __init__(self, item):
-        self.item = item
+    def __init__(self, attr):
+        self.attr = attr
 
 
-class plumb(plumberitem):
-    """Instructs the plumber to plumb a method or property into the plumbing
+class plumb(classmethod):
+    """Mark a method to be used in a plumbing chain.
 
-    XXX
-
-    A plumbing method is a classmethod bound to the plugin class defining it
-    (``plb``), as second argument it expects the next plumbing method
-    (``_next``) and the third argument (``self``) is the object that for normal
-    methods would be the first argument.
-
-    The signature of the function is:
+    The signature of the method is:
     ``def foo(plb, _next, self, *args, **kws)``
 
+    A plumbing method is a classmethod bound to the plugin class defining it
+    (``plb``), as second argument it receives the next plumbing method
+    (``_next``) and the third argument (``self``) is a plumbing instance, that
+    for normal methods would be the first argument.
+
     In order to plumb a method there needs to be a non-plumbing method behind
-    it, provided by: a plumbing plugin via extend later in the pipeline, the
-    class itself or one of its base classes.
+    it provided by: a plumbing plugin via ``extend`` or ``default`` later in
+    the pipeline, the class itself or one of its base classes.
     """
+
+def merge_doc(first, *args):
+    if first.__doc__ is None:
+        return None
+    if not args:
+        return first.__doc__
+    return os.linesep.join((first.__doc__, merge_doc(*args)))
 
 
 def entrance(name, pipe):
-    """Plumbs all methods of a pipeline together and returns the entrance.
+    """Create an entrance to a pipeline.
 
     recursively:
-    - pop first method
+    - pop first method from pipeline
     - create entrance to the rest of the pipe as _next
-    - wrap method passing it _next, if not last method
-    - return last method as is
+    - wrap method passing it _next and return it, if not last method
+    - return last method as is, if last method
     """
     # If only one element is left in the pipe, it is a normal method that does
     # not expect a ``_next`` parameter.
@@ -69,11 +82,7 @@ def entrance(name, pipe):
     _next = entrance(name, pipe)
     def _entrance(self, *args, **kw):
         return plumbing_method(_next, self, *args, **kw)
-    if _next.__doc__ is not None:
-        _entrance.__doc__ = os.linesep.join((
-                _next.__doc__,
-                plumbing_method.__doc__ or ''
-                ))
+    _entrance.__doc__ = merge_doc(_next, plumbing_method)
     return _entrance
 
 
@@ -83,15 +92,14 @@ class CLOSED(object):
 
 
 class Plumber(type):
-    """Metaclass to create classes using a plumbing
+    """Metaclass for plumbing creation
 
     First the normal new-style metaclass ``type()`` is called to construct the
     class with ``name``, ``bases``, ``dct``.
 
     Then, if the class declares a ``__pipeline__`` attribute, the plumber
-    creates a plumbing system accordingly and puts it in front of the class.
-    Methods defined on the class itself or inherited via base classes serve as
-    end points for the plumbing system.
+    will create a plumbing system accordingly. Attributes declared with
+    ``default``, ``extend`` and ``plumb`` will be used in the plumbing.
     """
     def __init__(cls, name, bases, dct):
         super(Plumber, cls).__init__(name, bases, dct)
@@ -101,25 +109,36 @@ class Plumber(type):
         if cls.__dict__.get('__pipeline__') is None:
             return
 
-        # Gather all things decorated either with ``extend`` or ``plumb`` and
-        # line up plumbing functions with the same name in pipelines.
+        # generate docstrings from all plugin classes
+        cls.__doc__ = merge_doc(cls, *reversed(cls.__pipeline__))
+
+        # Follow ``default``, ``extend`` and ``plumb`` declarations.
         pipelines = {}
+        defaulted = {}
         for plugin in cls.__pipeline__:
-            for name, item in plugin.__dict__.items():
-                if not isinstance(item, (extend, plumb)):
-                    continue
-                pipe = pipelines.setdefault(name, [])
-                if isinstance(item, extend):
-                    if name in cls.__dict__:
+
+            for name, decor in plugin.__dict__.items():
+                if isinstance(decor, extend):
+                    if name in cls.__dict__ \
+                      and name not in defaulted:
                         # XXX: provide more info what is colliding
                         raise PlumbingCollision(name)
-                    # just copy the item that was passed to the extend
+                    # just copy the attribute that was passed to the extend
                     # decorator and mark the pipeline as closed, i.e. adding
                     # further methods to it, will raise an error.
-                    cls.__dict__[name] = item.item
+                    setattr(cls, name, decor.attr)
+                    defaulted.pop(name, None)
+                    pipe = pipelines.setdefault(name, [])
                     pipe.append(CLOSED)
-                elif isinstance(item, plumb):
+                elif isinstance(decor, default):
+                    if not name in cls.__dict__:
+                        setattr(cls, name, decor.attr)
+                        defaulted[name] = None
+                elif isinstance(decor, plumb):
+                    pipe = pipelines.setdefault(name, [])
                     if pipe and pipe[-1] is CLOSED:
+                        raise PlumbingCollision(name)
+                    if name in defaulted:
                         raise PlumbingCollision(name)
                     # plumbing methods are class methods bound to the plumbing
                     # plugin class, ``getattr`` on the class in combination
@@ -135,35 +154,21 @@ class Plumber(type):
                     classImplements(cls, *list(ifaces))
 
         for name, pipe in pipelines.items():
-            # XXX
-            # For each pipeline we will now ask the MRO to give us a method to
-            # be used as an endpoint. An endpoint is therefore a normal method
-            # and not a plumbing anymore. Apart from that, any plumbing method
-            # can decide not to use its _next and just be the innermost method
-            # being called. In case the MRO does not give us a method, i.e. we
-            # get an AttributeError, we will provide a method that raises a
-            # NotImplementedError. By that, it is possible for the class to be
-            # built, but in order for a runtime call to succeed there needs to
-            # be a plumbing method in front, which will not make use of its
-            # _next method and therefore build the end point. So plumbing
-            # methods can extend a class with new functionality and even make a
-            # super call, just as if the method would be defined on the class.
-            # XXX
-            #def notimplemented(*args, **kws):
-            #    raise NotImplementedError
+            # Remove CLOSED pipe marker.
+            if pipe[-1] is CLOSED:
+                del pipe[-1]
+
+            # Retrieve end point from class, from what happened above it is
+            # found with priorities:
+            # 1. a plumbing plugin declared it with ``extend``
+            # 2. the plumbing class itself declared it
+            # 3. a plumbing plugin provided a ``default`` value
+            # 4. a base class provides the attribute
             end_point = getattr(cls, name)
             pipe.append(end_point)
 
             # Finally ``entrance`` will plumb the methods together and return
-            # us an entrance method, that can be set on the class and will
-            # result in a normal bound method when being retrieved by
+            # an entrance function, that is set on the plumbing class be and
+            # will result in a normal bound method when being retrieved by
             # getattr().
-            entrance_method = entrance(name, pipe)
-
-            # If there is a method with same name as a pipe, it is now part of
-            # the the pipe as innermost method and will be overwritten on the
-            # class. It lives on by being referenced in the pipeline as the
-            # innermost method and end point of the pipeline. Via super it can
-            # call the next method in the MRO, but anyway it is the default end
-            # point of the plumbing.
-            setattr(cls, name, entrance_method)
+            setattr(cls, name, entrance(name, pipe))
