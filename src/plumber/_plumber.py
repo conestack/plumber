@@ -16,13 +16,22 @@ class PlumbingCollision(RuntimeError):
 
 
 class attrdecorator(object):
+    """A marker for attributes to be copied to the plumbing class' __dict__
+
+    Markers will be removed from the attribute so it is possible to::
+
+        >>> class Plugin(object):
+        ...     foo = default(1)
+        ...     bar = default(foo)
+
+    """
     def __init__(self, attr):
         self.attr = self.unwrap(attr)
 
     def unwrap(self, attr):
         if not isinstance(attr, attrdecorator):
             return attr
-        return unwrap(attr.attr)
+        return self.unwrap(attr.attr)
 
 
 class default(attrdecorator):

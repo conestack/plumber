@@ -578,6 +578,7 @@ ignored::
 
     >>> class Two(object):
     ...     foo = default(2)
+    ...     bar = default(foo)
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
@@ -585,6 +586,8 @@ ignored::
 
     >>> Plumbing.foo
     1
+    >>> Plumbing.bar
+    2
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
