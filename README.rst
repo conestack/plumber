@@ -924,7 +924,8 @@ Dynamic Plumbing
 The plumber could replace the ``__pipeline__`` attribute with a property of the
 same name. Changing the attribute during runtime would result in a plumbing
 specific to the object. A plumbing cache could further be used to reduce the
-number of plumbing chains in case of many dynamic plumbings.
+number of plumbing chains in case of many dynamic plumbings. Realised eg by a
+descriptor.
 
 
 Test Coverage
