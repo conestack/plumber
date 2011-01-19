@@ -603,8 +603,6 @@ declared on the classes and the classes' methdods.
     ...         """
 
     >>> class Plumbing(object):
-    ...     """Plumbing
-    ...     """
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = (P1, P2)
     ...
@@ -630,7 +628,6 @@ Docstrings for plumbing chains are generated alike.
 ::
 
     >>> print Plumbing.foo.__doc__
-    Plumbing.foo
     <BLANKLINE>
     P2.foo
     <BLANKLINE>

@@ -56,14 +56,14 @@ class plumb(classmethod):
 
 
 def merge_doc(first, *args):
-    if first.__doc__ is None:
-        return None
     if not args:
         return first.__doc__
-    rest = merge_doc(*args)
-    if rest is None:
+
+    rest_doc = merge_doc(*args)
+    if rest_doc is None:
         return first.__doc__
-    return os.linesep.join((first.__doc__, rest))
+
+    return os.linesep.join((first.__doc__ or '', rest_doc))
 
 
 def entrance(name, pipe):
