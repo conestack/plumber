@@ -9,6 +9,7 @@ optionflags = doctest.NORMALIZE_WHITESPACE | \
 
 TESTFILES = [
     'plumber.txt',
+    '_plumber.txt',
 ]
 
 def test_suite():
