@@ -934,19 +934,6 @@ possible to base classes of our class, but without using subclassing.  For an
 additional maybe future approach see Discussion.
 
 
-Benchmarking
-~~~~~~~~~~~~
-XXX: The various solutions for properties themselves and properties in
-combination with plumbing need benchmarking. If the overhead is small enough, I
-think we should solely use properties with lambda abstraction.
-
-get, set, del for all:
-- Property using lambda abstraction
-- super(Klass, self).a
-- super(Klass, self).get_a()
-- Klass.__dict__['a'].fget(self) or even more direct?
-
-
 Nomenclature
 ------------
 
@@ -1179,6 +1166,8 @@ TODO
   the plumber. yafowil is doing it. jensens: would you be so kind.
 - verify behaviour with pickling
 - verify behaviour with ZODB persistence
+- subclassing for plumbing plugins
+- plumbing of property getter, setter and deleter for non-lambda properties
 
 
 Disclaimer
