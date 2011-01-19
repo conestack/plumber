@@ -279,6 +279,10 @@ Extending classes through plumbing, an alternative to mixins
 
 Why? It's faster - yet to be proven.
 
+.. contents::
+    :backlinks: entry
+    :local:
+
 Extending a class
 ~~~~~~~~~~~~~~~~~
 A plugin can put arbitrary attributes onto a class as if they were declared on it.
@@ -1048,6 +1052,10 @@ end-point (method)
 
 Discussions
 -----------
+
+.. contents::
+    :backlinks: entry
+    :local:
 
 Where is the plumbing
 ~~~~~~~~~~~~~~~~~~~~~
