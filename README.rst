@@ -11,7 +11,9 @@ next method and post-process results before passing them to the previous method
 (similar to WSGI pipelines).
 
 Why not just use sub-classing? see Motivation.
+
 ::
+
     >>> from plumber import Plumber
     >>> from plumber import default
     >>> from plumber import extend
@@ -33,7 +35,9 @@ XXX: diagram how a plumbing chain works
 Plumbing chains and usual subclassing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A class that will serve as normal base class for our plumbing.
+
 ::
+
     >>> class Base(object):
     ...     def foo(self):
     ...         print "Base.foo"
@@ -47,7 +51,9 @@ plumbing.
   instance of plumbing class. The system is designed so the code you write in
   plumbing methods looks as similar as possible to the code you would write
   directly on the class.
+
 ::
+
     >>> class Plugin1(object):
     ...     @plumb
     ...     def foo(plb, _next, self):
@@ -63,7 +69,9 @@ plumbing.
     ...         print "Plugin2.foo stop"
 
 A plumbing based on ``Base`` and using the plugins ``Plugin1`` and ``Plugin2``.
+
 ::
+
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = (Plugin1, Plugin2)
@@ -75,7 +83,9 @@ A plumbing based on ``Base`` and using the plugins ``Plugin1`` and ``Plugin2``.
 
 Methods provided by the plugins sit in front of methods declared by the class
 and its base classes.
+
 ::
+
     >>> plumbing = PlumbingClass()
     >>> plumbing.foo()
     Plugin1.foo start
@@ -87,7 +97,9 @@ and its base classes.
     Plugin1.foo stop
 
 The plugins are not in the class' method resolution order.
+
 ::
+
     >>> PlumbingClass.__mro__
     (<class 'PlumbingClass'>,
      <class 'Base'>,
@@ -101,7 +113,9 @@ The plugins are not in the class' method resolution order.
     False
 
 The plumbing can be subclassed like a normal class.
+
 ::
+
     >>> class SubOfPlumbingClass(PlumbingClass):
     ...     def foo(self):
     ...         print "SubOfPlumbingClass.foo start"
@@ -132,7 +146,9 @@ Passing parameters to methods in a plumbing chain
 Parameters to plumbing methods are passed in via keyword arguments - there is
 no sane way to do this via positional arguments (see section Default
 attributes for application to ``__init__`` plumbing).
+
 ::
+
     >>> class Plugin1(object):
     ...     @plumb
     ...     def foo(plb, _next, self, *args, **kw):
@@ -158,7 +174,9 @@ attributes for application to ``__init__`` plumbing).
 
 The plumbing plugins pick what they need, the remainging keywords and all
 positional arguments are just passed through to the plumbing class.
+
 ::
+
     >>> foo = PlumbingClass()
     >>> foo.foo('blub', p1='p1', p2='p2', plumbing='plumbing')
     Plugin1.foo: args=('blub',)
@@ -172,7 +190,9 @@ positional arguments are just passed through to the plumbing class.
 End-points for plumbing chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Plumbing chains need a normal method to serve as end-point.
+
 ::
+
     >>> class Plugin1(object):
     ...     @plumb
     ...     def foo(plb, _next, self):
@@ -189,7 +209,9 @@ It is looked up on the class with ``getattr``, after the plumbing pipeline is
 processed, but before it is installed on the class.
 
 It can be provided by the plumbing class itself.
+
 ::
+
     >>> class Plugin1(object):
     ...     @plumb
     ...     def foo(plb, _next, self):
@@ -210,7 +232,9 @@ It can be provided by the plumbing class itself.
     Plugin1.foo stop
 
 It can be provided by a base class of the plumbing class.
+
 ::
+
     >>> class Base(object):
     ...     def foo(self):
     ...         print "Base.foo"
@@ -250,7 +274,9 @@ Why? It's faster - yet to be proven.
 Extending a class
 ~~~~~~~~~~~~~~~~~
 A plugin can put arbitrary attributes onto a class as if they were declared on it.
+
 ::
+
     >>> class Plugin1(object):
     ...     foo = extend(False)
 
@@ -260,7 +286,9 @@ A plugin can put arbitrary attributes onto a class as if they were declared on i
 
 The attribute is defined on the class, setting it on an instance will store the
 value in the instance's ``__dict__``.
+
 ::
+
     >>> PlumbingClass.foo
     False
     >>> plumbing = PlumbingClass()
@@ -274,7 +302,9 @@ value in the instance's ``__dict__``.
 
 If the attribute collides with one already declared on the class, an exception
 is raised.
+
 ::
+
     >>> class Plugin1(object):
     ...     foo = extend(False)
 
@@ -291,7 +321,9 @@ XXX: increase verbosity of exception
 Also, if two plugins try to extend an attribute with the same name, an
 exception is raised. The situation before processing the second plugin is
 exactly as if the method was declared on the class itself.
+
 ::
+
     >>> class Plugin1(object):
     ...     foo = extend(False)
 
@@ -307,7 +339,9 @@ exactly as if the method was declared on the class itself.
 
 Extended methods close pipelines, adding a plumbing method afterwards raises an
 exception.
+
 ::
+
     >>> class Plugin1(object):
     ...     @extend
     ...     def foo(self):
@@ -326,7 +360,9 @@ exception.
     PlumbingCollision: foo
 
 Extending a method needed by a plugin earlier in the chain works.
+
 ::
+
     >>> class Plugin1(object):
     ...     @plumb
     ...     def foo(plb, _next, self):
@@ -349,7 +385,9 @@ Extending a method needed by a plugin earlier in the chain works.
     Plugin1.foo stop
 
 It is possible to make super calls from within the method added by the plugin.
+
 ::
+
     >>> class Base(object):
     ...     def foo(self):
     ...         print "Base.foo"
@@ -379,7 +417,9 @@ Default attributes
 ~~~~~~~~~~~~~~~~~~
 Plugins that use parameters, provide defaults that are overridable. Further it
 should enable setting these parameters through a ``__init__`` plumbing method.
+
 ::
+
     >>> class Plugin1(object):
     ...     foo = default(False)
     ...     @plumb
@@ -395,7 +435,9 @@ should enable setting these parameters through a ``__init__`` plumbing method.
     ...         self.bar = bar
 
 The default value is set in the class' ``__dict__``.
+
 ::
+
     >>> Plumbing.foo
     False
     >>> plumbing = Plumbing()
@@ -406,7 +448,9 @@ The default value is set in the class' ``__dict__``.
 
 Setting the value on the instance is persistent and the class' value is
 untouched.
+
 ::
+
     >>> plumbing.foo = True
     >>> plumbing.foo
     True
@@ -414,7 +458,9 @@ untouched.
     False
 
 Values can be provided to ``__init__``.
+
 ::
+
     >>> plumbing = Plumbing(bar=42, foo=True)
     >>> plumbing.foo
     True
@@ -425,7 +471,9 @@ Values can be provided to ``__init__``.
 
 The first plugin prodiving a default value is taken, later defaults are
 ignored.
+
 ::
+
     >>> class One(object):
     ...     foo = default(1)
 
@@ -447,7 +495,9 @@ ignored.
     2
 
 An attribute declared on the class overwrites ``default`` attributes.
+
 ::
+
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = (One, Two)
@@ -457,7 +507,9 @@ An attribute declared on the class overwrites ``default`` attributes.
     None
 
 ``Extend`` overrules ``default``.
+
 ::
+
     >>> class Default(object):
     ...     foo = default('default')
 
@@ -486,7 +538,9 @@ An attribute declared on the class overwrites ``default`` attributes.
     'extend'
 
 ``default`` does not interfere with ``extend`` collision detection.
+
 ::
+
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = (Default, Extend, Default, Extend, Default)
@@ -495,7 +549,9 @@ An attribute declared on the class overwrites ``default`` attributes.
     PlumbingCollision: foo
 
 ``plumb`` and either ``default`` or ``extend`` collide.
+
 ::
+
     >>> class Default(object):
     ...     foo = default(None)
 
@@ -527,7 +583,9 @@ Docstrings of plumbing methods and plugins
 
 Two plugins and a plumbing using them, one plumbing chain and ``__doc__``
 declared on the classes and the classes' methdods.
+
 ::
+
     >>> class P1(object):
     ...     """P1
     ...     """
@@ -556,7 +614,9 @@ declared on the classes and the classes' methdods.
 
 The class' docstring is generated from the ``__doc__`` declared on the plumbing
 class followed by plugin classes' ``__doc__`` in reverse order.
+
 ::
+
     >>> print Plumbing.__doc__
     Plumbing
     <BLANKLINE>
@@ -566,7 +626,9 @@ class followed by plugin classes' ``__doc__`` in reverse order.
     <BLANKLINE>
 
 Docstrings for plumbing chains are generated alike.
+
 ::
+
     >>> print Plumbing.foo.__doc__
     Plumbing.foo
     <BLANKLINE>
@@ -582,12 +644,14 @@ zope.interface support
 The plumber does not depend on ``zope.interface`` but is aware of it. That
 means it will try to import it and if available will check plumbing classes
 for implemented interfaces and will make the new class implement them, too.
+
 ::
 
     >>> from zope.interface import Interface
     >>> from zope.interface import implements
 
 A class with an interface that will serve as base.
+
 ::
 
     >>> class IBase(Interface):
@@ -601,6 +665,7 @@ A class with an interface that will serve as base.
 
 Two plugins with corresponding interfaces, one with a base class that also
 implements an interface.
+
 ::
 
     >>> class IPlugin1(Interface):
@@ -632,6 +697,7 @@ implements an interface.
 
 A class based on ``Base`` using a plumbing of ``Plugin1`` and ``Plugin2`` and
 implementing ``IPlumbingClass``.
+
 ::
 
     >>> class IPlumbingClass(Interface):
@@ -643,6 +709,7 @@ implementing ``IPlumbingClass``.
     ...     implements(IPlumbingClass)
 
 The directly declared and inherited interfaces are implemented.
+
 ::
 
     >>> IPlumbingClass.implementedBy(PlumbingClass)
@@ -651,6 +718,7 @@ The directly declared and inherited interfaces are implemented.
     True
 
 The interfaces implemented by the used plumbing classes are also implemented.
+
 ::
 
     >>> IPlugin1.implementedBy(PlumbingClass)
@@ -661,6 +729,7 @@ The interfaces implemented by the used plumbing classes are also implemented.
     True
 
 An instance of the class provides the interfaces.
+
 ::
 
     >>> plumbing = PlumbingClass()
@@ -804,6 +873,7 @@ Different zope.interface.Interfaces for plumbing and created class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A different approach to the currently implemented system is having different
 interfaces for the plugins and the class that is created.
+
 ::
 
     #    >>> class IPlugin1Behaviour(Interface):
@@ -863,7 +933,9 @@ Test Coverage
 XXX: automatic update of coverage report
 
 Summary of the test coverage report.
+
 ::
+
     lines   cov%   module   (path)
         4   100%   plumber.__init__
        16   100%   plumber._globalmetaclasstest
