@@ -750,48 +750,24 @@ possible to base classes of our class, but without using subclassing.  For an
 additional maybe future approach see Discussion.
 
 
-A more lengthy explanation
---------------------------
-
-XXX:
-A plumbing consists of plumbing elements that define methods to be used as part
-of the plumbing. An object using a plumbing system, declares the Plumber as its
-metaclass and a ``__pipeline__`` defining the order of plumbing elements to be
-used.
-
-The plumbing system works similar to WSGI (the Web Server Gateway Interface).
-It consists of pipelines that are formed of plumbing methods of the listed
-classes. For each pipeline an entrance method is created that is called like
-every normal method with the general signature of ``def foo(self, **kw)``.
-The entrance method will just wrap the first plumbing method.
-
-Plumbing methods receive a wrapper of the next plumbing method. Therefore they
-can alter arguments before passing them on to the next plumbing method
-(preprocessing the request) and alter the return value of the next plumbing
-method (postprocessing the response) before returning it further.
-
-The normal endpoint is determined by ``getattr`` on the class without the
-plumbing system. If neither the class itself nor its base classes implement a
-corresponding method, a method is created that raises a
-``NotImplementedError``. A plumbing method can serve as an endpoint by just not
-calling ``_next``, by that it basically implements a new method for the class,
-as it were defined on the class. A super call to the class' bases can be made
-``super(self.__class__, self).name(**kw)``.
-XXX
-
 Nomenclature
 ------------
 
 The nomenclature is just forming and still inconsistent.
 
 Plumber
-    The plumber is the metaclass creating a plumbing system.
+    Metaclass that creates a plumbing system according to the instructions on
+    plumbing plugins: ``default``, ``extend`` and ``plumb``.
 
 plumbing (system)
     A plumbing is the result of what the Plumber produces. It is built of
     methods declared on base classes, the plumbing class and plumbing plugins
     according to ``default``, ``extend`` and ``plumb`` directives. Plugins
     involved are listed in a class' ``__pipeline__`` attribute.
+
+pipeline attribute
+    The attribute a class uses to define the order of plumbing class to be used
+    to create the plumbing.
 
 plumbing class
     Synonymous for plumbing system, but sometimes also only the class that asks
@@ -813,18 +789,46 @@ plumbing class
 ``plumb`` decorator
     Instruct the plumber to make a function part of a plumbing chain and turns
     the function into a classmethod bound to the plumbing plugin declaring it
-    and having a signature of: ``def foo(plb, _next, self, *args, **kw)``.
+    with a signature of: ``def foo(plb, _next, self, *args, **kw)``.
     ``plb`` is the plugin class declaring it, ``_next`` a wrapper for the next
     method in chain and ``self`` and instance of the plumbing
+
+default attribute
+    Attribute set via the ``default`` decorator.
+
+extension attribute
+    Attribute set via the ``extend`` decorator.
+
+plumbing method
+    Method declared via the ``plumb`` decoarator.
 
 plumbing chain
     The methods of a pipeline with the same name plumbed together. The entrance
     and end-point have the signature of normal methods: ``def foo(self, *args,
-    **kw)``
+    **kw)``. The plumbing chain is a series of nested closures (see ``_next``).
 
-pipeline attribute
-    The attribute a class uses to define the order of plumbing class to be used
-    to create the plumbing.
+entrance method
+    A method with a normal signature. i.e. expecting ``self`` as first
+    argument, that is used to enter a plumbing chain. It is a ``_next``
+    function. A method declared on the class with the same name, will be
+    overwritten, but referenced in the chain as the innermost method, the
+    end-point.
+
+``_next`` function
+    The ``_next`` function is used to call the next method in a chain: in case of
+    a plumbing method, a wrapper of it that passes the correct next ``_next``
+    as first argument and in case of an end-point, just the end-point method
+    itself.
+
+end-point (method)
+    Method retrieved from the plumbing class with ``getattr()``, before setting
+    the entrance method on the class. It is provided with the following
+    precedence:
+
+    1. plumbing class itself,
+    2. plumbing extension attribute,
+    3. plumbing default attribute,
+    4. bases of the plumbing class.
 
 
 Discussions
