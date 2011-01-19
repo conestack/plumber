@@ -865,13 +865,273 @@ number of plumbing chains in case of many dynamic plumbings.
 Test Coverage
 -------------
 
+XXX: automatic update of coverage report
+
 Summary
 ~~~~~~~
-XXX: ./bin/coverage summary output
+::
+    lines   cov%   module   (path)
+        4   100%   plumber.__init__
+       16   100%   plumber._globalmetaclasstest
+       76    97%   plumber._plumber
+       15    93%   plumber.tests
 
 Detailed
 ~~~~~~~~
-XXX: pull in coverage test files
+Is this sane to have here?
+
+``parts/coverage/plumber._globalmetaclasstest.cover``:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
+           """A module to test setting a metaclass globally
+
+           ATTENTION: we do not recommend this, but you can do it!
+
+           Mostly here for understanding what's going on.
+        1: """
+
+        1: from zope.interface import Interface
+        1: from zope.interface import implements
+
+        1: from plumber import Plumber
+
+        1: __metaclass__ = Plumber
+
+
+        2: class IPlugin1(Interface):
+               """
+               A zope.interface.Interface is not affected by the global ``__metaclass__``.
+               ::
+                   >>> IPlugin1.__class__
+                   <class 'zope.interface.interface.InterfaceClass'>
+        1:     """
+        1:     pass
+
+
+        2: class Plugin1:
+               """
+               A global meta-class declaration makes all classes at least new-style
+               classes, even when not subclassing subclasses.
+               ::
+                   >>> Plugin1.__class__
+                   <class 'plumber._plumber.Plumber'>
+
+                   >>> issubclass(Plugin1, object)
+                   True
+        1:     """
+        1:     implements(IPlugin1)
+
+
+        2: class ClassMaybeUsingAPlumbing(object):
+               """
+               If subclassing object, the global metaclass declaration is ignored.
+               ::
+                   >>> ClassMaybeUsingAPlumbing.__class__
+                   <type 'type'>
+        1:     """
+
+
+        2: class ClassReallyUsingAPlumbing:
+               """
+                   >>> ClassReallyUsingAPlumbing.__class__
+                   <class 'plumber._plumber.Plumber'>
+
+                   >>> issubclass(ClassReallyUsingAPlumbing, object)
+                   True
+
+                   >>> IPlugin1.implementedBy(ClassReallyUsingAPlumbing)
+                   True
+        1:     """
+        1:     __pipeline__ = (Plugin1,)
+
+``parts/coverage/plumber.__init__.cover``:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
+        1: from plumber._plumber import Plumber
+        1: from plumber._plumber import default
+        1: from plumber._plumber import extend
+        1: from plumber._plumber import plumb
+
+``parts/coverage/plumber._plumber.cover``:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
+        1: import os
+
+           # We are aware of ``zope.interface.Interface``: if zope.interfaces is available
+           # we check interfaces implemented on the plumbing plugins and will make the
+           # plumbing implement them, too.
+        1: try:
+        1:     from zope.interface import classImplements
+        1:     from zope.interface import implementedBy
+        1:     ZOPE_INTERFACE_AVAILABLE = True
+    >>>>>> except ImportError:
+    >>>>>>     ZOPE_INTERFACE_AVAILABLE = False
+
+
+        2: class PlumbingCollision(RuntimeError):
+        1:     pass
+
+
+        2: class default(object):
+               """Provide a default value for something
+
+               The first plugin with a default value wins the first round: its value is
+               set on the plumbing as if it was declared there.
+
+               Attributes set with the ``extend`` decorator overrule ``default``
+               attributes (see ``extend`` decorator).
+        1:     """
+        1:     def __init__(self, attr):
+        5:         self.attr = attr
+
+
+        2: class extend(object):
+               """Declare an attribute on the plumning as if it was defined on it.
+
+               Attribute set with the ``extend`` decorator overrule ``default``
+               attributes. Two ``extend`` attributes in a chain raise a PlumbingCollision.
+        1:     """
+        1:     def __init__(self, attr):
+        9:         self.attr = attr
+
+
+        2: class plumb(classmethod):
+               """Mark a method to be used in a plumbing chain.
+
+               The signature of the method is:
+               ``def foo(plb, _next, self, *args, **kw)``
+
+               A plumbing method is a classmethod bound to the plugin class defining it
+               (``plb``), as second argument it receives the next plumbing method
+               (``_next``) and the third argument (``self``) is a plumbing instance, that
+               for normal methods would be the first argument.
+
+               In order to plumb a method there needs to be a non-plumbing method behind
+               it provided by: a plumbing plugin via ``extend`` or ``default`` later in
+               the pipeline, the class itself or one of its base classes.
+        1:     """
+
+        1: def merge_doc(first, *args):
+       39:     if first.__doc__ is None:
+       30:         return None
+        9:     if not args:
+        4:         return first.__doc__
+        5:     return os.linesep.join((first.__doc__, merge_doc(*args)))
+
+
+        1: def entrance(name, pipe):
+               """Create an entrance to a pipeline.
+
+               recursively:
+               - pop first method from pipeline
+               - create entrance to the rest of the pipe as _next
+               - wrap method passing it _next and return it, if not last method
+               - return last method as is, if last method
+               """
+               # If only one element is left in the pipe, it is a normal method that does
+               # not expect a ``_next`` parameter.
+       22:     if len(pipe) is 1:
+       12:         return pipe[0]
+
+               # XXX: traceback supplement for pdb, probably more than just name is needed
+
+       10:     plumbing_method = pipe.pop(0)
+       10:     _next = entrance(name, pipe)
+       10:     def _entrance(self, *args, **kw):
+       11:         return plumbing_method(_next, self, *args, **kw)
+       10:     _entrance.__doc__ = merge_doc(_next, plumbing_method)
+       10:     return _entrance
+
+
+        2: class CLOSED(object):
+               """used for marking a pipeline as closed
+        1:     """
+
+
+        2: class Plumber(type):
+               """Metaclass for plumbing creation
+
+               First the normal new-style metaclass ``type()`` is called to construct the
+               class with ``name``, ``bases``, ``dct``.
+
+               Then, if the class declares a ``__pipeline__`` attribute, the plumber
+               will create a plumbing system accordingly. Attributes declared with
+               ``default``, ``extend`` and ``plumb`` will be used in the plumbing.
+        1:     """
+        1:     def __init__(cls, name, bases, dct):
+       26:         super(Plumber, cls).__init__(name, bases, dct)
+                   # The metaclass is inherited.
+                   # The plumber will only get active if the class it produces defines a
+                   # __pipeline__.
+       26:         if cls.__dict__.get('__pipeline__') is None:
+        2:             return
+
+                   # generate docstrings from all plugin classes
+       24:         cls.__doc__ = merge_doc(cls, *reversed(cls.__pipeline__))
+
+                   # Follow ``default``, ``extend`` and ``plumb`` declarations.
+       24:         pipelines = {}
+       24:         defaulted = {}
+       61:         for plugin in cls.__pipeline__:
+
+      280:             for name, decor in plugin.__dict__.items():
+      243:                 if isinstance(decor, extend):
+       13:                     if name in cls.__dict__ \
+        6:                       and name not in defaulted:
+                                   # XXX: provide more info what is colliding
+        3:                         raise PlumbingCollision(name)
+                               # just copy the attribute that was passed to the extend
+                               # decorator and mark the pipeline as closed, i.e. adding
+                               # further methods to it, will raise an error.
+       10:                     setattr(cls, name, decor.attr)
+       10:                     defaulted.pop(name, None)
+       10:                     pipe = pipelines.setdefault(name, [])
+       10:                     pipe.append(CLOSED)
+      230:                 elif isinstance(decor, default):
+       14:                     if not name in cls.__dict__:
+        7:                         setattr(cls, name, decor.attr)
+        7:                         defaulted[name] = None
+      216:                 elif isinstance(decor, plumb):
+       14:                     pipe = pipelines.setdefault(name, [])
+       14:                     if pipe and pipe[-1] is CLOSED:
+        2:                         raise PlumbingCollision(name)
+       12:                     if name in defaulted:
+        1:                         raise PlumbingCollision(name)
+                               # plumbing methods are class methods bound to the plumbing
+                               # plugin class, ``getattr`` on the class in combination
+                               # with being a classmethod, does this for us.
+       11:                     pipe.append(getattr(plugin, name))
+
+                       # If zope.interface is available (see import at the beginning of
+                       # file), we check the plugins for implemented interfaces and make
+                       # the new class implement these, too.
+       37:             if ZOPE_INTERFACE_AVAILABLE:
+       37:                 ifaces = implementedBy(plugin)
+       37:                 if ifaces is not None:
+       37:                     classImplements(cls, *list(ifaces))
+
+       30:         for name, pipe in pipelines.items():
+                       # Remove CLOSED pipe marker.
+       13:             if pipe[-1] is CLOSED:
+        6:                 del pipe[-1]
+
+                       # Retrieve end point from class, from what happened above it is
+                       # found with priorities:
+                       # 1. a plumbing plugin declared it with ``extend``
+                       # 2. the plumbing class itself declared it
+                       # 3. a plumbing plugin provided a ``default`` value
+                       # 4. a base class provides the attribute
+       13:             end_point = getattr(cls, name)
+       12:             pipe.append(end_point)
+
+                       # Finally ``entrance`` will plumb the methods together and return
+                       # an entrance function, that is set on the plumbing class be and
+                       # will result in a normal bound method when being retrieved by
+                       # getattr().
+       12:             setattr(cls, name, entrance(name, pipe))
+
+``parts/coverage/plumber.tests.cover``:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 Contributors
