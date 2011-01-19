@@ -73,7 +73,7 @@ A plumbing based on ``Base`` and using the plugins ``Plugin1`` and ``Plugin2``::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...     __pipeline__ = Plugin1, Plugin2
     ...
     ...     def foo(self):
     ...         print "PlumbingClass.foo start"
@@ -158,7 +158,7 @@ attributes for application to ``__init__`` plumbing)::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...     __pipeline__ = Plugin1, Plugin2
     ...     def foo(self, *args, **kw):
     ...         print "PlumbingClass.foo: args=%s" % (args,)
     ...         print "PlumbingClass.foo: kw=%s" % (kw,)
@@ -187,7 +187,7 @@ Plumbing chains need a normal method to serve as end-point::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1,)
+    ...     __pipeline__ = Plugin1
     Traceback (most recent call last):
       ...
     AttributeError: type object 'PlumbingClass' has no attribute 'foo'
@@ -206,7 +206,7 @@ It can be provided by the plumbing class itself::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1,)
+    ...     __pipeline__ = Plugin1
     ...
     ...     def foo(self):
     ...         print "PlumbingClass.foo"
@@ -231,7 +231,7 @@ It can be provided by a base class of the plumbing class::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1,)
+    ...     __pipeline__ = Plugin1
 
     >>> plumbing = PlumbingClass().foo()
     Plugin1.foo start
@@ -372,7 +372,7 @@ Aspects of a property that uses lambda abstraction are easily plumbed::
 
     >>> class PlumbedLambdaProperty(LambdaBase):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (PropertyPlumbing,)
+    ...     __pipeline__ = PropertyPlumbing
 
     >>> plp = PlumbedLambdaProperty()
     >>> plp.a = 4
@@ -403,7 +403,7 @@ A plugin can put arbitrary attributes onto a class as if they were declared on i
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1,)
+    ...     __pipeline__ = Plugin1
 
 The attribute is defined on the class, setting it on an instance will store the
 value in the instance's ``__dict__``::
@@ -427,7 +427,7 @@ is raised::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1,)
+    ...     __pipeline__ = Plugin1
     ...     foo = False
     Traceback (most recent call last):
       ...
@@ -447,7 +447,7 @@ exactly as if the method was declared on the class itself::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...     __pipeline__ = Plugin1, Plugin2
     Traceback (most recent call last):
       ...
     PlumbingCollision: foo
@@ -467,7 +467,7 @@ exception::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...     __pipeline__ = Plugin1, Plugin2
     Traceback (most recent call last):
       ...
     PlumbingCollision: foo
@@ -488,7 +488,7 @@ Extending a method needed by a plugin earlier in the chain works::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...     __pipeline__ = Plugin1, Plugin2
 
     >>> PlumbingClass().foo()
     Plugin1.foo start
@@ -510,7 +510,7 @@ It is possible to make super calls from within the method added by the plugin::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1,)
+    ...     __pipeline__ = Plugin1
 
     >>> plumbing = PlumbingClass()
     >>> plumbing.foo()
@@ -537,7 +537,7 @@ should enable setting these parameters through a ``__init__`` plumbing method::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1,)
+    ...     __pipeline__ = Plugin1,
     ...     def __init__(self, bar=None):
     ...         self.bar = bar
 
@@ -581,14 +581,14 @@ ignored::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (One, Two)
+    ...     __pipeline__ = One, Two
 
     >>> Plumbing.foo
     1
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Two, One)
+    ...     __pipeline__ = Two, One
 
     >>> Plumbing.foo
     2
@@ -597,7 +597,7 @@ An attribute declared on the class overwrites ``default`` attributes::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (One, Two)
+    ...     __pipeline__ = One, Two
     ...     foo = None
 
     >>> print Plumbing.foo
@@ -613,21 +613,21 @@ An attribute declared on the class overwrites ``default`` attributes::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Extend, Default)
+    ...     __pipeline__ = Extend, Default
 
     >>> Plumbing.foo
     'extend'
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Default, Extend)
+    ...     __pipeline__ = Default, Extend
 
     >>> Plumbing.foo
     'extend'
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Default, Extend, Default)
+    ...     __pipeline__ = Default, Extend, Default
 
     >>> Plumbing.foo
     'extend'
@@ -636,7 +636,7 @@ An attribute declared on the class overwrites ``default`` attributes::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Default, Extend, Default, Extend, Default)
+    ...     __pipeline__ = Default, Extend, Default, Extend, Default
     Traceback (most recent call last):
       ...
     PlumbingCollision: foo
@@ -656,17 +656,30 @@ An attribute declared on the class overwrites ``default`` attributes::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Default, Plumb)
+    ...     __pipeline__ = Default, Plumb
     Traceback (most recent call last):
       ...
     PlumbingCollision: foo
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Extend, Plumb)
+    ...     __pipeline__ = Extend, Plumb
     Traceback (most recent call last):
       ...
     PlumbingCollision: foo
+
+Extending properties
+~~~~~~~~~~~~~~~~~~~~
+
+    >>> class Plugin(object):
+    ...     @extend
+    ...     @property
+    ...     def foo(self):
+    ...         return 5
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = Plugin
 
 
 Docstrings of plumbing methods and plugins
@@ -691,7 +704,7 @@ docstrings are skipped::
     ...     """Plumbing
     ...     """
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (P1, P2, P3)
+    ...     __pipeline__ = P1, P2, P3
 
 XXX: protect whitespace from testrunner normalization
 
@@ -715,7 +728,7 @@ If all are None the docstring is also None::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (P1, P2)
+    ...     __pipeline__ = P1, P2
 
     >>> print Plumbing.__doc__
     None
@@ -741,7 +754,7 @@ Docstrings for the entrance methods are generated alike::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (P1, P2, P3)
+    ...     __pipeline__ = P1, P2, P3
     ...     def foo():
     ...         """Plumbing.foo
     ...         """
@@ -818,7 +831,7 @@ implementing ``IPlumbingClass``::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...     __pipeline__ = Plugin1, Plugin2
     ...     implements(IPlumbingClass)
 
 The directly declared and inherited interfaces are implemented::

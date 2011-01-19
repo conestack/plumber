@@ -116,8 +116,7 @@ class Plumber(type):
         if cls.__dict__.get('__pipeline__') is None:
             return
         if type(cls.__pipeline__) is not tuple:
-            raise TypeError("__pipeline__ needs to be tuple not %s." % \
-                            (type(cls.__pipeline__),))
+            cls.__pipeline__ = (cls.__pipeline__,)
 
         # generate docstrings from all plugin classes
         cls.__doc__ = merge_doc(cls, *reversed(cls.__pipeline__))
