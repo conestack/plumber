@@ -63,7 +63,10 @@ def merge_doc(first, *args):
     if rest_doc is None:
         return first.__doc__
 
-    return os.linesep.join((first.__doc__ or '', rest_doc))
+    if first.__doc__ is None:
+        return rest_doc
+
+    return os.linesep.join((first.__doc__, rest_doc))
 
 
 def entrance(name, pipe):

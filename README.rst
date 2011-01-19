@@ -581,55 +581,90 @@ An attribute declared on the class overwrites ``default`` attributes.
 Docstrings of plumbing methods and plugins
 ------------------------------------------
 
-Two plugins and a plumbing using them, one plumbing chain and ``__doc__``
-declared on the classes and the classes' methdods.
+The class' docstring is generated from the ``__doc__`` declared on the plumbing
+class followed by plugin classes' ``__doc__`` in reverse order. ``None``
+docstrings are skipped.
 
 ::
 
     >>> class P1(object):
     ...     """P1
     ...     """
-    ...     @plumb
-    ...     def foo(plb, _next, self):
-    ...         """P1.foo
-    ...         """
 
     >>> class P2(object):
-    ...     """P2
+    ...     pass
+
+    >>> class P3(object):
+    ...     """P3
     ...     """
-    ...     @plumb
-    ...     def foo(plb, _next, self):
-    ...         """P2.foo
-    ...         """
 
     >>> class Plumbing(object):
+    ...     """Plumbing
+    ...     """
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (P1, P2)
-    ...
-    ...     def foo(self):
-    ...         """Plumbing.foo
-    ...         """
+    ...     __pipeline__ = (P1, P2, P3)
 
-The class' docstring is generated from the ``__doc__`` declared on the plumbing
-class followed by plugin classes' ``__doc__`` in reverse order.
+XXX: protect whitespace from testrunner normalization
 
 ::
 
     >>> print Plumbing.__doc__
     Plumbing
     <BLANKLINE>
-    P2
+    P3
     <BLANKLINE>
     P1
     <BLANKLINE>
 
-Docstrings for plumbing chains are generated alike.
+If all are None the docstring is also None.
 
 ::
 
+    >>> class P1(object):
+    ...     pass
+
+    >>> class P2(object):
+    ...     pass
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (P1, P2)
+
+    >>> print Plumbing.__doc__
+    None
+
+Docstrings for the entrance methods are generated alike.
+
+::
+
+    >>> class P1(object):
+    ...     @plumb
+    ...     def foo():
+    ...         """P1.foo
+    ...         """
+
+    >>> class P2(object):
+    ...     @plumb
+    ...     def foo():
+    ...         pass
+
+    >>> class P3(object):
+    ...     @plumb
+    ...     def foo():
+    ...         """P3.foo
+    ...         """
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (P1, P2, P3)
+    ...     def foo():
+    ...         """Plumbing.foo
+    ...         """
+
     >>> print Plumbing.foo.__doc__
+    Plumbing.foo
     <BLANKLINE>
-    P2.foo
+    P3.foo
     <BLANKLINE>
     P1.foo
     <BLANKLINE>
