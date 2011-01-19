@@ -26,6 +26,8 @@ XXX: write about property support
 
 XXX: use reStructured section references, does something like that exist?
 
+.. contents::
+
 
 Plumbing chains
 ---------------
@@ -47,7 +49,7 @@ the plumbing, they are classmethods of the plugin declaring them ``plb``, via
 ``_next`` they call the next method and ``self`` is an instance of the
 plumbing.
 
-..attention:: ``self`` is not an instance of the plugin class, but an
+.. attention:: ``self`` is not an instance of the plugin class, but an
   instance of plumbing class. The system is designed so the code you write in
   plumbing methods looks as similar as possible to the code you would write
   directly on the class.
@@ -134,7 +136,7 @@ The plumbing can be subclassed like a normal class.
     Plugin1.foo stop
     SubOfPlumbingClass.foo stop
 
-..note:: A class inherits the ``__metaclass__`` declaration from base classes.
+.. note:: A class inherits the ``__metaclass__`` declaration from base classes.
   The ``Plumber`` metaclass is called for ``PlumbingClass`` **and**
   ``SubOfPlumbingClass``. However, it will only get active for a class that
   declares a ``__pipeline__`` itself and otherwise just calls ``type``, the
@@ -1157,7 +1159,7 @@ Summary of the test coverage report.
 
 Detailed
 ~~~~~~~~
-XXX: Is this sane to have here? Include coverage files as preformatted.
+XXX: Would this be sane to have here? Include coverage files as preformatted.
 
 
 Contributors
