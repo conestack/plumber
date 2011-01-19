@@ -431,6 +431,24 @@ Plumbing properties that do not use lambda abstraction
     >>> hasattr(plumbing, '_a')
     False
 
+A base class has a readonly property, a plumbing property plumbs in::
+
+    >>> class Base(object):
+    ...     @property
+    ...     def foo(self):
+    ...         return 5
+
+    >>> class Plugin(object):
+    ...     @plumb
+    ...     @property
+    ...     def foo(plb, _next, self):
+    ...         return 3 * _next(self)
+
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = Plugin
+
+    >>> Plumbing().foo
 
 Extending classes through plumbing, an alternative to mixins
 ------------------------------------------------------------
