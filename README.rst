@@ -10,9 +10,7 @@ values for class variables (``default`` decorator) and form chains of methods
 next method and post-process results before passing them to the previous method
 (similar to WSGI pipelines).
 
-Why not just use sub-classing? see Motivation.
-
-::
+Why not just use sub-classing? see Motivation::
 
     >>> from plumber import Plumber
     >>> from plumber import default
@@ -40,9 +38,7 @@ XXX: diagram how a plumbing chain works
 
 Plumbing chains and usual subclassing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A class that will serve as normal base class for our plumbing.
-
-::
+A class that will serve as normal base class for our plumbing::
 
     >>> class Base(object):
     ...     def foo(self):
@@ -51,14 +47,7 @@ A class that will serve as normal base class for our plumbing.
 Two plugins for the plumbing: the ``plumb`` decorator makes the methods part of
 the plumbing, they are classmethods of the plugin declaring them ``plb``, via
 ``_next`` they call the next method and ``self`` is an instance of the
-plumbing.
-
-.. attention:: ``self`` is not an instance of the plugin class, but an
-  instance of plumbing class. The system is designed so the code you write in
-  plumbing methods looks as similar as possible to the code you would write
-  directly on the class.
-
-::
+plumbing::
 
     >>> class Plugin1(object):
     ...     @plumb
@@ -74,9 +63,13 @@ plumbing.
     ...         _next(self)
     ...         print "Plugin2.foo stop"
 
-A plumbing based on ``Base`` and using the plugins ``Plugin1`` and ``Plugin2``.
+.. attention:: ``self`` is not an instance of the plugin class, but an
+  instance of plumbing class. The system is designed so the code you write in
+  plumbing methods looks as similar as possible to the code you would write
+  directly on the class.
 
-::
+
+A plumbing based on ``Base`` and using the plugins ``Plugin1`` and ``Plugin2``::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
@@ -88,9 +81,7 @@ A plumbing based on ``Base`` and using the plugins ``Plugin1`` and ``Plugin2``.
     ...         print "PlumbingClass.foo stop"
 
 Methods provided by the plugins sit in front of methods declared by the class
-and its base classes.
-
-::
+and its base classes::
 
     >>> plumbing = PlumbingClass()
     >>> plumbing.foo()
@@ -102,9 +93,7 @@ and its base classes.
     Plugin2.foo stop
     Plugin1.foo stop
 
-The plugins are not in the class' method resolution order.
-
-::
+The plugins are not in the class' method resolution order::
 
     >>> PlumbingClass.__mro__
     (<class 'PlumbingClass'>,
@@ -118,9 +107,7 @@ The plugins are not in the class' method resolution order.
     >>> issubclass(PlumbingClass, Plugin2)
     False
 
-The plumbing can be subclassed like a normal class.
-
-::
+The plumbing can be subclassed like a normal class::
 
     >>> class SubOfPlumbingClass(PlumbingClass):
     ...     def foo(self):
@@ -151,9 +138,7 @@ Passing parameters to methods in a plumbing chain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Parameters to plumbing methods are passed in via keyword arguments - there is
 no sane way to do this via positional arguments (see section Default
-attributes for application to ``__init__`` plumbing).
-
-::
+attributes for application to ``__init__`` plumbing)::
 
     >>> class Plugin1(object):
     ...     @plumb
@@ -179,9 +164,7 @@ attributes for application to ``__init__`` plumbing).
     ...         print "PlumbingClass.foo: kw=%s" % (kw,)
 
 The plumbing plugins pick what they need, the remainging keywords and all
-positional arguments are just passed through to the plumbing class.
-
-::
+positional arguments are just passed through to the plumbing class::
 
     >>> foo = PlumbingClass()
     >>> foo.foo('blub', p1='p1', p2='p2', plumbing='plumbing')
@@ -195,9 +178,7 @@ positional arguments are just passed through to the plumbing class.
 
 End-points for plumbing chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Plumbing chains need a normal method to serve as end-point.
-
-::
+Plumbing chains need a normal method to serve as end-point::
 
     >>> class Plugin1(object):
     ...     @plumb
@@ -214,9 +195,7 @@ Plumbing chains need a normal method to serve as end-point.
 It is looked up on the class with ``getattr``, after the plumbing pipeline is
 processed, but before it is installed on the class.
 
-It can be provided by the plumbing class itself.
-
-::
+It can be provided by the plumbing class itself::
 
     >>> class Plugin1(object):
     ...     @plumb
@@ -237,9 +216,7 @@ It can be provided by the plumbing class itself.
     PlumbingClass.foo
     Plugin1.foo stop
 
-It can be provided by a base class of the plumbing class.
-
-::
+It can be provided by a base class of the plumbing class::
 
     >>> class Base(object):
     ...     def foo(self):
@@ -298,8 +275,8 @@ Properties with named functions, non-decorated
     False
 
 A property is realised by a property descriptor object in the ``__dict__`` of
-the class defining it:
-::
+the class defining it::
+
     >>> Base.__dict__['a']
     <property object at 0x...>
 
@@ -312,8 +289,8 @@ From now on we skip the deleter.
 
 If you want to change an aspect of a property, you need to redefine it, except
 if it uses lambda abstraction (see below). As the function used as getter is
-also in the Base class' ``__dict__`` we can use it, saving some overhead.
-::
+also in the Base class' ``__dict__`` we can use it, saving some overhead::
+
     >>> class ClassOverridingProperty(Base):
     ...     def get_a(self):
     ...         return 2 * super(ClassOverridingProperty, self).get_a()
@@ -328,8 +305,7 @@ Properties with decorated or unnamed getter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In case the property is realised by a decorated function or a single lambda -
 both cases result in a read-only property - the function used as getter is not
-anymore in the class' ``__dict__``.
-::
+anymore in the class' ``__dict__``::
 
     >>> class PropWithoutDictFuncBase(object):
     ...     @property
@@ -354,8 +330,7 @@ anymore in the class' ``__dict__``.
 Lambda abstraction
 ^^^^^^^^^^^^^^^^^^
 If a base class uses lambdas to add a layer of abstraction it is easier to
-override a single aspect, but adds another call (see Benchmarking below).
-::
+override a single aspect, but adds another call (see Benchmarking below)::
 
     >>> class LambdaBase(object):
     ...     def get_a(self):
@@ -378,8 +353,8 @@ override a single aspect, but adds another call (see Benchmarking below).
 
 Plumbing of a property that uses lambda abstraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Aspects of a property that uses lambda abstraction are easily plumbed
-::
+Aspects of a property that uses lambda abstraction are easily plumbed::
+
     >>> class LambdaBase(object):
     ...     def get_a(self):
     ...         return self._a
@@ -421,9 +396,7 @@ Why? It's faster - yet to be proven.
 
 Extending a class
 ~~~~~~~~~~~~~~~~~
-A plugin can put arbitrary attributes onto a class as if they were declared on it.
-
-::
+A plugin can put arbitrary attributes onto a class as if they were declared on it::
 
     >>> class Plugin1(object):
     ...     foo = extend(False)
@@ -433,9 +406,7 @@ A plugin can put arbitrary attributes onto a class as if they were declared on i
     ...     __pipeline__ = (Plugin1,)
 
 The attribute is defined on the class, setting it on an instance will store the
-value in the instance's ``__dict__``.
-
-::
+value in the instance's ``__dict__``::
 
     >>> PlumbingClass.foo
     False
@@ -449,9 +420,7 @@ value in the instance's ``__dict__``.
     False
 
 If the attribute collides with one already declared on the class, an exception
-is raised.
-
-::
+is raised::
 
     >>> class Plugin1(object):
     ...     foo = extend(False)
@@ -468,9 +437,7 @@ XXX: increase verbosity of exception
 
 Also, if two plugins try to extend an attribute with the same name, an
 exception is raised. The situation before processing the second plugin is
-exactly as if the method was declared on the class itself.
-
-::
+exactly as if the method was declared on the class itself::
 
     >>> class Plugin1(object):
     ...     foo = extend(False)
@@ -486,9 +453,7 @@ exactly as if the method was declared on the class itself.
     PlumbingCollision: foo
 
 Extended methods close pipelines, adding a plumbing method afterwards raises an
-exception.
-
-::
+exception::
 
     >>> class Plugin1(object):
     ...     @extend
@@ -507,9 +472,7 @@ exception.
       ...
     PlumbingCollision: foo
 
-Extending a method needed by a plugin earlier in the chain works.
-
-::
+Extending a method needed by a plugin earlier in the chain works::
 
     >>> class Plugin1(object):
     ...     @plumb
@@ -532,9 +495,7 @@ Extending a method needed by a plugin earlier in the chain works.
     Plugin2.foo
     Plugin1.foo stop
 
-It is possible to make super calls from within the method added by the plugin.
-
-::
+It is possible to make super calls from within the method added by the plugin::
 
     >>> class Base(object):
     ...     def foo(self):
@@ -564,9 +525,7 @@ value (see next section).
 Default attributes
 ~~~~~~~~~~~~~~~~~~
 Plugins that use parameters, provide defaults that are overridable. Further it
-should enable setting these parameters through a ``__init__`` plumbing method.
-
-::
+should enable setting these parameters through a ``__init__`` plumbing method::
 
     >>> class Plugin1(object):
     ...     foo = default(False)
@@ -582,9 +541,7 @@ should enable setting these parameters through a ``__init__`` plumbing method.
     ...     def __init__(self, bar=None):
     ...         self.bar = bar
 
-The default value is set in the class' ``__dict__``.
-
-::
+The default value is set in the class' ``__dict__``::
 
     >>> Plumbing.foo
     False
@@ -595,9 +552,7 @@ The default value is set in the class' ``__dict__``.
     False
 
 Setting the value on the instance is persistent and the class' value is
-untouched.
-
-::
+untouched::
 
     >>> plumbing.foo = True
     >>> plumbing.foo
@@ -605,9 +560,7 @@ untouched.
     >>> Plumbing.foo
     False
 
-Values can be provided to ``__init__``.
-
-::
+Values can be provided to ``__init__``::
 
     >>> plumbing = Plumbing(bar=42, foo=True)
     >>> plumbing.foo
@@ -618,9 +571,7 @@ Values can be provided to ``__init__``.
     42
 
 The first plugin prodiving a default value is taken, later defaults are
-ignored.
-
-::
+ignored::
 
     >>> class One(object):
     ...     foo = default(1)
@@ -642,9 +593,7 @@ ignored.
     >>> Plumbing.foo
     2
 
-An attribute declared on the class overwrites ``default`` attributes.
-
-::
+An attribute declared on the class overwrites ``default`` attributes::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
@@ -654,9 +603,7 @@ An attribute declared on the class overwrites ``default`` attributes.
     >>> print Plumbing.foo
     None
 
-``Extend`` overrules ``default``.
-
-::
+``Extend`` overrules ``default``::
 
     >>> class Default(object):
     ...     foo = default('default')
@@ -685,9 +632,7 @@ An attribute declared on the class overwrites ``default`` attributes.
     >>> Plumbing.foo
     'extend'
 
-``default`` does not interfere with ``extend`` collision detection.
-
-::
+``default`` does not interfere with ``extend`` collision detection::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
@@ -696,9 +641,7 @@ An attribute declared on the class overwrites ``default`` attributes.
       ...
     PlumbingCollision: foo
 
-``plumb`` and either ``default`` or ``extend`` collide.
-
-::
+``plumb`` and either ``default`` or ``extend`` collide::
 
     >>> class Default(object):
     ...     foo = default(None)
@@ -731,9 +674,7 @@ Docstrings of plumbing methods and plugins
 
 The class' docstring is generated from the ``__doc__`` declared on the plumbing
 class followed by plugin classes' ``__doc__`` in reverse order. ``None``
-docstrings are skipped.
-
-::
+docstrings are skipped::
 
     >>> class P1(object):
     ...     """P1
@@ -764,9 +705,7 @@ XXX: protect whitespace from testrunner normalization
     P1
     <BLANKLINE>
 
-If all are None the docstring is also None.
-
-::
+If all are None the docstring is also None::
 
     >>> class P1(object):
     ...     pass
@@ -781,9 +720,7 @@ If all are None the docstring is also None.
     >>> print Plumbing.__doc__
     None
 
-Docstrings for the entrance methods are generated alike.
-
-::
+Docstrings for the entrance methods are generated alike::
 
     >>> class P1(object):
     ...     @plumb
@@ -827,16 +764,12 @@ zope.interface support
 
 The plumber does not depend on ``zope.interface`` but is aware of it. That
 means it will try to import it and if available will check plumbing classes
-for implemented interfaces and will make the new class implement them, too.
-
-::
+for implemented interfaces and will make the new class implement them, too::
 
     >>> from zope.interface import Interface
     >>> from zope.interface import implements
 
-A class with an interface that will serve as base.
-
-::
+A class with an interface that will serve as base::
 
     >>> class IBase(Interface):
     ...     pass
@@ -848,9 +781,7 @@ A class with an interface that will serve as base.
     True
 
 Two plugins with corresponding interfaces, one with a base class that also
-implements an interface.
-
-::
+implements an interface::
 
     >>> class IPlugin1(Interface):
     ...     pass
@@ -880,9 +811,7 @@ implements an interface.
     True
 
 A class based on ``Base`` using a plumbing of ``Plugin1`` and ``Plugin2`` and
-implementing ``IPlumbingClass``.
-
-::
+implementing ``IPlumbingClass``::
 
     >>> class IPlumbingClass(Interface):
     ...     pass
@@ -892,18 +821,14 @@ implementing ``IPlumbingClass``.
     ...     __pipeline__ = (Plugin1, Plugin2)
     ...     implements(IPlumbingClass)
 
-The directly declared and inherited interfaces are implemented.
-
-::
+The directly declared and inherited interfaces are implemented::
 
     >>> IPlumbingClass.implementedBy(PlumbingClass)
     True
     >>> IBase.implementedBy(PlumbingClass)
     True
 
-The interfaces implemented by the used plumbing classes are also implemented.
-
-::
+The interfaces implemented by the used plumbing classes are also implemented::
 
     >>> IPlugin1.implementedBy(PlumbingClass)
     True
@@ -912,9 +837,7 @@ The interfaces implemented by the used plumbing classes are also implemented.
     >>> IPlugin2Base.implementedBy(PlumbingClass)
     True
 
-An instance of the class provides the interfaces.
-
-::
+An instance of the class provides the interfaces::
 
     >>> plumbing = PlumbingClass()
 
@@ -1064,9 +987,7 @@ case first.
 Different zope.interface.Interfaces for plumbing and created class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A different approach to the currently implemented system is having different
-interfaces for the plugins and the class that is created.
-
-::
+interfaces for the plugins and the class that is created::
 
     #    >>> class IPlugin1Behaviour(Interface):
     #    ...     pass
@@ -1125,9 +1046,7 @@ Test Coverage
 
 XXX: automatic update of coverage report
 
-Summary of the test coverage report.
-
-::
+Summary of the test coverage report::
 
     lines   cov%   module   (path)
         4   100%   plumber.__init__
