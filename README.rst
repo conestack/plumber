@@ -668,19 +668,6 @@ An attribute declared on the class overwrites ``default`` attributes::
       ...
     PlumbingCollision: foo
 
-Extending properties
-~~~~~~~~~~~~~~~~~~~~
-
-    >>> class Plugin(object):
-    ...     @extend
-    ...     @property
-    ...     def foo(self):
-    ...         return 5
-
-    >>> class Plumbing(object):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Plugin
-
 
 Docstrings of plumbing methods and plugins
 ------------------------------------------
