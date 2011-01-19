@@ -42,7 +42,7 @@ class plumb(classmethod):
     """Mark a method to be used in a plumbing chain.
 
     The signature of the method is:
-    ``def foo(plb, _next, self, *args, **kws)``
+    ``def foo(plb, _next, self, *args, **kw)``
 
     A plumbing method is a classmethod bound to the plugin class defining it
     (``plb``), as second argument it receives the next plumbing method

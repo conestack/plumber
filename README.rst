@@ -129,6 +129,50 @@ The plumbing can be subclassed like a normal class.
   default metaclass for new-style classes.
 
 
+Passing parameters to methods in a plumbing chain
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Parameters to plumbing methods are passed in via keyword arguments - there is
+no sane way to do this via positional arguments (see section Default
+attributes for application to ``__init__`` plumbing).
+
+::
+    >>> class Plugin1(object):
+    ...     @plumb
+    ...     def foo(plb, _next, self, *args, **kw):
+    ...         print "Plugin1.foo: args=%s" % (args,)
+    ...         print "Plugin1.foo: kw=%s" % (kw,)
+    ...         self.p1 = kw.pop('p1', None)
+    ...         _next(self, *args, **kw)
+
+    >>> class Plugin2(object):
+    ...     @plumb
+    ...     def foo(plb, _next, self, *args, **kw):
+    ...         print "Plugin2.foo: args=%s" % (args,)
+    ...         print "Plugin2.foo: kw=%s" % (kw,)
+    ...         self.p2 = kw.pop('p2', None)
+    ...         _next(self, *args, **kw)
+
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = (Plugin1, Plugin2)
+    ...     def foo(self, *args, **kw):
+    ...         print "PlumbingClass.foo: args=%s" % (args,)
+    ...         print "PlumbingClass.foo: kw=%s" % (kw,)
+
+The plumbing plugins pick what they need, the remainging keywords and all
+positional arguments are just passed through to the plumbing class.
+
+::
+    >>> foo = PlumbingClass()
+    >>> foo.foo('blub', p1='p1', p2='p2', plumbing='plumbing')
+    Plugin1.foo: args=('blub',)
+    Plugin1.foo: kw={'p2': 'p2', 'plumbing': 'plumbing', 'p1': 'p1'}
+    Plugin2.foo: args=('blub',)
+    Plugin2.foo: kw={'p2': 'p2', 'plumbing': 'plumbing'}
+    PlumbingClass.foo: args=('blub',)
+    PlumbingClass.foo: kw={'plumbing': 'plumbing'}
+
+
 End-points for plumbing chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Plumbing chains need a normal method to serve as end-point.
@@ -654,7 +698,7 @@ used.
 The plumbing system works similar to WSGI (the Web Server Gateway Interface).
 It consists of pipelines that are formed of plumbing methods of the listed
 classes. For each pipeline an entrance method is created that is called like
-every normal method with the general signature of ``def foo(self, **kws)``.
+every normal method with the general signature of ``def foo(self, **kw)``.
 The entrance method will just wrap the first plumbing method.
 
 Plumbing methods receive a wrapper of the next plumbing method. Therefore they
@@ -668,13 +712,8 @@ corresponding method, a method is created that raises a
 ``NotImplementedError``. A plumbing method can serve as an endpoint by just not
 calling ``_next``, by that it basically implements a new method for the class,
 as it were defined on the class. A super call to the class' bases can be made
-``super(self.__class__, self).name(**kws)``.
-
-..note:: It is not possible to pass positional arguments to the plumbing system
-  and anything behind it, as ``def f(foo, *args, bar=None, **kws)`` is not
-  valid python and ``def f(foo, bar=None, *args, **kws)`` makes ``bar`` a
-  positional which will be filled before ``*args``.
-XXX:
+``super(self.__class__, self).name(**kw)``.
+XXX
 
 Nomenclature
 ------------
@@ -815,277 +854,6 @@ and create a subclass chain. However, I currently don't know how this could be
 achieved, believe that it is not possible and think that the current approach
 is better.
 
-Positional arguments
-~~~~~~~~~~~~~~~~~~~~
-Currently, it is not possible to pass positional arguments ``*args`` to
-plumbing methods and therefore everything behind the plumbing system.
-
-In order to pass parameters to be processed by a plumbing method, we chose
-keyword arguments, because with positional arguments different plumbing methods
-in a pipeline would need to agree on the position they receive their parameter
-and the parameter would not be optional.
-
-Keyword arguements are needed for passing optional parameters to plumbing
-methods. In python, ``def f(foo, *args, bar=1, **kws)`` is invalid syntax and
-``def f(foo, bar=1, *args, **kws)`` makes ``bar`` effectively a positional
-optional argument. It does not need to be filled, but if somebody provides
-``args`` it will be filled.
-
-Failing approach 1
-^^^^^^^^^^^^^^^^^^
-Two plugins trying to use positional arguments.
-
-::
-
-    >>> class ArgsPlugin1(object):
-    ...     @plumb
-    ...     def foo(cls, _next, self, p1=None, *args, **kws):
-    ...         print "p1=%s" % (p1,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
-
-    >>> class ArgsPlugin2(object):
-    ...     @plumb
-    ...     def foo(cls, _next, self, p2=None, *args, **kws):
-    ...         print "p2=%s" % (p2,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
-
-    >>> class Foo(object):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
-    ...     def foo(self, *args, **kws):
-    ...         pass
-
-Calling without arguments
-::
-
-    >>> foo = Foo()
-    >>> foo.foo()
-    p1=None
-    args=()
-    kws={}
-    p2=None
-    args=()
-    kws={}
-
-Supplying arguments meant for the plumbing methods
-::
-    >>> foo.foo(p1='p1', p2='p2')
-    p1=p1
-    args=()
-    kws={'p2': 'p2'}
-    p2=p2
-    args=()
-    kws={}
-
-Trying to pass positional arguments along with the keyword arguments for the
-plumbing methods.
-::
-    >>> foo.foo('blub', p1='p1', p2='p2')
-    Traceback (most recent call last):
-    ...
-    TypeError: foo() got multiple values for keyword argument 'p1'
-
-    >>> foo.foo(p1='p1', p2='p2', 'blub')
-    Traceback (most recent call last):
-    ...
-    SyntaxError: non-keyword arg after keyword arg ...
-
-
-Solution 1
-^^^^^^^^^^
-
-It would be possible to support positional arguments, but then the plumbing
-methods may not declare keyword arguments but must extract them from ``**kws``
-
-::
-
-    >>> class ArgsPlugin1(object):
-    ...     @plumb
-    ...     def foo(cls, _next, self, *args, **kws):
-    ...         p1 = kws.pop('p1', None)
-    ...         print "p1=%s" % (p1,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
-
-    >>> class ArgsPlugin2(object):
-    ...     @plumb
-    ...     def foo(cls, _next, self, *args, **kws):
-    ...         p2 = kws.pop('p2', None)
-    ...         print "p2=%s" % (p2,)
-    ...         print "args=%s" % (args,)
-    ...         print "kws=%s" % (kws,)
-    ...         _next(self, *args, **kws)
-
-    >>> class Foo(object):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
-    ...     def foo(self, *args, **kws):
-    ...         pass
-
-    >>> foo = Foo()
-    >>> foo.foo('blub', p1='p1', p2='p2')
-    p1=p1
-    args=('blub',)
-    kws={'p2': 'p2'}
-    p2=p2
-    args=('blub',)
-    kws={}
-
-
-Solution 2
-^^^^^^^^^^
-
-A solution would be to declare the parameters also for the decorator and make
-it fish them out of kws
-
-::
-
-# Abandoned approach, messy code in plumber and during runtime needed
-#
-#    >>> class ArgsPlugin1(object):
-#    ...     @plumb(defaults=(None,))
-#    ...     def foo(cls, _next, self, p1, *args, **kws):
-#    ...         print "p1=%s" % (p1,)
-#    ...         print "args=%s" % (args,)
-#    ...         print "kws=%s" % (kws,)
-#    ...         _next(self, *args, **kws)
-#
-#    >>> class ArgsPlugin2(object):
-#    ...     @plumb(defaults=(None,))
-#    ...     def foo(cls, _next, self, p2, *args, **kws):
-#    ...         print "p2=%s" % (p2,)
-#    ...         print "args=%s" % (args,)
-#    ...         print "kws=%s" % (kws,)
-#    ...         _next(self, *args, **kws)
-#
-#    >>> class Foo(object):
-#    ...     __metaclass__ = Plumber
-#    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
-#    ...     def foo(self, *args, **kws):
-#    ...         pass
-#
-#    >>> foo = Foo()
-#    >>> foo.foo()
-#    p1=None
-#    args=()
-#    kws={}
-#    p2=None
-#    args=()
-#    kws={}
-#
-#    >>> foo.foo('blub')
-#    p1=None
-#    args=('blub',)
-#    kws={}
-#    p2=None
-#    args=('blub',)
-#    kws={}
-#
-#    >>> foo.foo('blub', p1='p1', p2='p2')
-#    p1=p1
-#    args=('blub',)
-#    kws={'p2': 'p2'}
-#    p2=p2
-#    args=('blub',)
-#    kws={}
-
-Solution 3
-^^^^^^^^^^
-This would mean it will pop a keyword named p1 from kws and make it available
-as a variable to the function, saving the p1 = kws.pop('p1', None) in the
-function. If the keyword is not in kws it will use the default value specified
-when initializing the decorator.
-
-possible but needs runtime closure creation.
-
-::
-
-#    >>> class ArgsPlugin1(object):
-#    ...     @plumb(p1=None)
-#    ...     def foo(cls, _next, self, *args, **kws):
-#    ...         print "p1=%s" % (p1,)
-#    ...         print "args=%s" % (args,)
-#    ...         print "kws=%s" % (kws,)
-#    ...         _next(self, *args, **kws)
-#
-#    >>> class ArgsPlugin2(object):
-#    ...     @plumb(p2=None)
-#    ...     def foo(cls, _next, self, *args, **kws):
-#    ...         print "p2=%s" % (p2,)
-#    ...         print "args=%s" % (args,)
-#    ...         print "kws=%s" % (kws,)
-#    ...         _next(self, *args, **kws)
-#
-#    >>> class Foo(object):
-#    ...     __metaclass__ = Plumber
-#    ...     __pipeline__ = (ArgsPlugin1, ArgsPlugin2)
-#    ...     def foo(self, *args, **kws):
-#    ...         pass
-#
-#    >>> foo = Foo()
-#    >>> foo.foo()
-#    p1=None
-#    args=()
-#    kws={}
-#    p2=None
-#    args=()
-#    kws={}
-#
-#    >>> foo.foo('blub')
-#    p1=None
-#    args=('blub',)
-#    kws={}
-#    p2=None
-#    args=('blub',)
-#    kws={}
-#
-#    >>> foo.foo('blub', p1='p1', p2='p2')
-#    p1=p1
-#    args=('blub',)
-#    kws={'p2': 'p2'}
-#    p2=p2
-#    args=('blub',)
-#    kws={}
-
-Solution 4
-^^^^^^^^^^
-Nicer would be not to declare them but have the decorator detect them in the
-function signature and fish them automatically. However, that magic might
-confuse people.
-
-::
-
-#    >>> class ArgsPlugin1(object):
-#    ...     @plumb
-#    ...     def foo(cls, _next, self, p1=None, *args, **kws):
-#    ...         print "p1=%s" % (p1,)
-#    ...         print "args=%s" % (args,)
-#    ...         print "kws=%s" % (kws,)
-#    ...         _next(self, *args, **kws)
-
-The plumber change pythons normal behaviour of filling function arguments in
-that it would first check if it is in keywords and move it in front of args
-and otherwise use the default value there.
-
-Python decided for one algorithm of assigning arguments. I think we should not
-change that or implement a new one.
-
-I'm in favor of solution 1.
-It does not involve any code changes, it supports positional arguments and we
-most of the time would anyway not change the signature of a function we are
-putting a plumbing in front, eg. __getitem__. Only really relevant when
-plumbing __init__. Parameters picked from kws should be documented in __doc__
-as if they were normal positional parameters including their default value
-later assigned in the code.
-
-Now looking at using the __doc__ of all plumbing methods to create the __doc__
-of the entrance.
-
 Dynamic Plumbing
 ~~~~~~~~~~~~~~~~
 The plumber could replace the ``__pipeline__`` attribute with a property of the
@@ -1093,12 +861,18 @@ same name. Changing the attribute during runtime would result in a plumbing
 specific to the object. A plumbing cache could further be used to reduce the
 number of plumbing chains in case of many dynamic plumbings.
 
-Class methods of the plumbing plugins
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Attribute declared with ``default``, ``extend`` and ``plumb`` are used for the
-class. Further, it is possible to access other class variables vie ``plb``.
 
-XXX: this should move up and just be documented
+Test Coverage
+-------------
+
+Summary
+~~~~~~~
+XXX: ./bin/coverage summary output
+
+Detailed
+~~~~~~~~
+XXX: pull in coverage test files
+
 
 Contributors
 ------------
