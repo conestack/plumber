@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-import sys, os
+import os
 
 version = '0.1dev'
 shortdesc = "A plumber constructs a pipeline to objects."
@@ -15,7 +15,7 @@ setup(name='plumber',
             'License :: OSI Approved :: GNU General Public License (GPL)',
             'Operating System :: OS Independent',
             'Programming Language :: Python',
-      ], # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
+            ], # Get strings from http://www.python.org/pypi?:action=list_classifiers
       keywords='',
       author='BlueDynamics Alliance',
       author_email='dev@bluedynamics.com',
