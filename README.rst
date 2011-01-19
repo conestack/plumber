@@ -671,13 +671,39 @@ An attribute declared on the class overwrites ``default`` attributes::
       ...
     PlumbingCollision: foo
 
+Extend/default properties
+~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``extend`` and ``default`` decorators are agnostic to the type of attribute
+they are decorating, it works as well on properties.
 
-Docstrings of plumbing methods and plugins
-------------------------------------------
+    >>> class Plugin(object):
+    ...     @extend
+    ...     @property
+    ...     def foo(self):
+    ...         return 5
+    ...
+    ...     @default
+    ...     @property
+    ...     def bar(self):
+    ...         return 17
 
-The class' docstring is generated from the ``__doc__`` declared on the plumbing
-class followed by plugin classes' ``__doc__`` in reverse order. ``None``
-docstrings are skipped::
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = Plugin
+
+    >>> plumbing = PlumbingClass()
+    >>> plumbing.foo
+    5
+    >>> plumbing.bar
+    17
+
+
+Plumbing docstrings
+-------------------
+
+The plumbing's docstring is generated from the ``__doc__`` declared on the
+plumbing class followed by plugin classes' ``__doc__`` in reverse order,
+``None`` docstrings are skipped::
 
     >>> class P1(object):
     ...     """P1
