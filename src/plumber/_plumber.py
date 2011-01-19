@@ -129,11 +129,17 @@ def entrance(name, pipe):
         # XXX: support plb for fget/fset/fdel if they are defined on the plugin
         # class and not just exist in the property
         def get_entrance(self):
-            return plumbattr.fget(_next.fget, self)
+            return plumbattr.plb_get(_next.fget, self)
         def set_entrance(self, val):
-            return plumbattr.fset(_next.fset, self, val)
+            return plumbattr.plb_set(_next.fset, self, val)
         def del_entrance(self):
-            return plumbattr.fdel(_next.fdel, self)
+            return plumbattr.plb_del(_next.fdel, self)
+        if _next.fget is None:
+            get_entrance = None
+        if _next.fset is None:
+            set_entrance = None
+        if _next.fdel is None:
+            del_entrance = None
         _entrance = property(get_entrance, set_entrance, del_entrance)
     elif isinstance(plumbattr, types.MethodType):
         def _entrance(self, *args, **kw):
@@ -148,6 +154,16 @@ def entrance(name, pipe):
 class CLOSED(object):
     """used for marking a pipeline as closed
     """
+
+
+def prepare_property(item, plugin):
+    item.plb_get = \
+            item.fget and classmethod(item.fget).__get__(plugin) or None
+    item.plb_set = \
+            item.fset and classmethod(item.fset).__get__(plugin) or None
+    item.plb_del = \
+            item.fdel and classmethod(item.fdel).__get__(plugin) or None
+    return item
 
 
 class Plumber(type):
@@ -177,14 +193,14 @@ class Plumber(type):
         pipelines = {}
         defaulted = {}
         for plugin in cls.__pipeline__:
-            for name, decor in plugin.__dict__.items():
-                if isinstance(decor, extensiondecor):
+            for name, item in plugin.__dict__.items():
+                if isinstance(item, extensiondecor):
                     pipe = pipelines.setdefault(name, [])
                     if not pipe or pipe[-1] is not CLOSED:
                         pipe.append(CLOSED)
                     # extend and default close pipelines, i.e no plumbing
                     # methods behind it anymore
-                    if isinstance(decor, extend):
+                    if isinstance(item, extend):
                         # collide with an attr that is on the class already,
                         # except if provided by default
                         if name in cls.__dict__ \
@@ -192,17 +208,17 @@ class Plumber(type):
                             # XXX: provide more info what is colliding
                             raise PlumbingCollision(name)
                         # put the original attribute on the class
-                        setattr(cls, name, decor.attr)
+                        setattr(cls, name, item.attr)
                         # remove potential defaulted flag
                         defaulted.pop(name, None)
-                    elif isinstance(decor, default):
+                    elif isinstance(item, default):
                         # set default attribute if there is none yet
                         if not name in cls.__dict__:
-                            setattr(cls, name, decor.attr)
+                            setattr(cls, name, item.attr)
                             defaulted[name] = None
                 elif name in pipelines and pipelines[name][-1] is CLOSED:
                     raise PlumbingCollision(name)
-                elif isinstance(decor, plumbmethod):
+                elif isinstance(item, plumbmethod):
                     pipe = pipelines.setdefault(name, [])
                     if pipe and isinstance(pipe[-1], plumbproperty):
                         raise PlumbingCollision(name)
@@ -210,11 +226,11 @@ class Plumber(type):
                     # plugin class, ``getattr`` on the class in combination
                     # with being a classmethod, does this for us.
                     pipe.append(getattr(plugin, name))
-                elif isinstance(decor, plumbproperty):
+                elif isinstance(item, plumbproperty):
                     pipe = pipelines.setdefault(name, [])
                     if pipe and not isinstance(pipe[-1], plumbproperty):
                         raise PlumbingCollision(name)
-                    pipe.append(decor)
+                    pipe.append(prepare_property(item, plugin))
 
             # If zope.interface is available (see import at the beginning of
             # file), we check the plugins for implemented interfaces and make

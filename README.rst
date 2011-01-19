@@ -392,23 +392,23 @@ Plumbing properties that do not use lambda abstraction
     ...     a = property(lambda self: self._a, set_a, del_a)
 
     >>> class Notify(object):
-    ...     def get_a(_next, self):
+    ...     def get_a(plb, _next, self):
     ...         print "Getting a"
     ...         return _next(self)
-    ...     def set_a(_next, self, val):
+    ...     def set_a(plb, _next, self, val):
     ...         print "Setting a"
     ...         _next(self, val)
-    ...     def del_a(_next, self):
+    ...     def del_a(plb, _next, self):
     ...         print "Deleting a"
     ...         _next(self)
     ...     a = plumb(property(get_a, set_a, del_a))
 
     >>> class Multiply(object):
-    ...     def get_a(_next, self):
+    ...     def get_a(plb, _next, self):
     ...         return _next(self) * 2
-    ...     def set_a(_next, self, val):
+    ...     def set_a(plb, _next, self, val):
     ...         _next(self, val)
-    ...     def del_a(_next, self):
+    ...     def del_a(plb, _next, self):
     ...         _next(self)
     ...     a = plumb(property(get_a, set_a, del_a))
 
@@ -434,9 +434,10 @@ Plumbing properties that do not use lambda abstraction
 A base class has a readonly property, a plumbing property plumbs in::
 
     >>> class Base(object):
+    ...     _foo = 5
     ...     @property
     ...     def foo(self):
-    ...         return 5
+    ...         return self._foo
 
     >>> class Plugin(object):
     ...     @plumb
@@ -448,7 +449,37 @@ A base class has a readonly property, a plumbing property plumbs in::
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = Plugin
 
-    >>> Plumbing().foo
+    >>> plumbing = Plumbing()
+    >>> plumbing.foo
+    15
+    >>> plumbing.foo = 10
+    Traceback (most recent call last):
+      ...
+    AttributeError: can't set attribute
+
+Extend the attribute to make it writable::
+
+    >>> class Plugin(object):
+    ...     @plumb
+    ...     @property
+    ...     def foo(plb, _next, self):
+    ...         return 3 * _next(self)
+    ...     @foo.setter
+    ...     def foo(plb, _next, self, val):
+    ...         _next(self, val)
+
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = Plugin
+
+    >>> plumbing = Plumbing()
+    >>> plumbing.foo
+    15
+
+#    >>> plumbing.foo = 10
+#    >>> plumbing.foo
+#    30
+
 
 Extending classes through plumbing, an alternative to mixins
 ------------------------------------------------------------
