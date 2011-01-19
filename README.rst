@@ -11,7 +11,6 @@ next method and post-process results before passing them to the previous method
 (similar to WSGI pipelines).
 
 Why not just use sub-classing? see Motivation.
-
 ::
     >>> from plumber import Plumber
     >>> from plumber import default
@@ -48,7 +47,6 @@ plumbing.
   instance of plumbing class. The system is designed so the code you write in
   plumbing methods looks as similar as possible to the code you would write
   directly on the class.
-
 ::
     >>> class Plugin1(object):
     ...     @plumb
@@ -134,7 +132,6 @@ Passing parameters to methods in a plumbing chain
 Parameters to plumbing methods are passed in via keyword arguments - there is
 no sane way to do this via positional arguments (see section Default
 attributes for application to ``__init__`` plumbing).
-
 ::
     >>> class Plugin1(object):
     ...     @plumb
@@ -161,7 +158,6 @@ attributes for application to ``__init__`` plumbing).
 
 The plumbing plugins pick what they need, the remainging keywords and all
 positional arguments are just passed through to the plumbing class.
-
 ::
     >>> foo = PlumbingClass()
     >>> foo.foo('blub', p1='p1', p2='p2', plumbing='plumbing')
@@ -383,7 +379,6 @@ Default attributes
 ~~~~~~~~~~~~~~~~~~
 Plugins that use parameters, provide defaults that are overridable. Further it
 should enable setting these parameters through a ``__init__`` plumbing method.
-
 ::
     >>> class Plugin1(object):
     ...     foo = default(False)
