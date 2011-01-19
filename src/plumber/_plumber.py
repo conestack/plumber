@@ -2,7 +2,7 @@ import os
 import types
 
 # We are aware of ``zope.interface.Interface``: if zope.interfaces is available
-# we check interfaces implemented on the plumbing plugins and will make the
+# we check interfaces implemented on the plumbing parts and will make the
 # plumbing implement them, too.
 try:
     from zope.interface import classImplements
@@ -21,7 +21,7 @@ class extensiondecor(object):
 
     Markers will be removed from the attribute so it is possible to::
 
-        >>> class Plugin(object):
+        >>> class Part(object):
         ...     foo = default(1)
         ...     bar = default(foo)
 
@@ -38,7 +38,7 @@ class extensiondecor(object):
 class default(extensiondecor):
     """Provide a default value for something
 
-    The first plugin with a default value wins the first round: its value is
+    The first part with a default value wins the first round: its value is
     set on the plumbing as if it was declared there.
 
     Attributes set with the ``extend`` decorator overrule ``default``
@@ -69,13 +69,13 @@ class plumbmethod(classmethod):
     The signature of the method is:
     ``def foo(plb, _next, self, *args, **kw)``
 
-    A plumbing method is a classmethod bound to the plugin class defining it
+    A plumbing method is a classmethod bound to the part class defining it
     (``plb``), as second argument it receives the next plumbing method
     (``_next``) and the third argument (``self``) is a plumbing instance, that
     for normal methods would be the first argument.
 
     In order to plumb a method there needs to be a non-plumbing method behind
-    it provided by: a plumbing plugin via ``extend`` or ``default`` later in
+    it provided by: a plumbing part via ``extend`` or ``default`` later in
     the pipeline, the class itself or one of its base classes.
     """
 
@@ -126,7 +126,7 @@ def entrance(name, pipe):
     plumbattr = pipe.pop(0)
     _next = entrance(name, pipe)
     if isinstance(plumbattr, plumbproperty):
-        # XXX: support plb for fget/fset/fdel if they are defined on the plugin
+        # XXX: support plb for fget/fset/fdel if they are defined on the part
         # class and not just exist in the property
         def get_entrance(self):
             return plumbattr.plb_get(_next.fget, self)
@@ -156,13 +156,13 @@ class CLOSED(object):
     """
 
 
-def prepare_property(item, plugin):
+def prepare_property(item, part):
     item.plb_get = \
-            item.fget and classmethod(item.fget).__get__(plugin) or None
+            item.fget and classmethod(item.fget).__get__(part) or None
     item.plb_set = \
-            item.fset and classmethod(item.fset).__get__(plugin) or None
+            item.fset and classmethod(item.fset).__get__(part) or None
     item.plb_del = \
-            item.fdel and classmethod(item.fdel).__get__(plugin) or None
+            item.fdel and classmethod(item.fdel).__get__(part) or None
     return item
 
 
@@ -173,14 +173,14 @@ class RealPlumber(object):
         if type(plb.__pipeline__) is not tuple:
             plb.__pipeline__ = (plb.__pipeline__,)
 
-        # generate docstrings from all plugin classes
+        # generate docstrings from all part classes
         plb.__doc__ = merge_doc(plb, *reversed(plb.__pipeline__))
 
         # Follow ``default``, ``extend`` and ``plumb`` declarations.
         pipelines = {}
         defaulted = {}
-        for plugin in plb.__pipeline__:
-            for name, item in plugin.__dict__.items():
+        for part in plb.__pipeline__:
+            for name, item in part.__dict__.items():
                 if isinstance(item, extensiondecor):
                     pipe = pipelines.setdefault(name, [])
                     if not pipe or pipe[-1] is not CLOSED:
@@ -210,20 +210,20 @@ class RealPlumber(object):
                     if pipe and isinstance(pipe[-1], plumbproperty):
                         raise PlumbingCollision(name)
                     # plumbing methods are class methods bound to the plumbing
-                    # plugin class, ``getattr`` on the class in combination
+                    # part class, ``getattr`` on the class in combination
                     # with being a classmethod, does this for us.
-                    pipe.append(getattr(plugin, name))
+                    pipe.append(getattr(part, name))
                 elif isinstance(item, plumbproperty):
                     pipe = pipelines.setdefault(name, [])
                     if pipe and not isinstance(pipe[-1], plumbproperty):
                         raise PlumbingCollision(name)
-                    pipe.append(prepare_property(item, plugin))
+                    pipe.append(prepare_property(item, part))
 
             # If zope.interface is available (see import at the beginning of
-            # file), we check the plugins for implemented interfaces and make
+            # file), we check the parts for implemented interfaces and make
             # the new class implement these, too.
             if ZOPE_INTERFACE_AVAILABLE:
-                ifaces = implementedBy(plugin)
+                ifaces = implementedBy(part)
                 if ifaces is not None:
                     classImplements(plb, *list(ifaces))
 
@@ -234,9 +234,9 @@ class RealPlumber(object):
 
             # Retrieve end point from class, from what happened above it is
             # found with priorities:
-            # 1. a plumbing plugin declared it with ``extend``
+            # 1. a plumbing part declared it with ``extend``
             # 2. the plumbing class itself declared it
-            # 3. a plumbing plugin provided a ``default`` value
+            # 3. a plumbing part provided a ``default`` value
             # 4. a base class provides the attribute
             end_point = getattr(plb, name)
             pipe.append(end_point)
