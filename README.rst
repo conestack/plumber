@@ -528,7 +528,8 @@ is raised::
     ...     foo = False
     Traceback (most recent call last):
       ...
-    PlumbingCollision: 'foo'...
+    PlumbingCollision: <extend 'foo' of <class 'Part1'> payload=False>
+                 with: <class 'PlumbingClass'>
 
 XXX: increase verbosity of exception
 
@@ -547,7 +548,8 @@ exactly as if the method was declared on the class itself::
     ...     __pipeline__ = Part1, Part2
     Traceback (most recent call last):
       ...
-    PlumbingCollision: 'foo'...
+    PlumbingCollision: <extend 'foo' of <class 'Part2'> payload=False>
+                 with: <extend 'foo' of <class 'Part1'> payload=False>
 
 Extending a method needed by a part earlier in the chain works::
 
@@ -595,7 +597,10 @@ exception::
     ...     __pipeline__ = Part1, Part2, Part3
     Traceback (most recent call last):
       ...
-    PlumbingCollision: 'foo'...
+    PlumbingCollision: 
+        <extend 'foo' of <class 'Part3'> payload=<function foo at 0x...>>
+      with:
+        <extend 'foo' of <class 'Part1'> payload=<function foo at 0x...>>
 
 It is possible to make super calls from within the method added by the part::
 
@@ -744,7 +749,11 @@ An attribute declared on the class overwrites ``default`` attributes::
     ...     __pipeline__ = Default, Extend, Default, Extend, Default
     Traceback (most recent call last):
       ...
-    PlumbingCollision: 'foo'...
+    PlumbingCollision: 
+        <extend 'foo' of <class 'Extend'> payload=extend>
+      with:
+        <extend 'foo' of <class 'Extend'> payload=extend>
+
 
 ``plumb`` and either ``default`` or ``extend`` collide::
 
@@ -1226,3 +1235,19 @@ Disclaimer
 ~~~~~~~~~~
 
 TODO
+
+
+
+
+Subclass gets its own stacks
+----------------------------
+
+    >>> class Part1(Part):
+    ...     a = extend(1)
+
+    >>> class Base(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = Part1
+
+    >>> class Sub(Base):
+    ...     __pipeline__ = Part1

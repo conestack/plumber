@@ -9,7 +9,7 @@ class Stacks(object):
 
     def __init__(self, plumbing):
         self.plumbing = plumbing
-        if not hasattr(self.plumbing, self.attrname):
+        if not self.attrname in self.plumbing.__dict__:
             setattr(self.plumbing, self.attrname, dict())
         self.stacks.setdefault('stages', dict())
         self.stages.setdefault('stage1', dict())

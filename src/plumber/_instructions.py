@@ -63,7 +63,7 @@ class Instruction(object):
         """
         raise NotImplementedError
 
-    def __call__(self):
+    def __call__(self, plumbing):
         """Apply instruction to a plumbing
         """
         raise NotImplementedError
@@ -79,6 +79,15 @@ class Instruction(object):
     @property
     def payload(self):
         return payload(self)
+
+    def __repr__(self):
+        return "<%(cls)s '%(name)s' of %(parent)s payload=%(payload)s>" % dict(
+                cls=self.__class__.__name__,
+                name=self.name or 'None',
+                parent=self.__parent__ or 'None',
+                payload=str(self.payload))
+
+    __str__ = __repr__
 
 
 class Stage1Instruction(Instruction):
@@ -109,12 +118,11 @@ class _implements(Stage1Instruction):
 
     def __add__(self, right):
         if not isinstance(right, _implements):
-            raise PlumbingCollision("Plumbing collision: %s + %s." % \
-                    (self, right))
+            raise PlumbingCollision(self, right)
         try:
             ifaces = self.payload + right.payload
         except TypeError:
-            import pdb;pdb.set_trace()
+            raise
         return _implements(ifaces)
 
     def __call__(self, plumbing):
@@ -151,11 +159,11 @@ class extend(Stage1Instruction):
         """
         if isinstance(right, default):
             return self
-        raise PlumbingCollision(self.name, self, right)
+        raise PlumbingCollision(self, right)
 
     def __call__(self, plumbing):
         if plumbing.__dict__.has_key(self.name):
-            raise PlumbingCollision(self.name, plumbing, self)
+            raise PlumbingCollision(plumbing, self)
         setattr(plumbing, self.name, self.payload)
 
 
