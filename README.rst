@@ -1,9 +1,19 @@
-Plumber
-=======
+=========
+ Plumber
+=========
 
-Plumber is a metaclass that implements a plumbing system which works orthogonal
-to subclassing. A class declares the plumber as its metaclass and a pipeline of
-parts that form the plumbing system. Parts can extend classes as if the
+Plumber is a metaclass that implements plumbing which works orthogonal
+to subclassing: It uses a chain of closures 
+A class declares ``Plumber`` as ``__metaclass__`` and a
+``__pipeline__`` of parts that will be used for the plumbing. A plumbing 
+limited to the class declaring 
+
+Parts carry instructions and instructions carry code and tell what to do with
+it.
+
+
+form the plumbing system. Parts can extend
+classes as if the
 code was declared on the class itself (``extend`` decorator), provide default
 values for class variables (``default`` decorator) and form chains of methods
 (``plumb`` decorator) that pre-process parameters before passing them to the
