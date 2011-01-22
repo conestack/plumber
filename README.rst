@@ -13,7 +13,7 @@ next method and post-process results before passing them to the previous method
 Why not just use sub-classing? see Motivation::
 
     >>> from plumber import Plumber
-    >>> from plumber import PlumbingPart
+    >>> from plumber import Part
     >>> from plumber import default
     >>> from plumber import extend
     >>> from plumber import plumb
@@ -50,14 +50,14 @@ the plumbing, they are classmethods of the part declaring them ``prt``, via
 ``_next`` they call the next method and ``self`` is an instance of the
 plumbing::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     @plumb
     ...     def foo(prt, _next, self):
     ...         print "Part1.foo start"
     ...         _next(self)
     ...         print "Part1.foo stop"
 
-    >>> class Part2(PlumbingPart):
+    >>> class Part2(Part):
     ...     @plumb
     ...     def foo(prt, _next, self):
     ...         print "Part2.foo start"
@@ -141,7 +141,7 @@ Parameters to plumbing methods are passed in via keyword arguments - there is
 no sane way to do this via positional arguments (see section Default
 attributes for application to ``__init__`` plumbing)::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     @plumb
     ...     def foo(prt, _next, self, *args, **kw):
     ...         print "Part1.foo: args=%s" % (args,)
@@ -149,7 +149,7 @@ attributes for application to ``__init__`` plumbing)::
     ...         self.p1 = kw.pop('p1', None)
     ...         _next(self, *args, **kw)
 
-    >>> class Part2(PlumbingPart):
+    >>> class Part2(Part):
     ...     @plumb
     ...     def foo(prt, _next, self, *args, **kw):
     ...         print "Part2.foo: args=%s" % (args,)
@@ -157,7 +157,7 @@ attributes for application to ``__init__`` plumbing)::
     ...         self.p2 = kw.pop('p2', None)
     ...         _next(self, *args, **kw)
 
-    >>> class PlumbingClass(PlumbingPart):
+    >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
     ...     __pipeline__ = Part1, Part2
     ...     def foo(self, *args, **kw):
@@ -181,7 +181,7 @@ End-points for plumbing chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Plumbing chains need a normal method to serve as end-point::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     @plumb
     ...     def foo(prt, _next, self):
     ...         pass
@@ -198,7 +198,7 @@ processed, but before it is installed on the class.
 
 It can be provided by the plumbing class itself::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     @plumb
     ...     def foo(prt, _next, self):
     ...         print "Part1.foo start"
@@ -223,7 +223,7 @@ It can be provided by a base class of the plumbing class::
     ...     def foo(self):
     ...         print "Base.foo"
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     @plumb
     ...     def foo(prt, _next, self):
     ...         print "Part1.foo start"
@@ -366,7 +366,7 @@ Aspects of a property that uses lambda abstraction are easily plumbed::
     ...             lambda self, val: self.set_a(val),
     ...             )
 
-    >>> class PropertyPlumbing(PlumbingPart):
+    >>> class PropertyPlumbing(Part):
     ...     @plumb
     ...     def get_a(cls, _next, self):
     ...         return 4 * _next(self)
@@ -383,103 +383,103 @@ Aspects of a property that uses lambda abstraction are easily plumbed::
 Plumbing properties that do not use lambda abstraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
-    >>> def set_a(self, val):
-    ...     self._a = val
-
-    >>> def del_a(self):
-    ...     del self._a
-
-    >>> class Base(object):
-    ...     a = property(lambda self: self._a, set_a, del_a)
-
-    >>> class Notify(PlumbingPart):
-    ...     def get_a(prt, _next, self):
-    ...         print "Getting a"
-    ...         return _next(self)
-    ...     def set_a(prt, _next, self, val):
-    ...         print "Setting a"
-    ...         _next(self, val)
-    ...     def del_a(prt, _next, self):
-    ...         print "Deleting a"
-    ...         _next(self)
-    ...     a = plumb(property(get_a, set_a, del_a))
-
-    >>> class Multiply(PlumbingPart):
-    ...     def get_a(prt, _next, self):
-    ...         return _next(self) * 2
-    ...     def set_a(prt, _next, self, val):
-    ...         _next(self, val)
-    ...     def del_a(prt, _next, self):
-    ...         _next(self)
-    ...     a = plumb(property(get_a, set_a, del_a))
-
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Notify, Multiply
-
-    >>> plumbing = Plumbing()
-    >>> hasattr(plumbing, '_a')
-    False
-    >>> plumbing.a = 8
-    Setting a
-    >>> plumbing.a
-    Getting a
-    16
-    >>> hasattr(plumbing, '_a')
-    True
-    >>> del plumbing.a
-    Deleting a
-    >>> hasattr(plumbing, '_a')
-    False
-
-A base class has a readonly property, a plumbing property plumbs in::
-
-    >>> class Base(object):
-    ...     _foo = 5
-    ...     @property
-    ...     def foo(self):
-    ...         return self._foo
-
-    >>> class Part(PlumbingPart):
-    ...     @plumb
-    ...     @property
-    ...     def foo(prt, _next, self):
-    ...         return 3 * _next(self)
-
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part
-
-    >>> plumbing = Plumbing()
-    >>> plumbing.foo
-    15
-    >>> plumbing.foo = 10
-    Traceback (most recent call last):
-      ...
-    AttributeError: can't set attribute
-
-Extend the attribute to make it writable::
-
-    >>> class Part(PlumbingPart):
-    ...     @plumb
-    ...     @property
-    ...     def foo(prt, _next, self):
-    ...         return 3 * _next(self)
-    ...     @foo.setter
-    ...     def foo(prt, _next, self, val):
-    ...         _next(self, val)
-
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part
-
-    >>> plumbing = Plumbing()
-    >>> plumbing.foo
-    15
-
-#    >>> plumbing.foo = 10
-#    >>> plumbing.foo
-#    30
+#XXX#    >>> def set_a(self, val):
+#XXX#    ...     self._a = val
+#XXX#
+#XXX#    >>> def del_a(self):
+#XXX#    ...     del self._a
+#XXX#
+#XXX#    >>> class Base(object):
+#XXX#    ...     a = property(lambda self: self._a, set_a, del_a)
+#XXX#
+#XXX#    >>> class Notify(Part):
+#XXX#    ...     def get_a(prt, _next, self):
+#XXX#    ...         print "Getting a"
+#XXX#    ...         return _next(self)
+#XXX#    ...     def set_a(prt, _next, self, val):
+#XXX#    ...         print "Setting a"
+#XXX#    ...         _next(self, val)
+#XXX#    ...     def del_a(prt, _next, self):
+#XXX#    ...         print "Deleting a"
+#XXX#    ...         _next(self)
+#XXX#    ...     a = plumb(property(get_a, set_a, del_a))
+#XXX#
+#XXX#    >>> class Multiply(Part):
+#XXX#    ...     def get_a(prt, _next, self):
+#XXX#    ...         return _next(self) * 2
+#XXX#    ...     def set_a(prt, _next, self, val):
+#XXX#    ...         _next(self, val)
+#XXX#    ...     def del_a(prt, _next, self):
+#XXX#    ...         _next(self)
+#XXX#    ...     a = plumb(property(get_a, set_a, del_a))
+#XXX#
+#XXX#    >>> class Plumbing(Base):
+#XXX#    ...     __metaclass__ = Plumber
+#XXX#    ...     __pipeline__ = Notify, Multiply
+#XXX#
+#XXX#    >>> plumbing = Plumbing()
+#XXX#    >>> hasattr(plumbing, '_a')
+#XXX#    False
+#XXX#    >>> plumbing.a = 8
+#XXX#    Setting a
+#XXX#    >>> plumbing.a
+#XXX#    Getting a
+#XXX#    16
+#XXX#    >>> hasattr(plumbing, '_a')
+#XXX#    True
+#XXX#    >>> del plumbing.a
+#XXX#    Deleting a
+#XXX#    >>> hasattr(plumbing, '_a')
+#XXX#    False
+#XXX#
+#XXX#A base class has a readonly property, a plumbing property plumbs in::
+#XXX#
+#XXX#    >>> class Base(object):
+#XXX#    ...     _foo = 5
+#XXX#    ...     @property
+#XXX#    ...     def foo(self):
+#XXX#    ...         return self._foo
+#XXX#
+#XXX#    >>> class Part(Part):
+#XXX#    ...     @plumb
+#XXX#    ...     @property
+#XXX#    ...     def foo(prt, _next, self):
+#XXX#    ...         return 3 * _next(self)
+#XXX#
+#XXX#    >>> class Plumbing(Base):
+#XXX#    ...     __metaclass__ = Plumber
+#XXX#    ...     __pipeline__ = Part
+#XXX#
+#XXX#    >>> plumbing = Plumbing()
+#XXX#    >>> plumbing.foo
+#XXX#    15
+#XXX#    >>> plumbing.foo = 10
+#XXX#    Traceback (most recent call last):
+#XXX#      ...
+#XXX#    AttributeError: can't set attribute
+#XXX#
+#XXX#Extend the attribute to make it writable::
+#XXX#
+#XXX#    >>> class Part(Part):
+#XXX#    ...     @plumb
+#XXX#    ...     @property
+#XXX#    ...     def foo(prt, _next, self):
+#XXX#    ...         return 3 * _next(self)
+#XXX#    ...     @foo.setter
+#XXX#    ...     def foo(prt, _next, self, val):
+#XXX#    ...         _next(self, val)
+#XXX#
+#XXX#    >>> class Plumbing(Base):
+#XXX#    ...     __metaclass__ = Plumber
+#XXX#    ...     __pipeline__ = Part
+#XXX#
+#XXX#    >>> plumbing = Plumbing()
+#XXX#    >>> plumbing.foo
+#XXX#    15
+#XXX#
+#XXX##    >>> plumbing.foo = 10
+#XXX##    >>> plumbing.foo
+#XXX##    30
 
 
 Extending classes through plumbing, an alternative to mixins
@@ -495,7 +495,7 @@ Extending a class
 ~~~~~~~~~~~~~~~~~
 A part can put arbitrary attributes onto a class as if they were declared on it::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     foo = extend(False)
 
     >>> class PlumbingClass(object):
@@ -519,7 +519,7 @@ value in the instance's ``__dict__``::
 If the attribute collides with one already declared on the class, an exception
 is raised::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     foo = extend(False)
 
     >>> class PlumbingClass(object):
@@ -528,7 +528,7 @@ is raised::
     ...     foo = False
     Traceback (most recent call last):
       ...
-    PlumbingCollision: foo
+    PlumbingCollision: 'foo'...
 
 XXX: increase verbosity of exception
 
@@ -536,10 +536,10 @@ Also, if two parts try to extend an attribute with the same name, an
 exception is raised. The situation before processing the second part is
 exactly as if the method was declared on the class itself::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     foo = extend(False)
 
-    >>> class Part2(PlumbingPart):
+    >>> class Part2(Part):
     ...     foo = extend(False)
 
     >>> class PlumbingClass(object):
@@ -547,38 +547,18 @@ exactly as if the method was declared on the class itself::
     ...     __pipeline__ = Part1, Part2
     Traceback (most recent call last):
       ...
-    PlumbingCollision: foo
-
-Extended methods close pipelines, adding a plumbing method afterwards raises an
-exception::
-
-    >>> class Part1(PlumbingPart):
-    ...     @extend
-    ...     def foo(self):
-    ...         pass
-
-    >>> class Part2(PlumbingPart):
-    ...     @plumb
-    ...     def foo(prt, _next, self):
-    ...         pass
-
-    >>> class PlumbingClass(object):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1, Part2
-    Traceback (most recent call last):
-      ...
-    PlumbingCollision: foo
+    PlumbingCollision: 'foo'...
 
 Extending a method needed by a part earlier in the chain works::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     @plumb
     ...     def foo(prt, _next, self):
     ...         print "Part1.foo start"
     ...         _next(self)
     ...         print "Part1.foo stop"
 
-    >>> class Part2(PlumbingPart):
+    >>> class Part2(Part):
     ...     @extend
     ...     def foo(self):
     ...         print "Part2.foo"
@@ -592,13 +572,38 @@ Extending a method needed by a part earlier in the chain works::
     Part2.foo
     Part1.foo stop
 
+Extended methods close pipelines, adding a plumbing method afterwards raises an
+exception::
+
+    >>> class Part1(Part):
+    ...     @extend
+    ...     def foo(self):
+    ...         pass
+
+    >>> class Part2(Part):
+    ...     @plumb
+    ...     def foo(prt, _next, self):
+    ...         pass
+
+    >>> class Part3(Part):
+    ...     @extend
+    ...     def foo(prt, _next, self):
+    ...         pass
+
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = Plumber
+    ...     __pipeline__ = Part1, Part2, Part3
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision: 'foo'...
+
 It is possible to make super calls from within the method added by the part::
 
     >>> class Base(object):
     ...     def foo(self):
     ...         print "Base.foo"
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     @extend
     ...     def foo(self):
     ...         print "Part1.foo start"
@@ -624,7 +629,7 @@ Default attributes
 Parts that use parameters, provide defaults that are overridable. Further it
 should enable setting these parameters through a ``__init__`` plumbing method::
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     foo = default(False)
     ...     @plumb
     ...     def __init__(prt, _next, self, *args, **kw):
@@ -667,13 +672,13 @@ Values can be provided to ``__init__``::
     >>> plumbing.bar
     42
 
-The first part prodiving a default value is taken, later defaults are
+The innermost part prodiving a default value is taken, other defaults are
 ignored::
 
-    >>> class One(PlumbingPart):
+    >>> class One(Part):
     ...     foo = default(1)
 
-    >>> class Two(PlumbingPart):
+    >>> class Two(Part):
     ...     foo = default(2)
     ...     bar = default(foo)
 
@@ -705,10 +710,10 @@ An attribute declared on the class overwrites ``default`` attributes::
 
 ``Extend`` overrules ``default``::
 
-    >>> class Default(PlumbingPart):
+    >>> class Default(Part):
     ...     foo = default('default')
 
-    >>> class Extend(PlumbingPart):
+    >>> class Extend(Part):
     ...     foo = extend('extend')
 
     >>> class Plumbing(object):
@@ -739,41 +744,41 @@ An attribute declared on the class overwrites ``default`` attributes::
     ...     __pipeline__ = Default, Extend, Default, Extend, Default
     Traceback (most recent call last):
       ...
-    PlumbingCollision: foo
+    PlumbingCollision: 'foo'...
 
 ``plumb`` and either ``default`` or ``extend`` collide::
 
-    >>> class Default(PlumbingPart):
-    ...     foo = default(None)
-
-    >>> class Extend(PlumbingPart):
-    ...     foo = extend(None)
-
-    >>> class Plumb(PlumbingPart):
-    ...     @plumb
-    ...     def foo(prt, _next, self):
-    ...         pass
-
-    >>> class Plumbing(object):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Default, Plumb
-    Traceback (most recent call last):
-      ...
-    PlumbingCollision: foo
-
-    >>> class Plumbing(object):
-    ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Extend, Plumb
-    Traceback (most recent call last):
-      ...
-    PlumbingCollision: foo
+#    >>> class Default(Part):
+#    ...     foo = default(None)
+#
+#    >>> class Extend(Part):
+#    ...     foo = extend(None)
+#
+#    >>> class Plumb(Part):
+#    ...     @plumb
+#    ...     def foo(prt, _next, self):
+#    ...         pass
+#
+#    >>> class Plumbing(object):
+#    ...     __metaclass__ = Plumber
+#    ...     __pipeline__ = Default, Plumb
+#    Traceback (most recent call last):
+#      ...
+#    PlumbingCollision: 'foo'...
+#
+#    >>> class Plumbing(object):
+#    ...     __metaclass__ = Plumber
+#    ...     __pipeline__ = Extend, Plumb
+#    Traceback (most recent call last):
+#      ...
+#    PlumbingCollision: foo
 
 Extend/default properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``extend`` and ``default`` decorators are agnostic to the type of attribute
 they are decorating, it works as well on properties.
 
-    >>> class Part(PlumbingPart):
+    >>> class Part(Part):
     ...     @extend
     ...     @property
     ...     def foo(self):
@@ -802,14 +807,14 @@ The plumbing's docstring is generated from the ``__doc__`` declared on the
 plumbing class followed by part classes' ``__doc__`` in reverse order,
 ``None`` docstrings are skipped::
 
-    >>> class P1(PlumbingPart):
+    >>> class P1(Part):
     ...     """P1
     ...     """
 
-    >>> class P2(PlumbingPart):
+    >>> class P2(Part):
     ...     pass
 
-    >>> class P3(PlumbingPart):
+    >>> class P3(Part):
     ...     """P3
     ...     """
 
@@ -826,17 +831,17 @@ XXX: protect whitespace from testrunner normalization
     >>> print Plumbing.__doc__
     Plumbing
     <BLANKLINE>
-    P3
-    <BLANKLINE>
     P1
+    <BLANKLINE>
+    P3
     <BLANKLINE>
 
 If all are None the docstring is also None::
 
-    >>> class P1(PlumbingPart):
+    >>> class P1(Part):
     ...     pass
 
-    >>> class P2(PlumbingPart):
+    >>> class P2(Part):
     ...     pass
 
     >>> class Plumbing(object):
@@ -848,18 +853,18 @@ If all are None the docstring is also None::
 
 Docstrings for the entrance methods are generated alike::
 
-    >>> class P1(PlumbingPart):
+    >>> class P1(Part):
     ...     @plumb
     ...     def foo():
     ...         """P1.foo
     ...         """
 
-    >>> class P2(PlumbingPart):
+    >>> class P2(Part):
     ...     @plumb
     ...     def foo():
     ...         pass
 
-    >>> class P3(PlumbingPart):
+    >>> class P3(Part):
     ...     @plumb
     ...     def foo():
     ...         """P3.foo
@@ -877,11 +882,11 @@ XXX: protect whitespace from testrunner normalization
 ::
 
     >>> print Plumbing.foo.__doc__
-    Plumbing.foo
+    P1.foo
     <BLANKLINE>
     P3.foo
     <BLANKLINE>
-    P1.foo
+    Plumbing.foo
     <BLANKLINE>
 
 
@@ -912,13 +917,13 @@ implements an interface::
     >>> class IPart1(Interface):
     ...     pass
 
-    >>> class Part1(PlumbingPart):
+    >>> class Part1(Part):
     ...     implements(IPart1)
 
     >>> class IPart2Base(Interface):
     ...     pass
 
-    >>> class Part2Base(PlumbingPart):
+    >>> class Part2Base(Part):
     ...     implements(IPart2Base)
 
     >>> class IPart2(Interface):
@@ -954,7 +959,7 @@ The directly declared and inherited interfaces are implemented::
     >>> IBase.implementedBy(PlumbingClass)
     True
 
-The interfaces implemented by the used plumbing classes are also implemented::
+The interfaces implemented by the parts are also implemented::
 
     >>> IPart1.implementedBy(PlumbingClass)
     True
@@ -1118,14 +1123,14 @@ interfaces for the parts and the class that is created::
     #    >>> class IPart1Behaviour(Interface):
     #    ...     pass
     #
-    #    >>> class Part1(PlumbingPart):
+    #    >>> class Part1(Part):
     #    ...     implements(IPart1)
     #    ...     interfaces = (IPart1Behaviour,)
     #
     #    >>> class IPart2(Interface):
     #    ...     pass
     #
-    #    >>> class Part2(PlumbingPart):
+    #    >>> class Part2(Part):
     #    ...     implements(IPart2)
     #    ...     interfaces = (IPart2Behaviour,)
     #
@@ -1193,6 +1198,7 @@ Contributors
 ~~~~~~~~~~~~
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
+- Jens W. Klein <jens@bluedynamics.com>
 - Attila Oláh
 - thanks to WSGI for the concept
 - thanks to #python for trying to block stupid ideas
@@ -1200,6 +1206,7 @@ Contributors
 
 Changes
 ~~~~~~~
+- complete rewrite [chaoflow 2011-01-22]
 - prt instead of cls [chaoflow, rnix 2011-01-19
 - default, extend, plumb [chaoflow, rnix 2011-01-19]
 - initial [chaoflow, 2011-01-04]

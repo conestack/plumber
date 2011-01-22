@@ -8,7 +8,7 @@ optionflags = doctest.NORMALIZE_WHITESPACE | \
               doctest.REPORT_ONLY_FIRST_FAILURE
 
 TESTFILES = [
-    'plumber.txt',
+    '../plumber.txt',
 ]
 
 def test_suite():
@@ -21,7 +21,7 @@ def test_suite():
             ) for file in TESTFILES
         ]+[
         doctest.DocTestSuite(
-            'plumber._globalmetaclasstest',
+            'plumber.tests._globalmetaclasstest',
             )
     ])
 

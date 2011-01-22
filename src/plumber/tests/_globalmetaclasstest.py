@@ -9,7 +9,7 @@ from zope.interface import Interface
 from zope.interface import implements
 
 from plumber import Plumber
-from plumber import PlumbingPart
+from plumber import Part
 
 __metaclass__ = Plumber
 
@@ -37,7 +37,7 @@ class Foo:
     """
 
 
-class Part1(PlumbingPart):
+class Part1(Part):
     implements(IPart1)
 
 
