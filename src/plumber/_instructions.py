@@ -168,16 +168,15 @@ class Stage2Instruction(Instruction):
 def plumb(item):
     """Return instruction depending on what is to be plumbed 
 
-    - _plumbmethod for a function
+    - _plumbcallable for a function
     - _plumbproperty for a property
     """
     if type(payload(item)) is property:
         return _plumbproperty(item)
-    elif type(payload(item)) is types.FunctionType:
-        return _plumbmethod(item)
+    elif callable(payload(item)):
+        return _plumbcallable(item)
     else:
-        raise TypeError("instance of %s cannot be plumbed" % \
-                (type(payload),))
+        raise TypeError("%s cannot be plumbed" % (payload(item),))
 
 
 def entrancefor(plumbing_method, _next):
@@ -204,7 +203,7 @@ def plumbingfor(plumbing_method, _next):
     return plumbing
 
 
-class _plumbmethod(Stage2Instruction):
+class _plumbcallable(Stage2Instruction):
     """
     The signature of the method is:
     ``def foo(prt, _next, self, *args, **kw)``
@@ -221,7 +220,7 @@ class _plumbmethod(Stage2Instruction):
     XXX
     """
     def __add__(self, right):
-        return _plumbmethod(
+        return _plumbcallable(
                 plumbingfor(self.plumbing_method, right.plumbing_method),
                 name=self.name,
                 )
@@ -255,11 +254,12 @@ class _plumbmethod(Stage2Instruction):
         if issubclass(plumbing, plumber.Part):
             if _next is not None:
                 plumbing_method = plumbingfor(plumbing_method, _next)
-            setattr(plumbing, self.name, _plumbmethod(plumbing_method))
+            setattr(plumbing, self.name, _plumbcallable(plumbing_method))
         else:
             # we need a method to plumb to
-            if not type(_next) is types.MethodType:
-                raise TypeError("Cannot plumb %s to %s." % (self.item, _next))
+            if not callable(_next):
+                raise TypeError("Cannot plumb %s to %s." % (self.item,
+                    type(_next)))
             entrance = entrancefor(plumbing_method, _next)
             setattr(plumbing, self.name, entrance)
 
