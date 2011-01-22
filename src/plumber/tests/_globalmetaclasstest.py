@@ -61,4 +61,4 @@ class ClassReallyUsingAPlumbing:
         >>> IPart1.implementedBy(ClassReallyUsingAPlumbing)
         True
     """
-    __pipeline__ = Part1
+    __plumbing__ = Part1

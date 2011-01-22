@@ -5,7 +5,7 @@
 Plumber is a metaclass that implements plumbing which works orthogonal
 to subclassing: It uses a chain of closures 
 A class declares ``Plumber`` as ``__metaclass__`` and a
-``__pipeline__`` of parts that will be used for the plumbing. A plumbing 
+``__plumbing__`` of parts that will be used for the plumbing. A plumbing 
 limited to the class declaring 
 
 Parts carry instructions and instructions carry code and tell what to do with
@@ -84,7 +84,7 @@ A plumbing based on ``Base`` and using the parts ``Part1`` and ``Part2``::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1, Part2
+    ...     __plumbing__ = Part1, Part2
     ...
     ...     def foo(self):
     ...         print "PlumbingClass.foo start"
@@ -141,7 +141,7 @@ The plumbing can be subclassed like a normal class::
 .. note:: A class inherits the ``__metaclass__`` declaration from base classes.
   The ``Plumber`` metaclass is called for ``PlumbingClass`` **and**
   ``SubOfPlumbingClass``. However, it will only get active for a class that
-  declares a ``__pipeline__`` itself and otherwise just calls ``type``, the
+  declares a ``__plumbing__`` itself and otherwise just calls ``type``, the
   default metaclass for new-style classes.
 
 
@@ -169,7 +169,7 @@ attributes for application to ``__init__`` plumbing)::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1, Part2
+    ...     __plumbing__ = Part1, Part2
     ...     def foo(self, *args, **kw):
     ...         print "PlumbingClass.foo: args=%s" % (args,)
     ...         print "PlumbingClass.foo: kw=%s" % (kw,)
@@ -198,7 +198,7 @@ Plumbing chains need a normal method to serve as end-point::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1
     Traceback (most recent call last):
       ...
     AttributeError: type object 'PlumbingClass' has no attribute 'foo'
@@ -217,7 +217,7 @@ It can be provided by the plumbing class itself::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1
     ...
     ...     def foo(self):
     ...         print "PlumbingClass.foo"
@@ -242,7 +242,7 @@ It can be provided by a base class of the plumbing class::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1
 
     >>> plumbing = PlumbingClass().foo()
     Part1.foo start
@@ -383,7 +383,7 @@ Aspects of a property that uses lambda abstraction are easily plumbed::
 
     >>> class PlumbedLambdaProperty(LambdaBase):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = PropertyPlumbing
+    ...     __plumbing__ = PropertyPlumbing
 
     >>> plp = PlumbedLambdaProperty()
     >>> plp.a = 4
@@ -425,7 +425,7 @@ Plumbing properties that do not use lambda abstraction
 #XXX#
 #XXX#    >>> class Plumbing(Base):
 #XXX#    ...     __metaclass__ = Plumber
-#XXX#    ...     __pipeline__ = Notify, Multiply
+#XXX#    ...     __plumbing__ = Notify, Multiply
 #XXX#
 #XXX#    >>> plumbing = Plumbing()
 #XXX#    >>> hasattr(plumbing, '_a')
@@ -458,7 +458,7 @@ Plumbing properties that do not use lambda abstraction
 #XXX#
 #XXX#    >>> class Plumbing(Base):
 #XXX#    ...     __metaclass__ = Plumber
-#XXX#    ...     __pipeline__ = Part
+#XXX#    ...     __plumbing__ = Part
 #XXX#
 #XXX#    >>> plumbing = Plumbing()
 #XXX#    >>> plumbing.foo
@@ -481,7 +481,7 @@ Plumbing properties that do not use lambda abstraction
 #XXX#
 #XXX#    >>> class Plumbing(Base):
 #XXX#    ...     __metaclass__ = Plumber
-#XXX#    ...     __pipeline__ = Part
+#XXX#    ...     __plumbing__ = Part
 #XXX#
 #XXX#    >>> plumbing = Plumbing()
 #XXX#    >>> plumbing.foo
@@ -510,7 +510,7 @@ A part can put arbitrary attributes onto a class as if they were declared on it:
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1
 
 The attribute is defined on the class, setting it on an instance will store the
 value in the instance's ``__dict__``::
@@ -534,7 +534,7 @@ is raised::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1
     ...     foo = False
     Traceback (most recent call last):
       ...
@@ -555,7 +555,7 @@ exactly as if the method was declared on the class itself::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1, Part2
+    ...     __plumbing__ = Part1, Part2
     Traceback (most recent call last):
       ...
     PlumbingCollision: <extend 'foo' of <class 'Part2'> payload=False>
@@ -577,7 +577,7 @@ Extending a method needed by a part earlier in the chain works::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1, Part2
+    ...     __plumbing__ = Part1, Part2
 
     >>> PlumbingClass().foo()
     Part1.foo start
@@ -604,7 +604,7 @@ exception::
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1, Part2, Part3
+    ...     __plumbing__ = Part1, Part2, Part3
     Traceback (most recent call last):
       ...
     PlumbingCollision: 
@@ -627,7 +627,7 @@ It is possible to make super calls from within the method added by the part::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1
 
     >>> plumbing = PlumbingClass()
     >>> plumbing.foo()
@@ -651,10 +651,10 @@ should enable setting these parameters through a ``__init__`` plumbing method::
     ...         if 'foo' in kw:
     ...             self.foo = kw.pop('foo')
     ...         _next(self, *args, **kw)
-
+    
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1
     ...     def __init__(self, bar=None):
     ...         self.bar = bar
 
@@ -699,7 +699,7 @@ ignored::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = One, Two
+    ...     __plumbing__ = One, Two
 
     >>> Plumbing.foo
     1
@@ -708,7 +708,7 @@ ignored::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Two, One
+    ...     __plumbing__ = Two, One
 
     >>> Plumbing.foo
     2
@@ -717,7 +717,7 @@ An attribute declared on the class overwrites ``default`` attributes::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = One, Two
+    ...     __plumbing__ = One, Two
     ...     foo = None
 
     >>> print Plumbing.foo
@@ -733,21 +733,21 @@ An attribute declared on the class overwrites ``default`` attributes::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Extend, Default
+    ...     __plumbing__ = Extend, Default
 
     >>> Plumbing.foo
     'extend'
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Default, Extend
+    ...     __plumbing__ = Default, Extend
 
     >>> Plumbing.foo
     'extend'
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Default, Extend, Default
+    ...     __plumbing__ = Default, Extend, Default
 
     >>> Plumbing.foo
     'extend'
@@ -756,7 +756,7 @@ An attribute declared on the class overwrites ``default`` attributes::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Default, Extend, Default, Extend, Default
+    ...     __plumbing__ = Default, Extend, Default, Extend, Default
     Traceback (most recent call last):
       ...
     PlumbingCollision: 
@@ -780,14 +780,14 @@ An attribute declared on the class overwrites ``default`` attributes::
 #
 #    >>> class Plumbing(object):
 #    ...     __metaclass__ = Plumber
-#    ...     __pipeline__ = Default, Plumb
+#    ...     __plumbing__ = Default, Plumb
 #    Traceback (most recent call last):
 #      ...
 #    PlumbingCollision: 'foo'...
 #
 #    >>> class Plumbing(object):
 #    ...     __metaclass__ = Plumber
-#    ...     __pipeline__ = Extend, Plumb
+#    ...     __plumbing__ = Extend, Plumb
 #    Traceback (most recent call last):
 #      ...
 #    PlumbingCollision: foo
@@ -810,7 +810,7 @@ they are decorating, it works as well on properties.
 
     >>> class PlumbingClass(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part
+    ...     __plumbing__ = Part
 
     >>> plumbing = PlumbingClass()
     >>> plumbing.foo
@@ -841,7 +841,7 @@ plumbing class followed by part classes' ``__doc__`` in reverse order,
     ...     """Plumbing
     ...     """
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = P1, P2, P3
+    ...     __plumbing__ = P1, P2, P3
 
 XXX: protect whitespace from testrunner normalization
 
@@ -865,7 +865,7 @@ If all are None the docstring is also None::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = P1, P2
+    ...     __plumbing__ = P1, P2
 
     >>> print Plumbing.__doc__
     None
@@ -891,7 +891,7 @@ Docstrings for the entrance methods are generated alike::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = P1, P2, P3
+    ...     __plumbing__ = P1, P2, P3
     ...     def foo():
     ...         """Plumbing.foo
     ...         """
@@ -937,6 +937,7 @@ implements an interface::
     ...     pass
 
     >>> class Part1(Part):
+    ...     blub = 1
     ...     implements(IPart1)
 
     >>> class IPart2Base(Interface):
@@ -968,7 +969,7 @@ implementing ``IPlumbingClass``::
 
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1, Part2
+    ...     __plumbing__ = Part1, Part2
     ...     implements(IPlumbingClass)
 
 The directly declared and inherited interfaces are implemented::
@@ -1020,7 +1021,7 @@ plumbing (system)
     A plumbing is the result of what the Plumber produces. It is built of
     methods declared on base classes, the plumbing class and plumbing parts
     according to ``default``, ``extend`` and ``plumb`` directives. Parts
-    involved are listed in a class' ``__pipeline__`` attribute.
+    involved are listed in a class' ``__plumbing__`` attribute.
 
 pipeline attribute
     The attribute a class uses to define the order of plumbing class to be used
@@ -1184,7 +1185,7 @@ is better.
 
 Dynamic Plumbing
 ~~~~~~~~~~~~~~~~
-The plumber could replace the ``__pipeline__`` attribute with a property of the
+The plumber could replace the ``__plumbing__`` attribute with a property of the
 same name. Changing the attribute during runtime would result in a plumbing
 specific to the object. A plumbing cache could further be used to reduce the
 number of plumbing chains in case of many dynamic plumbings. Realised eg by a
@@ -1217,7 +1218,7 @@ Contributors
 ~~~~~~~~~~~~
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
-- Jens W. Klein <jens@bluedynamics.com>
+- Jens W. Klein <jens@bluedynamics.com> 
 - Attila Oláh
 - thanks to WSGI for the concept
 - thanks to #python for trying to block stupid ideas
@@ -1225,7 +1226,7 @@ Contributors
 
 Changes
 ~~~~~~~
-- complete rewrite [chaoflow 2011-01-22]
+- complete rewrite [chaoflow 2011-01-22] 
 - prt instead of cls [chaoflow, rnix 2011-01-19
 - default, extend, plumb [chaoflow, rnix 2011-01-19]
 - initial [chaoflow, 2011-01-04]
@@ -1257,7 +1258,7 @@ Subclass gets its own stacks
 
     >>> class Base(object):
     ...     __metaclass__ = Plumber
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1
 
     >>> class Sub(Base):
-    ...     __pipeline__ = Part1
+    ...     __plumbing__ = Part1

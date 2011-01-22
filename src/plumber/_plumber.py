@@ -34,15 +34,15 @@ class RealPlumber(Stacks):
         """Initialize stacks, turn pipeline into tuple and remember plumbing
         """
         super(RealPlumber, self).__init__(plumbing)
-        if type(plumbing.__pipeline__) is not tuple:
-            plumbing.__pipeline__ = (plumbing.__pipeline__,)
+        if type(plumbing.__plumbing__) is not tuple:
+            plumbing.__plumbing__ = (plumbing.__plumbing__,)
         self.plumbing = plumbing
 
     def __call__(self):
         """Parse the parts into stacks and install the result afterwards
         """
         # parse the parts, nested tuples are flatened
-        for part in self.plumbing.__pipeline__:
+        for part in self.plumbing.__plumbing__:
             for instruction in Instructions(part):
                 self.merge(instruction)
 
@@ -71,11 +71,11 @@ class RealPlumber(Stacks):
 class Plumber(PartMetaclass):
     """Metaclass for plumbing creation
 
-    Create and call a real plumber, for classes declaring a ``__pipeline__``
+    Create and call a real plumber, for classes declaring a ``__plumbing__``
     attribute (inheritance is not enough):
     """
     def __init__(cls, name, bases, dct):
         super(Plumber, cls).__init__(name, bases, dct)
-        if cls.__dict__.has_key('__pipeline__'):
+        if cls.__dict__.has_key('__plumbing__'):
             real_plumber = RealPlumber(cls)
             real_plumber()
