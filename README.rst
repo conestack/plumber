@@ -3,7 +3,8 @@
 =========
 
 Plumber is a metaclass that implements plumbing which works orthogonal
-to subclassing: It uses a chain of closures 
+to subclassing: It uses a chain of closures.
+
 A class declares ``Plumber`` as ``__metaclass__`` and a
 ``__plumbing__`` of parts that will be used for the plumbing. A plumbing 
 limited to the class declaring 
@@ -36,6 +37,58 @@ XXX: use reStructured section references, does something like that exist?
 .. contents::
     :backlinks: entry
     :depth: 2
+
+
+Resolution Matrix
+=================
+
+``@default``::
+
+    +---------------+-----+-----+-----+-----+
+    | PlumbingClass |     | (y) |     |     |
+    +---------------+-----+-----+-----+-----+
+    | A             | (x) |     |     |     |
+    +---------------+-----+-----+-----+-----+
+    | B             |  x  |  y  |     |     |
+    +---------------+-----+-----+-----+-----+
+    | C             |     |     | (z) |     |
+    +---------------+-----+-----+-----+-----+
+    | Bases         |  x  |  y  |  z  | (w) |
+    +---------------+-----+-----+-----+-----+
+
+
+``@extend``::
+
+    +---------------+-----+-----+-----+-----+-----+
+    | PlumbingClass | (X) |     |     |     |     |
+    +---------------+-----+-----+-----+-----+-----+
+    | A             |     | (y) |     |     |     |
+    +---------------+-----+-----+-----+-----+-----+
+    | B             |     |     | (z) |     |     |
+    +---------------+-----+-----+-----+-----+-----+
+    | C             |     |     |     | (w) |     |
+    +---------------+-----+-----+-----+-----+-----+
+    | Bases         |     |     |     |     | (v) |
+    +---------------+-----+-----+-----+-----+-----+
+
+
+``@plumb``::
+
+    +---+---+---+---+----------+
+    |   | A | B | C | Endpoint |
+    +---+---+---+---+----------+
+    |   |  ---------->         |
+    | E | x |   |   | x        |
+    | N |  <----------         |
+    + T +---+---+---+----------+
+    | R |  --> ------>         |
+    | A | y | y |   | y        |
+    | N |  <-- <------         |
+    + C +---+---+---+----------+
+    | E |   |   |  -->         |
+    |   |   |   | z | z        |
+    |   |   |   |  <--         |
+    +---+---+---+---+----------+
 
 
 Plumbing chains
