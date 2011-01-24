@@ -695,7 +695,7 @@ exception::
     ...     __plumbing__ = Part1, Part2, Part3
     Traceback (most recent call last):
       ...
-    PlumbingCollision: 
+    PlumbingCollision:
         <extend 'foo' of <class 'Part1'> payload=<function foo at 0x...>>
       with:
         <extend 'foo' of <class 'Part3'> payload=<function foo at 0x...>>
@@ -739,7 +739,7 @@ should enable setting these parameters through a ``__init__`` plumbing method::
     ...         if 'foo' in kw:
     ...             self.foo = kw.pop('foo')
     ...         _next(self, *args, **kw)
-    
+
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
     ...     __plumbing__ = Part1
@@ -847,7 +847,7 @@ An attribute declared on the class overwrites ``default`` attributes::
 #XXX#    ...     __plumbing__ = Default, Extend, Default, Extend, Default
 #XXX#    Traceback (most recent call last):
 #XXX#      ...
-#XXX#    PlumbingCollision: 
+#XXX#    PlumbingCollision:
 #XXX#        <extend 'foo' of <class 'Extend'> payload=extend>
 #XXX#      with:
 #XXX#        <extend 'foo' of <class 'Extend'> payload=extend>
@@ -1309,7 +1309,7 @@ Contributors
 ~~~~~~~~~~~~
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
-- Jens W. Klein <jens@bluedynamics.com> 
+- Jens W. Klein <jens@bluedynamics.com>
 - Attila Oláh
 - thanks to WSGI for the concept
 - thanks to #python (for trying) to block stupid ideas
@@ -1324,7 +1324,7 @@ Changes
 - merged docstring instruction into plumb
 - plumber instead of Plumber [chaoflow 2011-01-24]
 - plumbing methods are not classmethods of part anymore [chaoflow 2011-01-24]
-- complete rewrite [chaoflow 2011-01-22] 
+- complete rewrite [chaoflow 2011-01-22]
 - prt instead of cls [chaoflow, rnix 2011-01-19
 - default, extend, plumb [chaoflow, rnix 2011-01-19]
 - initial [chaoflow, 2011-01-04]

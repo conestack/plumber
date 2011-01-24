@@ -53,7 +53,7 @@ def plumb_str(leftdoc, rightdoc):
         <BLANKLINE>
         Left tail
         <BLANKLINE>
-    
+
     Otherwise rightdoc is just appended to leftdoc, separated by a newline::
 
         >>> leftdoc = '''Left doc
@@ -114,7 +114,7 @@ class Instruction(object):
 
     def __add__(self, right):
         """Used to merge instruction, subclasses need to implement.
-        
+
             >>> Instruction(None) + 1
             Traceback (most recent call last):
               ...
@@ -124,7 +124,7 @@ class Instruction(object):
 
     def __call__(self, plumbing):
         """Apply instruction to a plumbing, subclasses need to implement.
-        
+
             >>> Instruction(None)(None)
             Traceback (most recent call last):
               ...
@@ -212,7 +212,7 @@ if ZOPE_INTERFACE_AVAILABLE:
             >>> foo + Instruction("bar")
             Traceback (most recent call last):
               ...
-            PlumbingCollision: 
+            PlumbingCollision:
                 <_implements '__interfaces__' of None payload=('foo',)>
               with:
                 <Instruction 'None' of None payload='bar'>
@@ -240,7 +240,7 @@ if ZOPE_INTERFACE_AVAILABLE:
 
 class default(Stage1Instruction):
     """Provide a default attribute
-    
+
     A default attribute is used, if neither the class nor one of its bases
     declare the attribute.
 
@@ -271,7 +271,7 @@ class default(Stage1Instruction):
             >>> def1 + Instruction('foo')
             Traceback (most recent call last):
               ...
-            PlumbingCollision: 
+            PlumbingCollision:
                 <default 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload='foo'>
@@ -310,23 +310,23 @@ class extend(Stage1Instruction):
             True
             >>> ext1 + default(2) is ext1
             True
-        
+
         Two unequal extends collide::
 
             >>> ext1 + extend(2)
             Traceback (most recent call last):
               ...
-            PlumbingCollision: 
+            PlumbingCollision:
                 <extend 'None' of None payload=1>
               with:
                 <extend 'None' of None payload=2>
-            
+
         Everything except default/extend collides::
 
             >>> ext1 + Instruction(1)
             Traceback (most recent call last):
               ...
-            PlumbingCollision: 
+            PlumbingCollision:
                 <extend 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
@@ -399,7 +399,7 @@ class plumb(Stage2Instruction):
             return isinstance(p2, basestring) or p2 is None
         if isinstance(p1, property):
             return isinstance(p2, property)
-        if callable(p1): 
+        if callable(p1):
             return callable(p2)
         return False
 

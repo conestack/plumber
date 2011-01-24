@@ -9,7 +9,7 @@ except ImportError: #pragma NO COVERAGE
     # zope.testrunner depends on zope.interface
     # XXX: how do we test without zope.interface?
     ZOPE_INTERFACE_AVAILABLE = False #pragma NO COVERAGE
-    
+
 
 class _Part(object):
     """Just here to solve a dependency loop

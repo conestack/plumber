@@ -1,5 +1,5 @@
 import unittest
-import doctest 
+import doctest
 from pprint import pprint
 from interlude import interact
 
@@ -24,7 +24,7 @@ def test_suite():
             ) for module in TESTMODULES
         ]+[
         doctest.DocFileSuite(
-            file, 
+            file,
             optionflags=optionflags,
             globs={'interact': interact,
                    'pprint': pprint},
