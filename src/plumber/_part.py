@@ -60,16 +60,16 @@ class PartMetaclass(type):
         if ZOPE_INTERFACE_AVAILABLE:
             instructions.append(_implements(cls))
 
-        # Check for instructions in ``cls.__dict__``, tell them their name
-        # and parent and append them to the list of instructions
         for name, item in cls.__dict__.iteritems():
             if isinstance(item, Instruction):
                 item.__name__ = name
                 item.__parent__ = cls
                 instructions.append(item)
+        for base in bases:
+            instructions += Instructions(base).instructions
 
 
+# Base class for plumbing parts: identification and metaclass setting
+# No doctest allowed here, it would be recognized as an instruction.
 class Part(_Part):
-    """Base class for plumbing parts: identification and metaclass setting
-    """
     __metaclass__ = PartMetaclass

@@ -62,10 +62,11 @@ class RealPlumber(Stacks):
         """
         stage = self.stages[instruction.__stage__]
         stack = stage.setdefault(instruction.__name__, [])
-        if stack:
-            instruction = stack[-1] + instruction
-        stack.append(instruction)
         self.history.append(instruction)
+        if instruction not in self.history[:-1]:
+            if stack:
+                instruction = stack[-1] + instruction
+            stack.append(instruction)
 
 
 class Plumber(PartMetaclass):
@@ -79,3 +80,5 @@ class Plumber(PartMetaclass):
         if cls.__dict__.has_key('__plumbing__'):
             real_plumber = RealPlumber(cls)
             real_plumber()
+
+plumber = Plumber

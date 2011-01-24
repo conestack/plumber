@@ -53,7 +53,7 @@ class Instruction(object):
         if name is not None:
             self.__name__ = name
 
-    def __add__(self, previous):
+    def __add__(self, right):
         """Used to merge current and previous instruction.
 
         Depending on the specific instruction the result is:
@@ -147,6 +147,8 @@ class default(Stage1Instruction):
         return right
 
     def __call__(self, plumbing):
+        """declaration on the class or a base class wins against us.
+        """
         if not hasattr(plumbing, self.name):
             setattr(plumbing, self.name, self.payload)
 
@@ -162,6 +164,8 @@ class extend(Stage1Instruction):
         raise PlumbingCollision(self, right)
 
     def __call__(self, plumbing):
+        """declaration on class collides with us, we win against base classes
+        """
         if plumbing.__dict__.has_key(self.name):
             raise PlumbingCollision(plumbing, self)
         setattr(plumbing, self.name, self.payload)
