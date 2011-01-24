@@ -1,17 +1,15 @@
 from plumber.exceptions import PlumbingCollision
 from plumber._instructions import Instruction
-from plumber._instructions import _docstring
-from plumber._instructions import _implements
+from plumber._instructions import plumb
 
-# We are aware of ``zope.interface``: if zope.interfaces is available we check
-# interfaces implemented on the plumbing parts and will make the plumbing
-# implement them, too.
 try:
-    import zope.interface
+    from plumber._instructions import _implements
     ZOPE_INTERFACE_AVAILABLE = True
-except ImportError:
-    ZOPE_INTERFACE_AVAILABLE = False
-
+except ImportError: #pragma NO COVERAGE
+    # zope.testrunner depends on zope.interface
+    # XXX: how do we test without zope.interface?
+    ZOPE_INTERFACE_AVAILABLE = False #pragma NO COVERAGE
+    
 
 class _Part(object):
     """Just here to solve a dependency loop
@@ -36,23 +34,23 @@ class Instructions(object):
         return getattr(self.part, self.attrname)
 
 
-class PartMetaclass(type):
+class partmetaclass(type):
     """Metaclass for part creation
 
     Turn __doc__ and implemented zope interfaces into instructions and tell
     existing instructions their name and parent, for subclasses of ``Part``.
     """
     def __init__(cls, name, bases, dct):
-        super(PartMetaclass, cls).__init__(name, bases, dct)
+        super(partmetaclass, cls).__init__(name, bases, dct)
         if not issubclass(cls, _Part):
             return
 
         # Get the part's instructions list
         instructions = Instructions(cls).instructions
 
-        # An existing docstring is an implicit _docstring instruction
+        # An existing docstring is an implicit plumb instruction for __doc__
         if cls.__doc__ is not None:
-            instructions.append(_docstring(cls.__doc__))
+            instructions.append(plumb(cls.__doc__, name='__doc__'))
 
         # If zope.interface is available treat existence of implemented
         # interfaces as an implicit _implements instruction with these
@@ -61,15 +59,21 @@ class PartMetaclass(type):
             instructions.append(_implements(cls))
 
         for name, item in cls.__dict__.iteritems():
+            # adopt instructions and enlist them
             if isinstance(item, Instruction):
                 item.__name__ = name
                 item.__parent__ = cls
                 instructions.append(item)
         for base in bases:
-            instructions += Instructions(base).instructions
+            for instruction in Instructions(base):
+                # skip instructions from bases for attributes we already have
+                # an instruction for - this reflects normal subclassing
+                # behaviour.
+                if not instruction.__name__ in cls.__dict__:
+                    instructions.append(instruction)
 
 
 # Base class for plumbing parts: identification and metaclass setting
 # No doctest allowed here, it would be recognized as an instruction.
 class Part(_Part):
-    __metaclass__ = PartMetaclass
+    __metaclass__ = partmetaclass

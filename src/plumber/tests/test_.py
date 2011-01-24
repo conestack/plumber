@@ -11,19 +11,25 @@ TESTFILES = [
     '../plumber.txt',
 ]
 
+TESTMODULES = [
+    'plumber._instructions',
+    'plumber.tests._globalmetaclasstest',
+]
+
 def test_suite():
     return unittest.TestSuite([
+        doctest.DocTestSuite(
+            module,
+            optionflags=optionflags,
+            ) for module in TESTMODULES
+        ]+[
         doctest.DocFileSuite(
             file, 
             optionflags=optionflags,
             globs={'interact': interact,
                    'pprint': pprint},
             ) for file in TESTFILES
-        ]+[
-        doctest.DocTestSuite(
-            'plumber.tests._globalmetaclasstest',
-            )
-    ])
+        ])
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite')
+    unittest.main(defaultTest='test_suite') #pragma NO COVERAGE

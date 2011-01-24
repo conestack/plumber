@@ -8,10 +8,10 @@ Mostly here for understanding what's going on.
 from zope.interface import Interface
 from zope.interface import implements
 
-from plumber import Plumber
+from plumber import plumber
 from plumber import Part
 
-__metaclass__ = Plumber
+__metaclass__ = plumber
 
 
 class IPart1(Interface):
@@ -30,7 +30,7 @@ class Foo:
     classes, even when not subclassing subclasses.
     ::
         >>> Foo.__class__
-        <class 'plumber._plumber.Plumber'>
+        <class 'plumber._plumber.plumber'>
 
         >>> issubclass(Foo, object)
         True
@@ -53,7 +53,7 @@ class ClassMaybeUsingAPlumbing(object):
 class ClassReallyUsingAPlumbing:
     """
         >>> ClassReallyUsingAPlumbing.__class__
-        <class 'plumber._plumber.Plumber'>
+        <class 'plumber._plumber.plumber'>
 
         >>> issubclass(ClassReallyUsingAPlumbing, object)
         True

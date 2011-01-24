@@ -34,7 +34,7 @@ setup(name='plumber',
               'plone.testing',
               'unittest2',
               'zope.interface',
-          ]
+          ],
       },
       entry_points="""
       """,

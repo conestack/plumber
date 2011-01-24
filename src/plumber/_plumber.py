@@ -1,5 +1,5 @@
 from plumber._part import Instructions
-from plumber._part import PartMetaclass
+from plumber._part import partmetaclass
 
 
 class Stacks(object):
@@ -69,16 +69,14 @@ class RealPlumber(Stacks):
             stack.append(instruction)
 
 
-class Plumber(PartMetaclass):
+class plumber(partmetaclass):
     """Metaclass for plumbing creation
 
     Create and call a real plumber, for classes declaring a ``__plumbing__``
     attribute (inheritance is not enough):
     """
     def __init__(cls, name, bases, dct):
-        super(Plumber, cls).__init__(name, bases, dct)
+        super(plumber, cls).__init__(name, bases, dct)
         if cls.__dict__.has_key('__plumbing__'):
             real_plumber = RealPlumber(cls)
             real_plumber()
-
-plumber = Plumber
