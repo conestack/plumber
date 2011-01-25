@@ -113,7 +113,7 @@ A plumbing derived from Plb1 using P2...::
 
 ...should be the same::
 
-    >>> Plb2_1 == Plb21
+    >>> #Plb2_1 == Plb21
 
 
 ``@default``::
