@@ -72,6 +72,50 @@ XXX: use reStructured section references, does something like that exist?
 Resolution Matrix
 =================
 
+A way to describe plumbings: In parens ``()`` are the base classes used for
+the plumbing and in brackets ``[]`` the plumbing parts.
+
+Plb[P2, P1](Base) == Plb[P2](Plb[P1](Base))
+
+In code:
+
+A base class and three parts::
+
+    >>> class Base(object):
+    ...     pass
+
+    >>> class P1(Part):
+    ...     pass
+
+    >>> class P2(Part):
+    ...     pass
+
+    >>> class P3(Part):
+    ...     pass
+
+A plumbing derived from Base using P1::
+
+    >>> class Plb1(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = P1
+
+A plumbing derived from Plb1 using P2...::
+
+    >>> class Plb2_1(Plb1):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = P2
+
+...and a plumbing derived from Base using P2 and P1..::
+
+    >>> class Plb21(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = P2, P1
+
+...should be the same::
+
+    >>> Plb2_1 == Plb21
+
+
 ``@default``::
 
     +---------------+-----+-----+-----+-----+
