@@ -5,9 +5,36 @@
 Plumber is a metaclass that implements plumbing which works orthogonal
 to subclassing: It uses a chain of closures.
 
-A class declares ``Plumber`` as ``__metaclass__`` and a
-``__plumbing__`` of parts that will be used for the plumbing. A plumbing 
-limited to the class declaring 
+The plumber provides declaritive extension of classes. A class declares parts
+in a pip
+
+
+Plumbing only works within one class, as if declared on the class. default and
+extend don't take base class attr into account, they are checked if
+
+A metaclass creates classes, it works on them right after they are declared.
+
+A class that would like the plumber to extend it, declares a pipeline of parts.
+The parts are in an ordered list, they contain code with instructions on how to
+extend the class. A class using a plumber is called a plumbing.
+
+By that a
+
+plumber, a metaclass, extends a class with parts declared in its pipeline.
+
+
+by parts, declared
+
+
+plumber is a metaclass that implements plumbing which is an alternative to
+subclassing works orthogonal
+to subclassing: It uses a chain of closures
+
+
+
+A class declares ``plumber`` as ``__metaclass__`` and a
+``__plumbing__`` of parts that will be used for the plumbing. A plumbing
+limited to the class declaring
 
 Parts carry instructions and instructions carry code and tell what to do with
 it.

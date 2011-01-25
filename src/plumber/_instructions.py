@@ -181,63 +181,6 @@ class Stage1Instruction(Instruction):
     """
     __stage__ = 'stage1'
 
-if ZOPE_INTERFACE_AVAILABLE:
-    class _implements(Stage1Instruction):
-        """classImplements interfaces
-
-            >>> foo = _implements(('foo',))
-            >>> foo == foo
-            True
-            >>> foo + foo is foo
-            True
-
-            >>> foo == _implements(('foo',))
-            True
-            >>> foo != _implements(('bar',))
-            True
-
-            >>> _implements(('foo', 'bar')) == _implements(('bar', 'foo'))
-            True
-
-            >>> foo + _implements(('foo',)) is foo
-            True
-
-            >>> bar = _implements(('bar',))
-            >>> foo + bar
-            <_implements '__interfaces__' of None payload=('bar', 'foo')>
-
-            >>> foo + bar == bar + foo
-            True
-
-            >>> foo + Instruction("bar")
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
-                <_implements '__interfaces__' of None payload=('foo',)>
-              with:
-                <Instruction 'None' of None payload='bar'>
-        """
-        __name__ = "__interfaces__"
-
-        def __add__(self, right):
-            if self == right:
-                return self
-            if not isinstance(right, _implements):
-                raise PlumbingCollision(self, right)
-            ifaces = self.payload + right.payload
-            return _implements(ifaces)
-
-        def __call__(self, plumbing):
-            if self.payload:
-                classImplements(plumbing, *self.payload)
-
-        @property
-        def payload(self):
-            if type(self.item) is tuple:
-                return tuple(sorted(self.item))
-            return tuple(sorted(implementedBy(self.item)))
-
-
 class default(Stage1Instruction):
     """Provide a default attribute
 
@@ -285,7 +228,8 @@ class default(Stage1Instruction):
         raise PlumbingCollision(self, right)
 
     def __call__(self, plumbing):
-        if not hasattr(plumbing, self.name):
+        plb = plumbing()
+        if not hasattr(plb, self.name):
             setattr(plumbing, self.name, self.payload)
 
 
@@ -424,3 +368,60 @@ class plumb(Stage2Instruction):
             raise PlumbingCollision(self, plumbing)
         entrance = self.plumb(entrancefor, self.payload, _next)
         setattr(plumbing, self.name, entrance)
+
+
+if ZOPE_INTERFACE_AVAILABLE:
+    class _implements(Stage2Instruction):
+        """classImplements interfaces
+
+            >>> foo = _implements(('foo',))
+            >>> foo == foo
+            True
+            >>> foo + foo is foo
+            True
+
+            >>> foo == _implements(('foo',))
+            True
+            >>> foo != _implements(('bar',))
+            True
+
+            >>> _implements(('foo', 'bar')) == _implements(('bar', 'foo'))
+            True
+
+            >>> foo + _implements(('foo',)) is foo
+            True
+
+            >>> bar = _implements(('bar',))
+            >>> foo + bar
+            <_implements '__interfaces__' of None payload=('bar', 'foo')>
+
+            >>> foo + bar == bar + foo
+            True
+
+            >>> foo + Instruction("bar")
+            Traceback (most recent call last):
+              ...
+            PlumbingCollision:
+                <_implements '__interfaces__' of None payload=('foo',)>
+              with:
+                <Instruction 'None' of None payload='bar'>
+        """
+        __name__ = "__interfaces__"
+
+        def __add__(self, right):
+            if self == right:
+                return self
+            if not isinstance(right, _implements):
+                raise PlumbingCollision(self, right)
+            ifaces = self.payload + right.payload
+            return _implements(ifaces)
+
+        def __call__(self, plumbing):
+            if self.payload:
+                classImplements(plumbing, *self.payload)
+
+        @property
+        def payload(self):
+            if type(self.item) is tuple:
+                return tuple(sorted(self.item))
+            return tuple(sorted(implementedBy(self.item)))

@@ -26,8 +26,14 @@ class Instructions(object):
         if not part.__dict__.has_key(self.attrname):
             setattr(part, self.attrname, [])
 
+    def __contains__(self, item):
+        return item in self.instructions
+
     def __iter__(self):
         return iter(self.instructions)
+
+    def append(self, item):
+        self.instructions.append(item)
 
     @property
     def instructions(self):
@@ -46,7 +52,7 @@ class partmetaclass(type):
             return
 
         # Get the part's instructions list
-        instructions = Instructions(cls).instructions
+        instructions = Instructions(cls)
 
         # An existing docstring is an implicit plumb instruction for __doc__
         if cls.__doc__ is not None:
@@ -64,13 +70,20 @@ class partmetaclass(type):
                 item.__name__ = name
                 item.__parent__ = cls
                 instructions.append(item)
+
+        # check our bases for instructions we don't have already and which
+        # are not overwritten by our instructions (stage1)
         for base in bases:
-            for instruction in Instructions(base):
-                # skip instructions from bases for attributes we already have
-                # an instruction for - this reflects normal subclassing
-                # behaviour.
-                if not instruction.__name__ in cls.__dict__:
-                    instructions.append(instruction)
+            # XXX: I don't like this code
+            for instr in Instructions(base):
+                # skip instructions we have already
+                if instr in instructions:
+                    continue
+                # stage1 instructions with the same name are ignored
+                if instr.__name__ in [x.__name__ for x in instructions if
+                        x.__stage__ == 'stage1']:
+                    continue
+                instructions.append(instr)
 
 
 # Base class for plumbing parts: identification and metaclass setting
