@@ -113,7 +113,7 @@ class Instruction(object):
             self.__name__ = name
 
     def __add__(self, right):
-        """Used to merge instruction, subclasses need to implement.
+        """Used to merge instructions, subclasses need to implement it::
 
             >>> Instruction(None) + 1
             Traceback (most recent call last):
@@ -122,13 +122,16 @@ class Instruction(object):
         """
         raise NotImplementedError
 
-    def __call__(self, plumbing):
-        """Apply instruction to a plumbing, subclasses need to implement.
+    def __call__(self, dct, bases=None):
+        """Apply instruction to a plumbing, subclasses need to implement it::
 
             >>> Instruction(None)(None)
             Traceback (most recent call last):
               ...
             NotImplementedError
+
+        ``bases`` is a wrapper for all base classes of the plumbing and
+        provides ``__contains__``, instructions may or may not need it.
         """
         raise NotImplementedError
 
@@ -174,12 +177,11 @@ class Instruction(object):
 class Stage1Instruction(Instruction):
     """Instructions installed in stage1
 
-    - _docstring
     - default
     - extend
-    - _implements
     """
     __stage__ = 'stage1'
+
 
 class default(Stage1Instruction):
     """Provide a default attribute
@@ -227,10 +229,9 @@ class default(Stage1Instruction):
             return right
         raise PlumbingCollision(self, right)
 
-    def __call__(self, plumbing):
-        plb = plumbing()
-        if not hasattr(plb, self.name):
-            setattr(plumbing, self.name, self.payload)
+    def __call__(self, dct, bases):
+        if not dct.has_key(self.name) and not self.name in bases:
+            dct[self.name] = self.payload
 
 
 class extend(Stage1Instruction):
@@ -281,10 +282,10 @@ class extend(Stage1Instruction):
             return self
         raise PlumbingCollision(self, right)
 
-    def __call__(self, plumbing):
-        if plumbing.__dict__.has_key(self.name):
-            raise PlumbingCollision(plumbing, self)
-        setattr(plumbing, self.name, self.payload)
+    def __call__(self, dct, bases):
+        if dct.has_key(self.name):
+            raise PlumbingCollision('Plumbing class', self)
+        dct[self.name] = self.payload
 
 
 ####
@@ -295,6 +296,11 @@ class Stage2Instruction(Instruction):
     """Instructions installed in stage2: so far only plumb
     """
     __stage__ = 'stage2'
+
+    def __call__(self, cls):
+        """cls is the plumbing class, type finished its work already
+        """
+        raise NotImplementedError
 
 
 def entrancefor(plumbing_method, _next):
@@ -361,13 +367,13 @@ class plumb(Stage2Instruction):
             return plbfunc(p1, p2)
         raise RuntimeError("We should not reach this code!") #pragma NO COVERAGE
 
-    def __call__(self, plumbing):
+    def __call__(self, cls):
         # Check for a method on the plumbing class itself.
-        _next = getattr(plumbing, self.name)
+        _next = getattr(cls, self.name)
         if not self.ok(self.payload, _next):
-            raise PlumbingCollision(self, plumbing)
+            raise PlumbingCollision(self, cls)
         entrance = self.plumb(entrancefor, self.payload, _next)
-        setattr(plumbing, self.name, entrance)
+        setattr(cls, self.name, entrance)
 
 
 if ZOPE_INTERFACE_AVAILABLE:
@@ -416,9 +422,9 @@ if ZOPE_INTERFACE_AVAILABLE:
             ifaces = self.payload + right.payload
             return _implements(ifaces)
 
-        def __call__(self, plumbing):
+        def __call__(self, cls):
             if self.payload:
-                classImplements(plumbing, *self.payload)
+                classImplements(cls, *self.payload)
 
         @property
         def payload(self):

@@ -2,6 +2,9 @@
  plumber
 =========
 
+XXX: more like a scratchpad at the moment
+
+
 Plumber is a metaclass that implements plumbing which works orthogonal
 to subclassing: It uses a chain of closures.
 
@@ -636,7 +639,7 @@ is raised::
     Traceback (most recent call last):
       ...
     PlumbingCollision:
-        <class 'PlumbingClass'>
+        Plumbing class
       with:
         <extend 'foo' of <class 'Part1'> payload=False>
 
@@ -1344,17 +1347,39 @@ Contributors
 
 Changes
 ~~~~~~~
+- stage1 in __new__, stage2 in __init__, setting of __name__ now works
+  [chaoflow 2011-01-25]
+
 - instructions recognize equal instructions
-- instructions from base classes now like subclass inheritance
+  [chaoflow 2011-01-24]
+
+- instructions from base classes now like subclass inheritance [chaoflow 2011
+  [chaoflow 2011-01-24]
+
 - doctest order now plumbing order: P1, P2, PlumbingClass, was PlumbingClass,
-  P1, P2 [chaoflow 2011-01-24]
+  P1, P2
+  [chaoflow 2011-01-24]
+
 - merged docstring instruction into plumb
-- plumber instead of Plumber [chaoflow 2011-01-24]
-- plumbing methods are not classmethods of part anymore [chaoflow 2011-01-24]
-- complete rewrite [chaoflow 2011-01-22]
-- prt instead of cls [chaoflow, rnix 2011-01-19
-- default, extend, plumb [chaoflow, rnix 2011-01-19]
-- initial [chaoflow, 2011-01-04]
+  [chaoflow 2011-01-24]
+
+- plumber instead of Plumber
+  [chaoflow 2011-01-24]
+
+- plumbing methods are not classmethods of part anymore
+  [chaoflow 2011-01-24]
+
+- complete rewrite
+  [chaoflow 2011-01-22]
+
+- prt instead of cls
+  [chaoflow, rnix 2011-01-19
+
+- default, extend, plumb
+  [chaoflow, rnix 2011-01-19]
+
+- initial
+  [chaoflow, 2011-01-04]
 
 
 TODO
