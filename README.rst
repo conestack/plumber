@@ -50,6 +50,22 @@ The ``default`` decorator is used for providing functions, properties and
 attribues on the plumbing class which could be overwritten either by another
 part, the bases of the plumbing class or by the plumbing class itself.
 
+resolution matrix for ``default``::
+
+    +---------------+---------------------------------------+
+    |               |  DEFAULT ENDPOINT RESOLUTION          |
+    +---------------+---------+---------+---------+---------+
+    | Endpoints     |  x(p)   |  y(b)   |  z(p1)  |  w(p2)  |
+    +---------------+---------+---------+---------+---------+
+    | Plumbing      |  x(p)   |         |         |         |
+    +---------------+---------+---------+---------+---------+
+    | Base          |  x(b)   |  y(b)   |         |         |
+    +---------------+---------+---------+---------+---------+
+    | Part1         |  x(p1)  |  y(p1)  |  z(p1)  |         |
+    +---------------+---------+---------+---------+---------+
+    | Part2         |  x(p2)  |  y(p2)  |  z(p2)  |  w(b2)  |
+    +---------------+---------+---------+---------+---------+
+
 Example::
     
     >>> from plumber import plumber
@@ -57,48 +73,36 @@ Example::
     >>> from plumber import default
     
     >>> class Part1(Part):
-    ...     x = default(0)
-    ...     y = default(0)
-    ...     z = default(1)
+    ...     x = default('x(p1)')
+    ...     y = default('y(p1)')
+    ...     z = default('z(p1)')
     
     >>> class Part2(Part):
-    ...     x = default(0)
-    ...     y = default(0)
-    ...     z = default(0)
-    ...     w = default(1)
+    ...     x = default('x(p2)')
+    ...     y = default('y(p2)')
+    ...     z = default('z(p2)')
+    ...     w = default('w(p2)')
     
     >>> class Base(object):
-    ...     x = 0
-    ...     y = 1
+    ...     x = 'x(b)'
+    ...     y = 'y(b)'
     
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = plumber
     ...     __plumbing__ = Part1, Part2
-    ...     x = 1
-
-resolution matrix for ``default``::
+    ...     x = 'x(p)'
     
-    +---------------+-----+-----+-----+-----+
-    |               |        ENDPOINT       |
-    +---------------+-----+-----+-----+-----+
-    | PlumbingClass | (x) |     |     |     |
-    +---------------+-----+-----+-----+-----+
-    | Base          |  x  | (y) |     |     |
-    +---------------+-----+-----+-----+-----+
-    | Part1         |  x  |  y  | (z) |     |
-    +---------------+-----+-----+-----+-----+
-    | Part2         |  x  |  y  |  z  | (w) |
-    +---------------+-----+-----+-----+-----+
+Console::
 
     >>> plumbing = PlumbingClass()
     >>> plumbing.x
-    1
+    'x(p)'
     >>> plumbing.y
-    1
+    'y(b)'
     >>> plumbing.z
-    1
+    'z(p1)'
     >>> plumbing.w
-    1
+    'w(p2)'
 
 
 Defining extensions
@@ -115,6 +119,24 @@ They must not be overwritten by another part, this raises an error.
 Use ``extend`` decorator if you know that a function must not be overwritten
 by anything else, like storage related stuff, et cetera.
 
+Resolution matrix for ``extend``::
+    
+    +---------------+-------------------------------------------------+
+    |               |  EXTEND ENDPOINT RESOLUTION                     |
+    +---------------+---------+---------+---------+---------+---------+
+    | Endpoints     |  x(p)   |  y(p1)  |  z(p2)  |  w(p3)  |  v(p4)  |
+    +---------------+---------+---------+---------+---------+---------+
+    | Plumbing      |  x(p)   |         |         |         |         |
+    +---------------+---------+---------+---------+---------+---------+
+    | Part1         |         |  y(p1)  |         |         |         |
+    +---------------+---------+---------+---------+---------+---------+
+    | Part2         |         |         |  z(p2)  |         |         |
+    +---------------+---------+---------+---------+---------+---------+
+    | Part3         |         |         |         |  w(p3)  |         |
+    +---------------+---------+---------+---------+---------+---------+
+    | Base          |  x(b)   |  y(b)   |  z(b)   |  w(b)   |  v(b)   |
+    +---------------+---------+---------+---------+---------+---------+
+
 Example::
 
     >>> from plumber import plumber
@@ -122,53 +144,39 @@ Example::
     >>> from plumber import extend
     
     >>> class Part1(Part):
-    ...     y = extend(1)
+    ...     y = extend('y(p1)')
     
     >>> class Part2(Part):
-    ...     z = extend(1)
+    ...     z = extend('z(p2)')
     
     >>> class Part3(Part):
-    ...     w = extend(1)
+    ...     w = extend('w(p3)')
     
     >>> class Base(object):
-    ...     x = 0
-    ...     y = 0
-    ...     z = 0
-    ...     w = 0
-    ...     v = 1   
+    ...     x = 'x(b)'
+    ...     y = 'y(b)'
+    ...     z = 'z(b)'
+    ...     w = 'w(b)'
+    ...     v = 'v(b)' 
     
     >>> class PlumbingClass(Base):
     ...     __metaclass__ = plumber
     ...     __plumbing__ = Part1, Part2, Part3
-    ...     x = 1
+    ...     x = 'x(p)'
 
-Resolution matrix for ``extend``::
-    
-    +---------------+-----------------------------+
-    |               |          ENDPOINT           |
-    +---------------+-----+-----+-----+-----+-----+
-    | PlumbingClass | (X) |     |     |     |     |
-    +---------------+-----+-----+-----+-----+-----+
-    | Part1         |     | (y) |     |     |     |
-    +---------------+-----+-----+-----+-----+-----+
-    | Part2         |     |     | (z) |     |     |
-    +---------------+-----+-----+-----+-----+-----+
-    | Part3         |     |     |     | (w) |     |
-    +---------------+-----+-----+-----+-----+-----+
-    | Base          |  x  |  y  |  z  |  w  | (v) |
-    +---------------+-----+-----+-----+-----+-----+
+Console::
     
     >>> plumbing = PlumbingClass()
     >>> plumbing.x
-    1
+    'x(p)'
     >>> plumbing.y
-    1
+    'y(p1)'
     >>> plumbing.z
-    1
+    'z(p2)'
     >>> plumbing.w
-    1
+    'w(p3)'
     >>> plumbing.v
-    1
+    'v(b)'
 
 
 Defining pipelines
