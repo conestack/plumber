@@ -1,11 +1,211 @@
-=========
- plumber
-=========
+Plumber
+=======
 
-XXX: more like a scratchpad at the moment
+Plumber is a package to create classes in a declarative way. A Plumbing
+consists of a ``plumbing class`` and ``parts`` providing additional behavior
+on it.
+
+A plumbing is created by setting the metaclass ``plumber`` on plumbing class
+and defining the plumbing parts.::
+
+    >>> from plumber import plumber
+    >>> from somethere import Part1, Part2
+    
+    >>> class SomePlumbing(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
+
+The ``plumber`` metaclass adds the functionalities defined by ``Part1`` and 
+``Part2`` to ``SomePlumbing`` class.
+
+There are three functionalities which could be defined by parts:
+
+- provide ``defaults`` on plumbing classes.
+- ``extend`` plumbing classes.
+- build ``pipelines`` for ``endpoints`` of a plumbing class with ``plumb``.
 
 
-Plumber is a metaclass that implements plumbing which works orthogonal
+Endpoints
+---------
+
+Endpoints are the functions, attributes and properties available on the
+plumbing class after plumber has done its work.
+
+This endpoints could be defined either by parts using the ``default`` or
+``extend`` decorator, or by the plumbing class itself.
+
+
+Defining defaults
+-----------------
+
+The ``default`` decorator is used for providing functions, properties and
+attribues on the plumbing class which could be overwritten either by another
+part, the bases of the plumbing class or by the plumbing class itself.
+
+Example::
+
+    >>> class Part1(Part):
+    ...     x = default(0)
+    ...     y = default(0)
+    ...     z = default(1)
+    
+    >>> class Part2(Part):
+    ...     x = default(0)
+    ...     y = default(0)
+    ...     z = default(0)
+    ...     w = default(1)
+    
+    >>> class Base(object):
+    ...     x = 0
+    ...     y = 1
+    
+    >>> class PlumbingClass(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
+    ...     x = 1
+
+resolution matrix for ``default``::
+
+    +---------------+-----+-----+-----+-----+
+    |               |        ENDPOINT       |
+    +---------------+-----+-----+-----+-----+
+    | PlumbingClass | (x) |     |     |     |
+    +---------------+-----+-----+-----+-----+
+    | Base          |  x  | (y) |     |     |
+    +---------------+-----+-----+-----+-----+
+    | Part1         |  x  |  y  | (z) |     |
+    +---------------+-----+-----+-----+-----+
+    | Part2         |  x  |  y  |  z  | (w) |
+    +---------------+-----+-----+-----+-----+
+
+
+Defining extensions
+-------------------
+
+The ``extend`` decorator is used to explicitly define functions, properties and
+attribues as endpoints for a plumbing which are immutable.
+
+They overwrite existing functions, properties and attribues defined by
+``default`` decorator.
+
+They must not be overwritten by another part, this raises an error.
+
+Use ``extend`` decorator if you know that a function must not be overwritten
+by anything else, like storage related stuff, et cetera.
+
+Example::
+
+    >>> class Part1(Part):
+    ...     y = extend(1)
+    
+    >>> class Part2(Part):
+    ...     z = extend(1)
+    
+    >>> class Part3(Part):
+    ...     w = extend(1)
+    
+    >>> class Base(object):
+    ...     v = 1
+    
+    >>> class PlumbingClass(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2, Part3
+    ...     x = 0
+    ...     y = 0
+    ...     z = 0
+    ...     w = 0
+    ...     v = 1   
+
+Resolution matrix for ``extend``::
+
+    +---------------+-----------------------------+
+    |               |          ENDPOINT           |
+    +---------------+-----+-----+-----+-----+-----+
+    | PlumbingClass | (X) |     |     |     |     |
+    +---------------+-----+-----+-----+-----+-----+
+    | Part1         |     | (y) |     |     |     |
+    +---------------+-----+-----+-----+-----+-----+
+    | Part2         |     |     | (z) |     |     |
+    +---------------+-----+-----+-----+-----+-----+
+    | Part3         |     |     |     | (w) |     |
+    +---------------+-----+-----+-----+-----+-----+
+    | Base          |  x  |  y  |  z  |  w  | (v) |
+    +---------------+-----+-----+-----+-----+-----+
+
+
+Defining Pipelines
+------------------
+
+Plumber can be used to build pipelines for ``endpoints``. Pipelines can be
+defined for functions only (atm).
+
+To define pipelines, use the ``plumb`` decorator in your parts, i.e.::
+
+    >>> @plumb
+    >>> def __getitem__(_next, self, key):
+    ...     # before next
+    ...     ...
+    ...     ret = _next(self, key)
+    ...     # after next
+    ...     ...
+    ...     return ret
+
+Pipelines are build after endpoints are set, and are built in order parts are
+defined on ``__plumbing__`` attribute of the plumbing class.
+
+Example::
+
+    >>> class Part1(Part):
+    ...     @plumb
+    ...     def x(_next, self):
+    ...         _next(self)
+    ...     @plumb
+    ...     def y(_next, self):
+    ...         _next(self)
+    
+    >>> class Part2(Part):
+    ...     @plumb
+    ...     def y(_next, self):
+    ...         _next(self)
+    
+    >>> class Part3(Part):
+    ...     @plumb
+    ...     def z(_next, self):
+    ...         _next(self)
+    
+    >>> class PlumbingClass(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2, Part3
+    ...     def x(self):
+    ...         print 'x endpoint'
+    ...     def y(self):
+    ...         print 'y endpoint'
+    ...     def z(self):
+    ...         print 'z endpoint'
+
+Resolution matric for ``plumb``::
+
+    +---+-------+-------+-------+----------+
+    |   | Part1 | Part2 | Part3 | ENDPOINT |
+    +---+-------+-------+-------+----------+
+    |   |    ----------------------->      |
+    | E |   x   |       |       |    x     |
+    | N |    <-----------------------      |
+    + T +-------+-------+-------+----------+
+    | R |    ------> --------------->      |
+    | A |   y   |   y   |       |    y     |
+    | N |    <------ <---------------      |
+    + C +-------+-------+-------+----------+
+    | E |       |       |    ------->      |
+    |   |       |       |   z   |    z     |
+    |   |       |       |    <-------      |
+    +---+-------+-------+-------+----------+
+
+
+###############################################################################
+## scratch
+
+Thus, plumbing which works orthogonal
 to subclassing: It uses a chain of closures.
 
 The plumber provides declaritive extension of classes. A class declares parts
