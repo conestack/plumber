@@ -50,7 +50,7 @@ The ``default`` decorator is used for providing functions, properties and
 attribues on the plumbing class which could be overwritten either by another
 part, the bases of the plumbing class or by the plumbing class itself.
 
-resolution matrix for ``default``::
+Resolution matrix for ``default``::
 
     +---------------+---------------------------------------+
     |               |  DEFAULT ENDPOINT RESOLUTION          |
@@ -202,6 +202,24 @@ To define pipelines, use the ``plumb`` decorator in your parts, i.e.::
 Pipelines are build after endpoints are set, and are built in order parts are
 defined on ``__plumbing__`` attribute of the plumbing class.
 
+Resolution matrix for ``plumb``::
+    
+    +---+-------+-------+-------+----------+
+    |   | Part1 | Part2 | Part3 | ENDPOINT |
+    +---+-------+-------+-------+----------+
+    |   |    ----------------------->      |
+    | E |   x   |       |       |    x     |
+    | N |    <-----------------------      |
+    + T +-------+-------+-------+----------+
+    | R |    ------> --------------->      |
+    | A |   y   |   y   |       |    y     |
+    | N |    <------ <---------------      |
+    + C +-------+-------+-------+----------+
+    | E |       |       |    ------->      |
+    |   |       |       |   z   |    z     |
+    |   |       |       |    <-------      |
+    +---+-------+-------+-------+----------+
+
 Example::
     
     >>> from plumber import plumber
@@ -244,24 +262,8 @@ Example::
     ...     def z(self):
     ...         print 'z endpoint'
 
-Resolution matrix for ``plumb``::
-    
-    +---+-------+-------+-------+----------+
-    |   | Part1 | Part2 | Part3 | ENDPOINT |
-    +---+-------+-------+-------+----------+
-    |   |    ----------------------->      |
-    | E |   x   |       |       |    x     |
-    | N |    <-----------------------      |
-    + T +-------+-------+-------+----------+
-    | R |    ------> --------------->      |
-    | A |   y   |   y   |       |    y     |
-    | N |    <------ <---------------      |
-    + C +-------+-------+-------+----------+
-    | E |       |       |    ------->      |
-    |   |       |       |   z   |    z     |
-    |   |       |       |    <-------      |
-    +---+-------+-------+-------+----------+
-    
+Console::
+
     >>> plumbing = PlumbingClass()
     >>> plumbing.x()
     Part1.x begin
