@@ -367,6 +367,20 @@ The plumbing can be subclassed like a normal class::
   default metaclass for new-style classes.
 
 
+Subclass gets its own stacks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+::
+    >>> class Part1(Part):
+    ...     a = extend(1)
+
+    >>> class Base(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1
+
+    >>> class Sub(Base):
+    ...     __plumbing__ = Part1
+
+
 Passing parameters to methods in a plumbing chain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Parameters to plumbing methods are passed in via keyword arguments - there is
@@ -1240,7 +1254,7 @@ additional maybe future approach see Discussion.
 
 
 Nomenclature
-~~~~~~~~~~~~
+------------
 The nomenclature is just forming and still inconsistent.
 
 plumber
@@ -1398,22 +1412,4 @@ TODO
 
 Disclaimer
 ~~~~~~~~~~
-
 TODO
-
-
-
-
-Subclass gets its own stacks
-----------------------------
-
-    >>> class Part1(Part):
-    ...     a = extend(1)
-
-    >>> class Base(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1
-
-    >>> class Sub(Base):
-    ...     __plumbing__ = Part1
-
