@@ -35,7 +35,6 @@ There are three functionalities which could be defined by parts
 
 Endpoints
 ~~~~~~~~~
-
 Endpoints are the functions, attributes and properties available on the
 plumbing class after plumber has done its work.
 
@@ -45,7 +44,6 @@ This endpoints could be defined either by parts using the ``default`` or
 
 Defining defaults
 ~~~~~~~~~~~~~~~~~
-
 The ``default`` decorator is used for providing functions, properties and
 attribues on the plumbing class which could be overwritten either by another
 part, the bases of the plumbing class or by the plumbing class itself.
@@ -103,7 +101,6 @@ resolution matrix for ``default``::
 
 Defining extensions
 ~~~~~~~~~~~~~~~~~~~
-
 The ``extend`` decorator is used to explicitly define functions, properties and
 attribues as endpoints for a plumbing which are immutable.
 
@@ -173,7 +170,6 @@ Resolution matrix for ``extend``::
 
 Defining pipelines
 ~~~~~~~~~~~~~~~~~~
-
 Plumber can be used to build pipelines for ``endpoints``. Pipelines can be
 defined for functions only (atm).
 
@@ -275,7 +271,6 @@ Resolution matrix for ``plumb``::
 
 Plumbing chains and usual subclassing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 A class that will serve as normal base class for our plumbing::
 
     >>> class Base(object):
@@ -619,7 +614,7 @@ Aspects of a property that uses lambda abstraction are easily plumbed::
 
 Plumbing properties that do not use lambda abstraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-::
+Foo::
 #XXX#    >>> def set_a(self, val):
 #XXX#    ...     self._a = val
 #XXX#
@@ -718,15 +713,6 @@ Plumbing properties that do not use lambda abstraction
 #XXX#    >>> plumbing.foo
 #XXX#    30
 
-
-Extending classes through plumbing, an alternative to mixins
-------------------------------------------------------------
-
-Why? It's more fun.
-
-.. contents::
-    :backlinks: entry
-    :local:
 
 Extending a class
 ~~~~~~~~~~~~~~~~~
@@ -884,6 +870,7 @@ Extension is used if a part relies on a specific attribute value, most common
 the case with functions. If a part provides a setting it uses a default
 value (see next section).
 
+
 Default attributes
 ~~~~~~~~~~~~~~~~~~
 Parts that use parameters, provide defaults that are overridable. Further it
@@ -1037,6 +1024,7 @@ An attribute declared on the class overwrites ``default`` attributes::
 #      ...
 #    PlumbingCollision: foo
 
+
 Extend/default properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``extend`` and ``default`` decorators are agnostic to the type of attribute
@@ -1065,8 +1053,7 @@ they are decorating, it works as well on properties.
 
 
 Plumbing docstrings
--------------------
-
+~~~~~~~~~~~~~~~~~~~
 The plumbing's docstring is generated from the ``__doc__`` declared on the
 plumbing class followed by part classes' ``__doc__`` in reverse order,
 ``None`` docstrings are skipped::
@@ -1155,8 +1142,7 @@ XXX: protect whitespace from testrunner normalization
 
 
 zope.interface support
-----------------------
-
+~~~~~~~~~~~~~~~~~~~~~~
 The plumber does not depend on ``zope.interface`` but is aware of it. That
 means it will try to import it and if available will check plumbing classes
 for implemented interfaces and will make the new class implement them, too::
@@ -1254,8 +1240,7 @@ additional maybe future approach see Discussion.
 
 
 Nomenclature
-------------
-
+~~~~~~~~~~~~
 The nomenclature is just forming and still inconsistent.
 
 plumber
@@ -1334,109 +1319,6 @@ end-point (method)
     4. bases of the plumbing class.
 
 
-Discussions
------------
-
-.. contents::
-    :backlinks: entry
-    :local:
-
-Where is the plumbing
-~~~~~~~~~~~~~~~~~~~~~
-It is in front of the class and its MRO. If you feel it should be between the
-class and its base classes, consider subclassing the class that uses the
-plumbing system and put your code there. If you have a strong point why this is
-not a solution, please let us know. However, the point must be stronger than
-saving 3 lines of which two are pep8-conform whitespace.
-
-Signature of _next function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Currently ``self`` needs to be passed to the ``_next`` function. This could be
-wrapped, too. However, it might enable cool stuff, because you can decide to
-pass something else than self to be processed further.
-
-Implementation of this would slightly increase the complexity in the plumber,
-result in less flexibility, but save passing ``self`` to ``_next``.
-
-Instance based plumbing system
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-At various points it felt tempting to be able to instantiate plumbing elements
-to configure them. For that we need ``__init__``, which woul mean that plumbing
-``__init__`` would need a different name, eg. ``prt_``-prefix. Consequently
-this could then be done for all plumbing methods instead of decorating them.
-The decorator is really just used for marking them and turning them into
-classmethods. The plumbing decorator is just a subclass of the classmethod
-decorator.
-
-Reasoning why currently the methods are not prefixed and are classmethods:
-Plumbing elements are simply not meant to be normal classes. Their methods have
-the single purpose to be called as part of some other class' method calls,
-never directly. Configuration of plumbing elements can either be achieved by
-subclassing them or by putting the configuration on the objects/class they are
-used for.
-
-The current system is slim, clear and easy to use. An instance based plumbing
-system would be far more complex. It could be implemented to exist alongside
-the current system. But it won't be implemented by us, without seeing a real use
-case first.
-
-Different zope.interface.Interfaces for plumbing and created class
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A different approach to the currently implemented system is having different
-interfaces for the parts and the class that is created::
-
-    #    >>> class IPart1Behaviour(Interface):
-    #    ...     pass
-    #
-    #    >>> class Part1(Part):
-    #    ...     implements(IPart1)
-    #    ...     interfaces = (IPart1Behaviour,)
-    #
-    #    >>> class IPart2(Interface):
-    #    ...     pass
-    #
-    #    >>> class Part2(Part):
-    #    ...     implements(IPart2)
-    #    ...     interfaces = (IPart2Behaviour,)
-    #
-    #    >>> IUs.implementedBy(Us)
-    #    True
-    #    >>> IBase.implementedBy(Us)
-    #    True
-    #    >>> IPart1.implementedBy(Us)
-    #    False
-    #    >>> IPart2.implementedBy(Us)
-    #    False
-    #    >>> IPart1Behaviour.implementedBy(Us)
-    #    False
-    #    >>> IPart2Behaviour.implementedBy(Us)
-    #    False
-
-Same reasoning as before: up to now unnecessary complexity. It could make sense
-in combination with an instance based plumbing system and could be implemented
-as part of it alongside the current class based system.
-
-Implicit subclass generation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Currently the whole plumbing system is implemented within one class that is
-based on the base classes defined in the class declaration. During class
-creation the plumber determines all functions involved in the plumbing,
-generates pipelines of methods and plumbs them together.
-
-An alternative approach would be to take one plumbing elements after another
-and create a subclass chain. However, I currently don't know how this could be
-achieved, believe that it is not possible and think that the current approach
-is better.
-
-Dynamic Plumbing
-~~~~~~~~~~~~~~~~
-The plumber could replace the ``__plumbing__`` attribute with a property of the
-same name. Changing the attribute during runtime would result in a plumbing
-specific to the object. A plumbing cache could further be used to reduce the
-number of plumbing chains in case of many dynamic plumbings. Realised eg by a
-descriptor.
-
-
 Test Coverage
 -------------
 
@@ -1452,11 +1334,6 @@ Summary of the test coverage report::
        10   100%   plumber.exceptions
        18   100%   plumber.tests._globalmetaclasstest
        16   100%   plumber.tests.test_
-
-
-Detailed
-~~~~~~~~
-XXX: Would this be sane to have here? Include coverage files as preformatted?
 
 
 About
