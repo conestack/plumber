@@ -3,8 +3,8 @@
     :backlinks: entry
     :depth: 2
 
-Getting Started
-===============
+Plumber
+=======
 
 Plumber is a package to create classes in a declarative way. A Plumbing
 consists of a ``plumbing class`` and ``parts`` providing additional behavior
@@ -170,7 +170,7 @@ Resolution matrix for ``extend``::
     1
 
 
-Defining Pipelines
+Defining pipelines
 ------------------
 
 Plumber can be used to build pipelines for ``endpoints``. Pipelines can be
@@ -273,7 +273,7 @@ Resolution matrix for ``plumb``::
 
 
 Plumbing chains and usual subclassing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------
 
 A class that will serve as normal base class for our plumbing::
 
@@ -372,7 +372,8 @@ The plumbing can be subclassed like a normal class::
 
 
 Passing parameters to methods in a plumbing chain
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------
+
 Parameters to plumbing methods are passed in via keyword arguments - there is
 no sane way to do this via positional arguments (see section Default
 attributes for application to ``__init__`` plumbing)::
@@ -414,7 +415,8 @@ positional arguments are just passed through to the plumbing class::
 
 
 End-points for plumbing chains
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
+
 Plumbing chains need a normal method to serve as end-point::
 
     >>> class Part1(Part):
@@ -482,8 +484,9 @@ therefore behaves exactly like the method would be declared on the class
 itself.
 
 
-Plumbing for property getter, setter and deleter.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Plumbing for property getter, setter and deleter
+------------------------------------------------
+
 Properties with named functions, non-decorated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
@@ -540,6 +543,7 @@ also in the Base class' ``__dict__`` we can use it, saving some overhead::
 
 Properties with decorated or unnamed getter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 In case the property is realised by a decorated function or a single lambda -
 both cases result in a read-only property - the function used as getter is not
 anymore in the class' ``__dict__``::
@@ -566,6 +570,7 @@ anymore in the class' ``__dict__``::
 
 Lambda abstraction
 ^^^^^^^^^^^^^^^^^^
+
 If a base class uses lambdas to add a layer of abstraction it is easier to
 override a single aspect, but adds another call (see Benchmarking below)::
 
@@ -590,6 +595,7 @@ override a single aspect, but adds another call (see Benchmarking below)::
 
 Plumbing of a property that uses lambda abstraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Aspects of a property that uses lambda abstraction are easily plumbed::
 
     >>> class LambdaBase(object):
@@ -718,17 +724,9 @@ Plumbing properties that do not use lambda abstraction
 #XXX##    30
 
 
-Extending classes through plumbing, an alternative to mixins
-------------------------------------------------------------
-
-Why? It's more fun.
-
-.. contents::
-    :backlinks: entry
-    :local:
-
 Extending a class
-~~~~~~~~~~~~~~~~~
+-----------------
+
 A part can put arbitrary attributes onto a class as if they were declared on it::
 
     >>> class Part1(Part):
@@ -884,7 +882,8 @@ the case with functions. If a part provides a setting it uses a default
 value (see next section).
 
 Default attributes
-~~~~~~~~~~~~~~~~~~
+------------------
+
 Parts that use parameters, provide defaults that are overridable. Further it
 should enable setting these parameters through a ``__init__`` plumbing method::
 
@@ -1037,7 +1036,8 @@ An attribute declared on the class overwrites ``default`` attributes::
 #    PlumbingCollision: foo
 
 Extend/default properties
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
+
 The ``extend`` and ``default`` decorators are agnostic to the type of attribute
 they are decorating, it works as well on properties.
 
