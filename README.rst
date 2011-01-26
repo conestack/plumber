@@ -7,7 +7,7 @@ consists of a ``plumbing class`` and ``parts`` providing additional behavior
 on it.
 
 A plumbing is created by setting the metaclass ``plumber`` on plumbing class
-and defining the plumbing parts.::
+and defining the plumbing parts::
 
     >>> from plumber import plumber
     >>> from somethere import Part1, Part2
@@ -19,7 +19,7 @@ and defining the plumbing parts.::
 The ``plumber`` metaclass adds the functionalities defined by ``Part1`` and 
 ``Part2`` to ``SomePlumbing`` class.
 
-There are three functionalities which could be defined by parts:
+There are three functionalities which could be defined by parts
 
 - provide ``defaults`` on plumbing classes.
 - ``extend`` plumbing classes.
@@ -202,9 +202,7 @@ Resolution matrix for ``plumb``::
     |   |       |       |    <-------      |
     +---+-------+-------+-------+----------+
 
-
-###############################################################################
-## scratch
+###
 
 Thus, plumbing which works orthogonal
 to subclassing: It uses a chain of closures.
