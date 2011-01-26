@@ -34,7 +34,7 @@ There are three functionalities which could be defined by parts
 
 
 Endpoints
----------
+~~~~~~~~~
 
 Endpoints are the functions, attributes and properties available on the
 plumbing class after plumber has done its work.
@@ -44,7 +44,7 @@ This endpoints could be defined either by parts using the ``default`` or
 
 
 Defining defaults
------------------
+~~~~~~~~~~~~~~~~~
 
 The ``default`` decorator is used for providing functions, properties and
 attribues on the plumbing class which could be overwritten either by another
@@ -102,7 +102,7 @@ resolution matrix for ``default``::
 
 
 Defining extensions
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 The ``extend`` decorator is used to explicitly define functions, properties and
 attribues as endpoints for a plumbing which are immutable.
@@ -172,7 +172,7 @@ Resolution matrix for ``extend``::
 
 
 Defining pipelines
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Plumber can be used to build pipelines for ``endpoints``. Pipelines can be
 defined for functions only (atm).
@@ -714,9 +714,9 @@ Plumbing properties that do not use lambda abstraction
 #XXX#    >>> plumbing.foo
 #XXX#    15
 #XXX#
-#XXX##    >>> plumbing.foo = 10
-#XXX##    >>> plumbing.foo
-#XXX##    30
+#XXX#    >>> plumbing.foo = 10
+#XXX#    >>> plumbing.foo
+#XXX#    30
 
 
 Extending classes through plumbing, an alternative to mixins
