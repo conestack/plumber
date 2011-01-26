@@ -1,6 +1,10 @@
 
-Plumber
-=======
+.. contents::
+    :backlinks: entry
+    :depth: 2
+
+Getting Started
+===============
 
 Plumber is a package to create classes in a declarative way. A Plumbing
 consists of a ``plumbing class`` and ``parts`` providing additional behavior
@@ -267,196 +271,10 @@ Resolution matrix for ``plumb``::
     z endpoint
     Part3.z end
 
-###
-
-Thus, plumbing which works orthogonal
-to subclassing: It uses a chain of closures.
-
-The plumber provides declaritive extension of classes. A class declares parts
-in a pip
-
-
-Plumbing only works within one class, as if declared on the class. default and
-extend don't take base class attr into account, they are checked if
-
-A metaclass creates classes, it works on them right after they are declared.
-
-A class that would like the plumber to extend it, declares a pipeline of parts.
-The parts are in an ordered list, they contain code with instructions on how to
-extend the class. A class using a plumber is called a plumbing.
-
-By that a
-
-plumber, a metaclass, extends a class with parts declared in its pipeline.
-
-
-by parts, declared
-
-
-plumber is a metaclass that implements plumbing which is an alternative to
-subclassing works orthogonal
-to subclassing: It uses a chain of closures
-
-
-
-A class declares ``plumber`` as ``__metaclass__`` and a
-``__plumbing__`` of parts that will be used for the plumbing. A plumbing
-limited to the class declaring
-
-Parts carry instructions and instructions carry code and tell what to do with
-it.
-
-
-form the plumbing system. Parts can extend
-classes as if the
-code was declared on the class itself (``extend`` decorator), provide default
-values for class variables (``default`` decorator) and form chains of methods
-(``plumb`` decorator) that pre-process parameters before passing them to the
-next method and post-process results before passing them to the previous method
-(similar to WSGI pipelines).
-
-Why not just use sub-classing? see Motivation::
-
-    >>> from plumber import plumber
-    >>> from plumber import Part
-    >>> from plumber import default
-    >>> from plumber import extend
-    >>> from plumber import plumb
-
-The plumber is aware of ``zope.interface`` but does not require it (see
-``zope.interface support``)
-
-XXX: use reStructured section references, does something like that exist?
-
-.. contents::
-    :backlinks: entry
-    :depth: 2
-
-
-Resolution Matrix
-=================
-
-A way to describe plumbings: In parens ``()`` are the base classes used for
-the plumbing and in brackets ``[]`` the plumbing parts.
-
-Plb[P2, P1](Base) == Plb[P2](Plb[P1](Base))
-
-In code:
-
-A base class and three parts::
-
-    >>> class Base(object):
-    ...     pass
-
-    >>> class P1(Part):
-    ...     pass
-
-    >>> class P2(Part):
-    ...     pass
-
-    >>> class P3(Part):
-    ...     pass
-
-A plumbing derived from Base using P1::
-
-    >>> class Plb1(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = P1
-
-A plumbing derived from Plb1 using P2...::
-
-    >>> class Plb2_1(Plb1):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = P2
-
-...and a plumbing derived from Base using P2 and P1..::
-
-    >>> class Plb21(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = P2, P1
-
-...should be the same::
-
-    >>> #Plb2_1 == Plb21
-
-
-``@default``::
-
-    +---------------+-----+-----+-----+-----+
-    |               |        ENDPOINT       |
-    +---------------+-----+-----+-----+-----+
-    | PlumbingClass |     | (y) |     |     |
-    +---------------+-----+-----+-----+-----+
-    | A             | (x) |     |     |     |
-    +---------------+-----+-----+-----+-----+
-    | B             |  x  |  y  |     |     |
-    +---------------+-----+-----+-----+-----+
-    | C             |     |     | (z) |     |
-    +---------------+-----+-----+-----+-----+
-    | Bases         |  x  |  y  |  z  | (w) |
-    +---------------+-----+-----+-----+-----+
-
-XXX: proposal - currently implemented - enables easy dict nodification, see
-(node.parts.mapping.txt and node.parts.nodify.txt::
-
-    +---------------+-----+-----+-----+-----+
-    |               |        ENDPOINT       |
-    +---------------+-----+-----+-----+-----+
-    | PlumbingClass | (x) |     |     |     |
-    +---------------+-----+-----+-----+-----+
-    | Bases         |  x  | (y) |     |     |
-    +---------------+-----+-----+-----+-----+
-    | A             |  x  |  y  | (z) |     |
-    +---------------+-----+-----+-----+-----+
-    | B             |  x  |  y  |  z  | (w) |
-    +---------------+-----+-----+-----+-----+
-
-``@extend``::
-
-    +---------------+-----------------------------+
-    |               |          ENDPOINT           |
-    +---------------+-----+-----+-----+-----+-----+
-    | PlumbingClass | (X) |     |     |     |     |
-    +---------------+-----+-----+-----+-----+-----+
-    | A             |     | (y) |     |     |     |
-    +---------------+-----+-----+-----+-----+-----+
-    | B             |     |     | (z) |     |     |
-    +---------------+-----+-----+-----+-----+-----+
-    | C             |     |     |     | (w) |     |
-    +---------------+-----+-----+-----+-----+-----+
-    | Bases         |  x  |  y  |  z  |  w  | (v) |
-    +---------------+-----+-----+-----+-----+-----+
-
-``@plumb``::
-
-    +---+---+---+---+----------+
-    |   | A | B | C | ENDPOINT |
-    +---+---+---+---+----------+
-    |   |  ---------->         |
-    | E | x |   |   | x        |
-    | N |  <----------         |
-    + T +---+---+---+----------+
-    | R |  --> ------>         |
-    | A | y | y |   | y        |
-    | N |  <-- <------         |
-    + C +---+---+---+----------+
-    | E |   |   |  -->         |
-    |   |   |   | z | z        |
-    |   |   |   |  <--         |
-    +---+---+---+---+----------+
-
-
-Plumbing chains
----------------
-
-XXX: diagram how a plumbing chain works
-
-.. contents::
-    :backlinks: entry
-    :local:
 
 Plumbing chains and usual subclassing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 A class that will serve as normal base class for our plumbing::
 
     >>> class Base(object):
