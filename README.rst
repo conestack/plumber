@@ -32,6 +32,20 @@ There are three functionalities which could be defined by parts
 - ``extend`` plumbing classes.
 - build ``pipelines`` for ``endpoints`` of a plumbing class with ``plumb``.
 
+The resolution of this funcionalities is done during a 2-phase parse of the
+``__plumbing__`` chain.
+
+1.) All ``default`` and ``extend`` are computed which define the ``endpoints``
+of the plumbing.
+
+2.) All ``pipelines`` are created. A single pipeline consists of a set of nested
+closures which get called for defined endpoints.
+
+2-Phase parse::
+
+- iter[Part1, Part2, Part3] -> write endpoints
+- iter[Part1, Part2, Part3] -> create pipelines
+
 
 Endpoints
 ---------
