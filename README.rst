@@ -10,7 +10,10 @@ A plumbing is created by setting the metaclass ``plumber`` on plumbing class
 and defining the plumbing parts::
 
     >>> from plumber import plumber
-    >>> from somethere import Part1, Part2
+    >>> from plumber import Part
+    
+    >>> class Part1(Part): pass
+    >>> class Part2(Part): pass
     
     >>> class SomePlumbing(object):
     ...     __metaclass__ = plumber
@@ -44,6 +47,10 @@ attribues on the plumbing class which could be overwritten either by another
 part, the bases of the plumbing class or by the plumbing class itself.
 
 Example::
+    
+    >>> from plumber import plumber
+    >>> from plumber import Part
+    >>> from plumber import default
     
     >>> class Part1(Part):
     ...     x = default(0)
@@ -79,6 +86,15 @@ resolution matrix for ``default``::
     | Part2         |  x  |  y  |  z  | (w) |
     +---------------+-----+-----+-----+-----+
 
+    >>> plumbing = PlumbingClass()
+    >>> plumbing.x
+    1
+    >>> plumbing.y
+    1
+    >>> plumbing.z
+    1
+    >>> plumbing.w
+    1
 
 Defining extensions
 -------------------
@@ -95,6 +111,10 @@ Use ``extend`` decorator if you know that a function must not be overwritten
 by anything else, like storage related stuff, et cetera.
 
 Example::
+
+    >>> from plumber import plumber
+    >>> from plumber import Part
+    >>> from plumber import extend
     
     >>> class Part1(Part):
     ...     y = extend(1)
@@ -106,16 +126,16 @@ Example::
     ...     w = extend(1)
     
     >>> class Base(object):
-    ...     v = 1
-    
-    >>> class PlumbingClass(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2, Part3
     ...     x = 0
     ...     y = 0
     ...     z = 0
     ...     w = 0
     ...     v = 1   
+    
+    >>> class PlumbingClass(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2, Part3
+    ...     x = 1
 
 Resolution matrix for ``extend``::
     
@@ -132,6 +152,18 @@ Resolution matrix for ``extend``::
     +---------------+-----+-----+-----+-----+-----+
     | Base          |  x  |  y  |  z  |  w  | (v) |
     +---------------+-----+-----+-----+-----+-----+
+    
+    >>> plumbing = PlumbingClass()
+    >>> plumbing.x
+    1
+    >>> plumbing.y
+    1
+    >>> plumbing.z
+    1
+    >>> plumbing.w
+    1
+    >>> plumbing.v
+    1
 
 
 Defining Pipelines
@@ -142,37 +174,52 @@ defined for functions only (atm).
 
 To define pipelines, use the ``plumb`` decorator in your parts, i.e.::
     
-    >>> @plumb
-    >>> def __getitem__(_next, self, key):
-    ...     # before next
-    ...     ...
-    ...     ret = _next(self, key)
-    ...     # after next
-    ...     ...
-    ...     return ret
+    >> # pseudo code
+    >> @plumb
+    >> def __getitem__(_next, self, key):
+    ..     ...
+    ..     before next
+    ..     ...
+    ..     ret = _next(self, key)
+    ..     ...
+    ..     after next
+    ..     ...
+    ..     return ret
 
 Pipelines are build after endpoints are set, and are built in order parts are
 defined on ``__plumbing__`` attribute of the plumbing class.
 
 Example::
     
+    >>> from plumber import plumber
+    >>> from plumber import Part
+    >>> from plumber import plumb
+    
     >>> class Part1(Part):
     ...     @plumb
     ...     def x(_next, self):
+    ...         print 'Part1.x begin'
     ...         _next(self)
+    ...         print 'Part1.x end'
     ...     @plumb
     ...     def y(_next, self):
+    ...         print 'Part1.y begin'
     ...         _next(self)
+    ...         print 'Part1.y end'
     
     >>> class Part2(Part):
     ...     @plumb
     ...     def y(_next, self):
+    ...         print 'Part2.y begin'
     ...         _next(self)
+    ...         print 'Part2.y end'
     
     >>> class Part3(Part):
     ...     @plumb
     ...     def z(_next, self):
+    ...         print 'Part3.z begin'
     ...         _next(self)
+    ...         print 'Part3.z end'
     
     >>> class PlumbingClass(object):
     ...     __metaclass__ = plumber
@@ -201,6 +248,24 @@ Resolution matrix for ``plumb``::
     |   |       |       |   z   |    z     |
     |   |       |       |    <-------      |
     +---+-------+-------+-------+----------+
+    
+    >>> plumbing = PlumbingClass()
+    >>> plumbing.x()
+    Part1.x begin
+    x endpoint
+    Part1.x end
+    
+    >>> plumbing.y()
+    Part1.y begin
+    Part2.y begin
+    y endpoint
+    Part2.y end
+    Part1.y end
+    
+    >>> plumbing.z()
+    Part3.z begin
+    z endpoint
+    Part3.z end
 
 ###
 
