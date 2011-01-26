@@ -43,7 +43,7 @@ attribues on the plumbing class which could be overwritten either by another
 part, the bases of the plumbing class or by the plumbing class itself.
 
 Example::
-
+    
     >>> class Part1(Part):
     ...     x = default(0)
     ...     y = default(0)
@@ -65,7 +65,7 @@ Example::
     ...     x = 1
 
 resolution matrix for ``default``::
-
+    
     +---------------+-----+-----+-----+-----+
     |               |        ENDPOINT       |
     +---------------+-----+-----+-----+-----+
@@ -94,7 +94,7 @@ Use ``extend`` decorator if you know that a function must not be overwritten
 by anything else, like storage related stuff, et cetera.
 
 Example::
-
+    
     >>> class Part1(Part):
     ...     y = extend(1)
     
@@ -117,7 +117,7 @@ Example::
     ...     v = 1   
 
 Resolution matrix for ``extend``::
-
+    
     +---------------+-----------------------------+
     |               |          ENDPOINT           |
     +---------------+-----+-----+-----+-----+-----+
@@ -140,7 +140,7 @@ Plumber can be used to build pipelines for ``endpoints``. Pipelines can be
 defined for functions only (atm).
 
 To define pipelines, use the ``plumb`` decorator in your parts, i.e.::
-
+    
     >>> @plumb
     >>> def __getitem__(_next, self, key):
     ...     # before next
@@ -154,7 +154,7 @@ Pipelines are build after endpoints are set, and are built in order parts are
 defined on ``__plumbing__`` attribute of the plumbing class.
 
 Example::
-
+    
     >>> class Part1(Part):
     ...     @plumb
     ...     def x(_next, self):
@@ -183,8 +183,8 @@ Example::
     ...     def z(self):
     ...         print 'z endpoint'
 
-Resolution matric for ``plumb``::
-
+Resolution matrix for ``plumb``::
+    
     +---+-------+-------+-------+----------+
     |   | Part1 | Part2 | Part3 | ENDPOINT |
     +---+-------+-------+-------+----------+
