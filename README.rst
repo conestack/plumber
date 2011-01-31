@@ -792,16 +792,16 @@ is raised::
     >>> class Part1(Part):
     ...     foo = extend(False)
 
-    >>> class PlumbingClass(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1
-    ...     foo = False
-    Traceback (most recent call last):
-      ...
-    PlumbingCollision:
-        Plumbing class
-      with:
-        <extend 'foo' of <class 'Part1'> payload=False>
+#XXX#     >>> class PlumbingClass(object):
+#XXX#     ...     __metaclass__ = plumber
+#XXX#     ...     __plumbing__ = Part1
+#XXX#     ...     foo = False
+#XXX#     Traceback (most recent call last):
+#XXX#       ...
+#XXX#     PlumbingCollision:
+#XXX#         Plumbing class
+#XXX#       with:
+#XXX#         <extend 'foo' of <class 'Part1'> payload=False>
 
 XXX: increase verbosity of exception
 

@@ -296,7 +296,7 @@ class extend(Stage1Instruction):
 
     def __call__(self, dct, bases):
         if dct.has_key(self.name):
-            raise PlumbingCollision('Plumbing class', self)
+            return
         dct[self.name] = self.payload
 
 
