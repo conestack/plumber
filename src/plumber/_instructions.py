@@ -179,6 +179,7 @@ class Stage1Instruction(Instruction):
 
     - default
     - extend
+    - finalize
     """
     __stage__ = 'stage1'
 
@@ -189,7 +190,8 @@ class default(Stage1Instruction):
     A default attribute is used, if neither the class nor one of its bases
     declare the attribute.
 
-    For extend/default merging see ``__add__`` here and ``extend.__add__``.
+    For default/extend/finalize merging see ``__add__`` here,
+    ``extend.__add__`` and ``finalize.__add__``.
     """
     def __add__(self, right):
         """
@@ -210,6 +212,12 @@ class default(Stage1Instruction):
             >>> def1 + ext3 is ext3
             True
 
+        Finalize wins over default::
+
+            >>> fin4 = finalize(4)
+            >>> def1 + fin4 is fin4
+            True
+
         Adding with something else than default/extend, raises
         ``PlumbingCollision``::
 
@@ -227,6 +235,8 @@ class default(Stage1Instruction):
             return self
         if isinstance(right, extend):
             return right
+        if isinstance(right, finalize):
+            return right
         raise PlumbingCollision(self, right)
 
     def __call__(self, dct, bases):
@@ -237,11 +247,14 @@ class default(Stage1Instruction):
 class extend(Stage1Instruction):
     """Extend the class with an attribute
 
-    An extend attribute is used if the class does not declare the attribute. It
-    overrides an attribute declared on a base class and collides with a
-    declaration on the class itself.
+    An ``extend`` attribute overrides an attribute defined on a base class or
+    provided by ``default``, but is overridden by ``finalize`` and attributes
+    declared on the plumbing class (implicit ``finalize``).
 
-    For extend/default merging see ``__add__`` here and ``default.__add__``.
+    The first ``extend`` will be picked over later ``extend``.
+
+    For default/extend/finalize merging see ``__add__`` here,
+    ``default.__add__`` and ``finalize.__add__``.
     """
     def __add__(self, right):
         """
@@ -249,22 +262,13 @@ class extend(Stage1Instruction):
         defaults::
 
             >>> ext1 = extend(1)
-            >>> ext1 + ext1 is ext1
-            True
-            >>> ext1 + extend(1) is ext1
+            >>> ext1 + extend(2) is ext1
             True
             >>> ext1 + default(2) is ext1
             True
-
-        Two unequal extends collide::
-
-            >>> ext1 + extend(2)
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
-                <extend 'None' of None payload=1>
-              with:
-                <extend 'None' of None payload=2>
+            >>> fin3 = finalize(3)
+            >>> ext1 + fin3 is fin3
+            True
 
         Everything except default/extend collides::
 
@@ -279,6 +283,69 @@ class extend(Stage1Instruction):
         if self == right:
             return self
         if isinstance(right, default):
+            return self
+        if isinstance(right, extend):
+            return self
+        if isinstance(right, finalize):
+            return right
+        raise PlumbingCollision(self, right)
+
+    def __call__(self, dct, bases):
+        if dct.has_key(self.name):
+            raise PlumbingCollision('Plumbing class', self)
+        dct[self.name] = self.payload
+
+
+class finalize(Stage1Instruction):
+    """Insist on the final value / finalize the endpoint
+
+    A ``finalize`` attribute is chosen over all others, two ``finalize``
+    collide, declarations on the plumbing class are implicit ``finalize``
+    declarations.
+
+    For default/extend/finalize merging see ``__add__`` here,
+    ``default.__add__`` and ``extend.__add__``.
+    """
+    def __add__(self, right):
+        """
+        First extend wins against following equal extends and arbitrary
+        defaults::
+
+            >>> fin1 = finalize(1)
+            >>> fin1 + fin1 is fin1
+            True
+            >>> fin1 + finalize(1) is fin1
+            True
+            >>> fin1 + default(2) is fin1
+            True
+            >>> fin1 + extend(2) is fin1
+            True
+
+        Two unequal finalize collide::
+
+            >>> fin1 + finalize(2)
+            Traceback (most recent call last):
+              ...
+            PlumbingCollision:
+                <finalize 'None' of None payload=1>
+              with:
+                <finalize 'None' of None payload=2>
+
+        Everything except default/extend collides::
+
+            >>> fin1 + Instruction(1)
+            Traceback (most recent call last):
+              ...
+            PlumbingCollision:
+                <finalize 'None' of None payload=1>
+              with:
+                <Instruction 'None' of None payload=1>
+        """
+        if self == right:
+            return self
+        if isinstance(right, default):
+            return self
+        if isinstance(right, extend):
             return self
         raise PlumbingCollision(self, right)
 
@@ -374,6 +441,16 @@ class plumb(Stage2Instruction):
             raise PlumbingCollision(self, cls)
         entrance = self.plumb(entrancefor, self.payload, _next)
         setattr(cls, self.name, entrance)
+
+
+class plumbifexists(plumb):
+    """Only plumb, if an end point exists
+    """
+    def __call__(self, cls):
+        try:
+            super(plumbifexists, self).__call__(cls)
+        except AttributeError:
+            pass
 
 
 if ZOPE_INTERFACE_AVAILABLE:
