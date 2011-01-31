@@ -71,6 +71,7 @@ class partmetaclass(type):
                 item.__parent__ = cls
                 instructions.append(item)
 
+        # XXX: introduce C3 resolution
         # check our bases for instructions we don't have already and which
         # are not overwritten by our instructions (stage1)
         for base in bases:
