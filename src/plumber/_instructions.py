@@ -262,6 +262,10 @@ class extend(Stage1Instruction):
         defaults::
 
             >>> ext1 = extend(1)
+            >>> ext1 + ext1 is ext1
+            True
+            >>> ext1 + extend(1) is ext1
+            True
             >>> ext1 + extend(2) is ext1
             True
             >>> ext1 + default(2) is ext1
@@ -367,7 +371,7 @@ class Stage2Instruction(Instruction):
     def __call__(self, cls):
         """cls is the plumbing class, type finished its work already
         """
-        raise NotImplementedError
+        raise NotImplementedError #pragma NO COVERAGE
 
 
 def entrancefor(plumbing_method, _next):

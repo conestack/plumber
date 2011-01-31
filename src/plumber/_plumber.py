@@ -23,6 +23,18 @@ class Stacks(object):
 
 
 def searchnameinbases(name, bases):
+    """
+        >>> class A(object):
+        ...     foo = 1
+
+        >>> class B(A):
+        ...     pass
+
+        >>> searchnameinbases('foo', (B,))
+        True
+        >>> searchnameinbases('bar', (B,))
+        False
+    """
     for base in bases:
         if name in base.__dict__:
             return True
