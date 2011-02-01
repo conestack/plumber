@@ -1,8 +1,10 @@
 import os
 
+linesep = getattr(os, 'linsep', '\n')
+
 class PlumbingCollision(RuntimeError):
     def __init__(self, left, right):
-        msg = os.linesep.join([
+        msg = linesep.join([
             "",
             "    %s",
             "  with:",

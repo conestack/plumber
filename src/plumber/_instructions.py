@@ -4,6 +4,8 @@ import os
 import re
 import types
 
+linesep = getattr(os, 'linsep', '\n')
+
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
@@ -78,10 +80,10 @@ def plumb_str(leftdoc, rightdoc):
         return rightdoc
     if rightdoc is None:
         return leftdoc
-    _next = re.search(os.linesep.join(('', "\s*.. plb_next::\s*", '')), leftdoc)
+    _next = re.search(linesep.join(('', "\s*.. plb_next::\s*", '')), leftdoc)
     if not _next:
-        return os.linesep.join((leftdoc, rightdoc))
-    return os.linesep.join((
+        return linesep.join((leftdoc, rightdoc))
+    return linesep.join((
             leftdoc[:_next.start()],
             rightdoc,
             leftdoc[_next.end():]
