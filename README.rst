@@ -1400,6 +1400,9 @@ Contributors
 Changes
 -------
 
+- ``.. plbnext::`` instead of ``.. plb_next::``
+  [chaoflow 2011-02-02]
+
 - stage1 in __new__, stage2 in __init__, setting of __name__ now works
   [chaoflow 2011-01-25]
 

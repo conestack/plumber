@@ -4,8 +4,6 @@ import os
 import re
 import types
 
-linesep = getattr(os, 'linsep', '\n')
-
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
@@ -35,22 +33,22 @@ def payload(item):
 def plumb_str(leftdoc, rightdoc):
     """helper function to plumb two doc strings together
 
-    A ``.. plb_next::`` tag is replaced with rightdoc::
+    A ``.. plbnext::`` tag is replaced with rightdoc::
 
         >>> leftdoc = '''Left head
-        ... .. plb_next::
+        ... .. plbnext::
         ... Left tail
         ... '''
 
         >>> rightdoc = '''Right head
-        ... .. plb_next::
+        ... .. plbnext::
         ... Right tail
         ... '''
 
         >>> print plumb_str(leftdoc, rightdoc)
         Left head
         Right head
-        .. plb_next::
+        .. plbnext::
         Right tail
         <BLANKLINE>
         Left tail
@@ -80,10 +78,10 @@ def plumb_str(leftdoc, rightdoc):
         return rightdoc
     if rightdoc is None:
         return leftdoc
-    _next = re.search(linesep.join(('', "\s*.. plb_next::\s*", '')), leftdoc)
+    _next = re.search("\n".join(('', "\s*.. plbnext::\s*", '')), leftdoc)
     if not _next:
-        return linesep.join((leftdoc, rightdoc))
-    return linesep.join((
+        return "\n".join((leftdoc, rightdoc))
+    return "\n".join((
             leftdoc[:_next.start()],
             rightdoc,
             leftdoc[_next.end():]
