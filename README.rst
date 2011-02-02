@@ -1,3 +1,498 @@
+Plumber
+=======
+
+XXX: Intro
+
+Motivation
+----------
+
+Plumbing is an alternative to mixin-based extension of classes, motivated by
+limitations and/or design choice of python's subclassing:
+
+.. content::
+    :local:
+
+Control of precedence only through order of mixins
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Mixins are commonly used to extend classes with pre-defined behaviours: an
+attribute on the first mixin overwrites attributes with the same name on all
+following mixins and the base class being extended::
+
+    >>> class Mixin1(object):
+    ...     a = 1
+
+    >>> class Mixin2(object):
+    ...     a = 2
+    ...     b = 2
+
+    >>> Base = dict
+    >>> class MixedClass(Mixin1, Mixin2, Base):
+    ...     pass
+
+    >>> MixedClass.a
+    1
+    >>> MixedClass.b
+    2
+    >>> MixedClass.keys
+    <method 'keys' of 'dict' objects>
+
+There is no way for a mixin later in the chain to take precedence over an
+earlier one.
+
+**Solution**: plumber provides 3 decorators to enable finer control of
+precedence (``default``, ``extend``, ``finalize``).
+
+Impossible to provide default values to fill gaps on a base class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A dictionary-like storage at least needs to provide ``__getitem__``,
+``__setitem__``, ``__delitem__`` and ``__iter__``, all other methods of a
+dictionary can be build upon these. A mixin that turns storages into full
+dictionaries needs to be able to provide default methods, taken if the base
+class does not provide a (more efficient) implementation.
+
+**Solution**: plumber provides the ``default`` decorator to enable such
+defaults.
+
+Endpoints for ``super``-chains are checked during runtime
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+It is possible to build a chain of methods using ``super``: ``Mixin1`` turns
+the key lowercase before passing it on, ``Mixin2`` multiplies the result by 2
+before returning it and both are chatty about start/stop::
+
+    >>> class Mixin1(object):
+    ...     def __getitem__(self, key):
+    ...         print "Mixin1 start"
+    ...         key = key.lower()
+    ...         ret = super(Mixin1, self).__getitem__(key)
+    ...         print "Mixin1 stop"
+    ...         return ret
+
+    >>> class Mixin2(object):
+    ...     def __getitem__(self, key):
+    ...         print "Mixin2 start"
+    ...         ret = super(Mixin2, self).__getitem__(key)
+    ...         ret = 2 * ret
+    ...         print "Mixin2 stop"
+    ...         return ret
+
+    >>> Base = dict
+    >>> class MixedClass(Mixin1, Mixin2, Base):
+    ...     pass
+
+    >>> mc = MixedClass()
+    >>> mc['abc'] = 6
+    >>> mc['ABC']
+    Mixin1 start
+    Mixin2 start
+    Mixin2 stop
+    Mixin1 stop
+    12
+
+``dict.__getitem__`` forms the endpoint of the chain as it returns a value
+without delegating to a method later in the chain (using ``super``). If there
+is no endpoint an ``AttributeError`` is raised during runtime.
+
+The chain is not verified during class creation.
+
+**Solution**: Plumber provides the ``plumb`` decorator to build similar chains
+using nested closures. These are create and verified during class creation.
+
+No conditional ``super``-chains
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A mixin with subclassing needs to fit exactly the base class, there is no way
+to conditionally hook into method calls depending on whether the base class
+provides a method.
+
+**Solution**: Plumber provides the ``plumbifexists`` decorator that behaves
+like ``plumb``, if there is an endpoint available.
+
+Docstrings are not accumulated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A class' docstring that uses mixins is not build from the docstrings of the
+mixins.
+
+**Solution**: Plumber enables plumbing of docstrings using a special marker
+``.. plbnext::``, which is replaced with the docstring of the next "mixin"
+Without the marker, docstrings are concatenated.
+
+
+The plumbing system
+-------------------
+
+The ``plumber`` metaclass creates plumbing classes according to instructions
+found on plumbing parts.
+
+XXX:
+
+Plumbing parts
+^^^^^^^^^^^^^^
+Plumbing parts correspond to mixins, but are more powerful and flexible. A
+plumbing part needs to inherit from ``plumber.Part`` and declares attributes
+with instructions on how to use them, here by example of the ``default``
+instruction (see Plumbing Instructions for more)::
+
+    >>> from plumber import Part
+    >>> from plumber import default
+
+    >>> class Part1(Part):
+    ...     a = default(True)
+    ...
+    ...     @default
+    ...     def foo(self):
+    ...         return 42
+
+The instructions are given as part of assignments (``a = default(None)``) or as
+decorators (``@default``).
+
+A plumbing declaration defines the ``plumber`` as metaclass and one or more
+plumbing parts to be processed from left to right. Further it may declare
+attributes like every normal class, they will be treated as implicit
+``finalize`` instructions (see Stage 1: Extension)::
+
+    >>> from plumber import plumber
+
+    >>> class Part2(Part):
+    ...     pass
+
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
+    ...
+    ...     def bar(self):
+    ...         return 17
+
+The result is a plumbing class created according to the plumbing declaration::
+
+    >>> Plumbing.a
+    True
+    >>> Plumbing().foo()
+    42
+    >>> Plumbing().bar()
+    17
+
+Plumbing instructions
+^^^^^^^^^^^^^^^^^^^^^
+Plumbing instructions are grouped into two stages:
+
+1. extension via ``default``, ``extend`` and ``finalize``
+2. creation of pipelines via ``plumb`` and ``plumbifexists``
+
+Plumbing pipelines correspond to ``super``-chains, they need endpoints, which
+are created during the first stage.
+
+Within a stage, instructions are grouped by attribute name in part order.
+
+Apart from instructions on plumbing parts, declarations on the plumbing class
+and its base classes are taken into account.
+
+Stage 1: Extension
+~~~~~~~~~~~~~~~~~~
+The extension stage creates endpoints for the pipelines created in stage 2. If
+no pipeline uses the endpoint, it will just live on as a normal attribute in
+the plumbind class' dictionary.
+
+The extension decorators:
+
+``finalize``
+    ``finalize`` is the strongest extension instruction. It will override
+    declarations on base classes and all other extension instructions
+    (``extend`` and ``default``). Attributes declared as part of the plumbing
+    declaration are implicit ``finalize`` declarations. Two ``finalize`` for
+    one attribute name will collide and raise a ``PlumbingCollision`` during
+    class creation.
+
+    +-------+-------+----------+-------+-----------+
+    | Part1 | Part2 | Plumbing | Base  |    ok?    |
+    +=======+=======+==========+======-+===========|
+    |       |       |          | **x** |           |
+    +-------+-------+----------+-------+-----------+
+    |       |       |  **x**   |   ?   |           |
+    +-------+-------+----------+-------+-----------+
+    |       | **f** |          |   ?   |           |
+    +-------+-------+----------+-------+-----------+
+    | **f** |       |          |   ?   |           |
+    +-------+-------+----------+-------+-----------+
+    |       |   f   |    x     |   ?   | collision |
+    +-------+-------+----------+-------+-----------+
+    |   f   |   f   |    x     |   ?   | collision |
+    +-------+-------+----------+-------+-----------+
+    |   f   |   f   |          |   ?   | collision |
+    +-------+-------+----------+-------+-----------+
+
+``extend``
+    ``extend`` is weaker than ``finalize`` and overrides declarations on base
+    classes and ``default`` declarations. Two ``extend`` instructions for the
+    same attribute name do not collide, instead the first one will be used.
+
+    +-------+-------+----------+-------+
+    | Part1 | Part2 | Plumbing | Base  |
+    +=======+=======+==========+=======+
+    |   e   |   e   |  **x**   |   ?   |
+    +-------+-------+----------+-------+
+    |       | **e** |          |   ?   |
+    +-------+-------+----------+-------+
+    | **e** |   e   |          |   ?   |
+    +-------+-------+----------+-------+
+
+``default``
+    ``default`` is the weakest extension instruction. It will not even override
+    declarations of base classes. The first default takes precendence over
+    later defaults.
+
+    +-------+-------+----------+-------+
+    | Part1 | Part2 | Plumbing | Base  |
+    +=======+=======+==========+=======+
+    |       |   d   |          | **x** |
+    +-------+-------+----------+-------+
+    |       |   d   |  **x**   |   ?   |
+    +-------+-------+----------+-------+
+    |       | **d** |          |       |
+    +-------+-------+----------+-------+
+    | **d** |   d   |          |       |
+    +-------+-------+----------+-------+
+
+``finalize`` wins over ``extend``:
+
+    +-------+-------+----------+------+
+    | Part1 | Part2 | Plumbing | Base |
+    +=======+=======+==========+======+
+    |   e   | **f** |          |   ?  |
+    +-------+-------+----------+------+
+    | **f** |   e   |          |   ?  |
+    +-------+-------+----------+------+
+
+``extend`` wins over ``default``, but loses against plumbing class declaration:
+
+    +-------+-------+----------+------+
+    | Part1 | Part2 | Plumbing | Base |
+    +=======+=======+==========+======+
+    |   d   |   e   |  **x**   |   ?  |
+    +-------+-------+----------+------+
+    |   d   | **e** |          |   ?  |
+    +-------+-------+----------+------+
+    | **e** |   d   |          |   ?  |
+    +-------+-------+----------+------+
+
+``finalize`` wins over ``default``:
+
+    +-------+-------+----------+------+
+    | Part1 | Part2 | Plumbing | Base |
+    +=======+=======+==========+======+
+    |   d   | **f** |          |   ?  |
+    +-------+-------+----------+------+
+    | **f** |   d   |          |   ?  |
+    +-------+-------+----------+------+
+
+``finalize`` wins over any combination of ``default`` and ``extend``:
+
+    +-------+-------+-------+----------+------+
+    | Part1 | Part2 | Part3 | Plumbing | Base |
+    +=======+=======+=======+==========+======+
+    |   e   |   d   | **f** |          |   ?  |
+    +-------+-------+-------+----------+------+
+    |   d   |   e   | **f** |          |   ?  |
+    +-------+-------+-------+----------+------+
+    |   e   | **f** |   d   |          |   ?  |
+    +-------+-------+-------+----------+------+
+    |   d   | **f** |   e   |          |   ?  |
+    +-------+-------+-------+----------+------+
+    | **f** |   d   |   e   |          |   ?  |
+    +-------+-------+-------+----------+------+
+    | **f** |   e   |   e   |          |   ?  |
+    +-------+-------+-------+----------+------+
+
+Stage 2: Creation of Pipelines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Declaration of a plumbing
+^^^^^^^^^^^^^^^^^^^^^^^^^
+A plumbing class inherits from base classes, declares the plumber as metaclass
+and one or more Parts to be used by the plumber::
+
+    >>> class Part2(Part):
+    ...     pass
+
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
+
+
+
+A plumber in action
+^^^^^^^^^^^^^^^^^^^
+
+
+Instructions are processed in two stages: First
+
+
+
+.. note:: Attributes
+
+
+``plumber``
+    Metaclass that creates a plumbing according to the instructions declared on
+    plumbing parts. Instructions are given by decorators: ``default``,
+    ``extend``, ``finalize``, ``plumb`` and ``plumbifexists``.
+
+plumbing
+    A plumber is called by a class that declares ``__metaclass__ = plumber``
+    and a list of parts to be used for the plumbing ``__plumbing__ = Part1,
+    Part2``. Apart from the parts, declarations on base classes and the class
+    asking for the plumber are taken into account.  Once created a plumbing
+    looks like any other class and can be subclassed as usual.
+
+plumbing part
+    A plumbing part provides attributes (functions, properties and plain values)
+    along with instructions for how to use them. Instructions are given via
+    decorators: ``default``, ``extend``, ``finalize``, ``plumb`` and
+    ``plumbifexists``.
+
+``default`` decorator
+    Instruct the plumber to set a default value: first default wins, loses
+    against base class declaration, ``extend`` and ``finalize``.
+
+``extend`` decorator
+    Instruct the plumber to set an attribute on the plumbing: first ``extend``
+    wins, overrides ``default`` and base class, loses against ``finalize``.
+
+``finalize`` decorator
+    Instruct the plumber to definitely use an attribute value, overrides
+``plumb`` decorator
+    Instruct the plumber to make a function part of a plumbing chain and turns
+    the function into a classmethod bound to the plumbing part declaring it
+    with a signature of: ``def foo(_next, self, *args, **kw)``.
+    ``prt`` is the part class declaring it, ``_next`` a wrapper for the next
+    method in chain and ``self`` and instance of the plumbing
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Nomenclature
+^^^^^^^^^^^^
+
+raw plumbing class
+
+
+``plumber``
+    Metaclass that creates a plumbing according to the instructions declared on
+    plumbing parts. Instructions are given by decorators: ``default``,
+    ``extend``, ``finalize``, ``plumb`` and ``plumbifexists``.
+
+plumbing
+    A plumber is called by a class that declares ``__metaclass__ = plumber``
+    and a list of parts to be used for the plumbing ``__plumbing__ = Part1,
+    Part2``. Apart from the parts, declarations on base classes and the class
+    asking for the plumber are taken into account.  Once created a plumbing
+    looks like any other class and can be subclassed as usual.
+
+plumbing part
+    A plumbing part provides attributes (functions, properties and plain values)
+    along with instructions for how to use them. Instructions are given via
+    decorators: ``default``, ``extend``, ``finalize``, ``plumb`` and
+    ``plumbifexists``.
+
+``default`` decorator
+    Instruct the plumber to set a default value: first default wins, loses
+    against base class declaration, ``extend`` and ``finalize``.
+
+``extend`` decorator
+    Instruct the plumber to set an attribute on the plumbing: first ``extend``
+    wins, overrides ``default`` and base class, loses against ``finalize``.
+
+``finalize`` decorator
+    Instruct the plumber to definitely use an attribute value, overrides
+``plumb`` decorator
+    Instruct the plumber to make a function part of a plumbing chain and turns
+    the function into a classmethod bound to the plumbing part declaring it
+    with a signature of: ``def foo(_next, self, *args, **kw)``.
+    ``prt`` is the part class declaring it, ``_next`` a wrapper for the next
+    method in chain and ``self`` and instance of the plumbing
+
+
+
+
+
+default attribute
+    Attribute set via the ``default`` decorator.
+
+extension attribute
+    Attribute set via the ``extend`` decorator.
+
+plumbing method
+    Method declared via the ``plumb`` decoarator.
+
+plumbing chain
+    The methods of a pipeline with the same name plumbed together. The entrance
+    and end-point have the signature of normal methods: ``def foo(self, *args,
+    **kw)``. The plumbing chain is a series of nested closures (see ``_next``).
+
+entrance method
+    A method with a normal signature. i.e. expecting ``self`` as first
+    argument, that is used to enter a plumbing chain. It is a ``_next``
+    function. A method declared on the class with the same name, will be
+    overwritten, but referenced in the chain as the innermost method, the
+    end-point.
+
+``_next`` function
+    The ``_next`` function is used to call the next method in a chain: in case of
+    a plumbing method, a wrapper of it that passes the correct next ``_next``
+    as first argument and in case of an end-point, just the end-point method
+    itself.
+
+end-point (method)
+    Method retrieved from the plumbing class with ``getattr()``, before setting
+    the entrance method on the class. It is provided with the following
+    precedence:
+
+    1. plumbing class itself,
+    2. plumbing extension attribute,
+    3. plumbing default attribute,
+    4. bases of the plumbing class.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .. contents::
     :backlinks: entry
