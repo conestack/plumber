@@ -661,104 +661,98 @@ Aspects of a property that uses lambda abstraction are easily plumbed::
 
 Plumbing properties that do not use lambda abstraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-::
-    #XXX#    >>> def set_a(self, val):
-    #XXX#    ...     self._a = val
-    #XXX#
-    #XXX#    >>> def del_a(self):
-    #XXX#    ...     del self._a
-    #XXX#
-    #XXX#    >>> class Base(object):
-    #XXX#    ...     a = property(lambda self: self._a, set_a, del_a)
-    #XXX#
-    #XXX#    >>> class Notify(Part):
-    #XXX#    ...     def get_a(_next, self):
-    #XXX#    ...         print "Getting a"
-    #XXX#    ...         return _next(self)
-    #XXX#    ...     def set_a(_next, self, val):
-    #XXX#    ...         print "Setting a"
-    #XXX#    ...         _next(self, val)
-    #XXX#    ...     def del_a(_next, self):
-    #XXX#    ...         print "Deleting a"
-    #XXX#    ...         _next(self)
-    #XXX#    ...     a = plumb(property(get_a, set_a, del_a))
-    #XXX#
-    #XXX#    >>> class Multiply(Part):
-    #XXX#    ...     def get_a(_next, self):
-    #XXX#    ...         return _next(self) * 2
-    #XXX#    ...     def set_a(_next, self, val):
-    #XXX#    ...         _next(self, val)
-    #XXX#    ...     def del_a(_next, self):
-    #XXX#    ...         _next(self)
-    #XXX#    ...     a = plumb(property(get_a, set_a, del_a))
-    #XXX#
-    #XXX#    >>> class Plumbing(Base):
-    #XXX#    ...     __metaclass__ = plumber
-    #XXX#    ...     __plumbing__ = Notify, Multiply
-    #XXX#
-    #XXX#    >>> plumbing = Plumbing()
-    #XXX#    >>> hasattr(plumbing, '_a')
-    #XXX#    False
-    #XXX#    >>> plumbing.a = 8
-    #XXX#    Setting a
-    #XXX#    >>> plumbing.a
-    #XXX#    Getting a
-    #XXX#    16
-    #XXX#    >>> hasattr(plumbing, '_a')
-    #XXX#    True
-    #XXX#    >>> del plumbing.a
-    #XXX#    Deleting a
-    #XXX#    >>> hasattr(plumbing, '_a')
-    #XXX#    False
-    #XXX#
-    #XXX#A base class has a readonly property, a plumbing property plumbs in::
-    #XXX#
-    #XXX#    >>> class Base(object):
-    #XXX#    ...     _foo = 5
-    #XXX#    ...     @property
-    #XXX#    ...     def foo(self):
-    #XXX#    ...         return self._foo
-    #XXX#
-    #XXX#    >>> class Part(Part):
-    #XXX#    ...     @plumb
-    #XXX#    ...     @property
-    #XXX#    ...     def foo(_next, self):
-    #XXX#    ...         return 3 * _next(self)
-    #XXX#
-    #XXX#    >>> class Plumbing(Base):
-    #XXX#    ...     __metaclass__ = plumber
-    #XXX#    ...     __plumbing__ = Part
-    #XXX#
-    #XXX#    >>> plumbing = Plumbing()
-    #XXX#    >>> plumbing.foo
-    #XXX#    15
-    #XXX#    >>> plumbing.foo = 10
-    #XXX#    Traceback (most recent call last):
-    #XXX#      ...
-    #XXX#    AttributeError: can't set attribute
-    #XXX#
-    #XXX#Extend the attribute to make it writable::
-    #XXX#
-    #XXX#    >>> class Part(Part):
-    #XXX#    ...     @plumb
-    #XXX#    ...     @property
-    #XXX#    ...     def foo(_next, self):
-    #XXX#    ...         return 3 * _next(self)
-    #XXX#    ...     @foo.setter
-    #XXX#    ...     def foo(_next, self, val):
-    #XXX#    ...         _next(self, val)
-    #XXX#
-    #XXX#    >>> class Plumbing(Base):
-    #XXX#    ...     __metaclass__ = plumber
-    #XXX#    ...     __plumbing__ = Part
-    #XXX#
-    #XXX#    >>> plumbing = Plumbing()
-    #XXX#    >>> plumbing.foo
-    #XXX#    15
-    #XXX#
-    #XXX#    >>> plumbing.foo = 10
-    #XXX#    >>> plumbing.foo
-    #XXX#    30
+A base class with a full property::
+
+    >>> def set_a(self, val):
+    ...     self._a = val
+
+    >>> def del_a(self):
+    ...     del self._a
+
+    >>> class Base(object):
+    ...     a = property(
+    ...          lambda self: self._a,
+    ...          set_a,
+    ...          del_a,
+    ...          "doc_a",
+    ...          )
+
+A part that plumbs into all aspects of the property (getter, setter, deleter,
+doc)::
+
+    >>> class Notify(Part):
+    ...     def get_a(_next, self):
+    ...         print "Getting a"
+    ...         return _next(self)
+    ...     def set_a(_next, self, val):
+    ...         print "Setting a"
+    ...         _next(self, val)
+    ...     def del_a(_next, self):
+    ...         print "Deleting a"
+    ...         _next(self)
+    ...     a = plumb(property(
+    ...         get_a,
+    ...         set_a,
+    ...         del_a,
+    ...         "notify",
+    ...         ))
+
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Notify
+
+The docstring is plumbed::
+
+    >>> print Plumbing.a.__doc__
+    notify
+    doc_a
+
+    >>> plumbing = Plumbing()
+
+So are getter, setter and deleter::
+
+    >>> hasattr(plumbing, '_a')
+    False
+    >>> plumbing.a = 8
+    Setting a
+    >>> plumbing.a
+    Getting a
+    8
+    >>> hasattr(plumbing, '_a')
+    True
+    >>> del plumbing.a
+    Deleting a
+    >>> hasattr(plumbing, '_a')
+    False
+
+
+
+
+A base class has a readonly property, a plumbing property plumbs in::
+
+    >>> class Base(object):
+    ...     _foo = 5
+    ...     @property
+    ...     def foo(self):
+    ...         return self._foo
+
+    >>> class Part1(Part):
+    ...     @plumb
+    ...     @property
+    ...     def foo(_next, self):
+    ...         return 3 * _next(self)
+
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1
+
+    >>> plumbing = Plumbing()
+    >>> plumbing.foo
+    15
+    >>> plumbing.foo = 10
+    Traceback (most recent call last):
+     ...
+    AttributeError: can't set attribute
 
 
 Extending a class

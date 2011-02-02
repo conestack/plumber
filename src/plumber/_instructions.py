@@ -1,6 +1,5 @@
 """Instructions to be used in a plumbing part's declaration
 """
-import os
 import re
 import types
 
@@ -402,6 +401,15 @@ def plumbingfor(plumbing_method, _next):
 
 class plumb(Stage2Instruction):
     """Plumbing of strings, methods and properties
+
+    XXX: support getter, setter, deleter to enable:
+
+    @plumb
+    @property
+    def foo
+
+    @foo.setter
+    def foo
     """
     def __add__(self, right):
         if self == right:
@@ -428,12 +436,20 @@ class plumb(Stage2Instruction):
         if isinstance(p1, basestring):
             return plumb_str(p1, p2)
         if isinstance(p1, property):
-            return p1.__class__(
-                    plbfunc(p1.fget, p2.fget),
-                    plbfunc(p1.fset, p2.fset),
-                    plbfunc(p1.fdel, p2.fdel),
-                    plumb_str(p1.__doc__, p2.__doc__),
-                    )
+            # XXX: This should be split up into instructions during part
+            # parsing to enable two stages and all instructions
+            propfuncs = []
+            for x in 'fget', 'fset', 'fdel':
+                p1func = getattr(p1, x)
+                p2func = getattr(p2, x)
+                if p1func is None:
+                    propfuncs.append(p2func)
+                elif type(p1func) is extend:
+                    propfuncs.append(p1func.payload)
+                else:
+                    propfuncs.append(plbfunc(p1func, p2func))
+            propfuncs.append(plumb_str(p1.__doc__, p2.__doc__))
+            return p1.__class__(*propfuncs)
         if callable(p1):
             return plbfunc(p1, p2)
         raise RuntimeError("We should not reach this code!") #pragma NO COVERAGE
