@@ -643,7 +643,7 @@ plumbing pipelines that are build in stage2. Plumbing pipelines correspond to
 
 XXX: explain entrance
 
-XXX
+XXX::
 
     +---+-------+-------+-------+----------+
     |   | Part1 | Part2 | Part3 | ENDPOINT |
