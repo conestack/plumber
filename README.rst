@@ -406,11 +406,11 @@ in code::
 
 summary:
 
-K-M: attributes defined by parts, plumbing class and base classes
-e: ``extend`` declaration
-x: declaration on plumbing class or base class
-?: base class declaration is irrelevant
-**Y**: chosen end point
+- K-M: attributes defined by parts, plumbing class and base classes
+- e: ``extend`` declaration
+- x: declaration on plumbing class or base class
+- ?: base class declaration is irrelevant
+- **Y**: chosen end point
 
 +-------+-------+-------+----------+-------+
 | Attr  | Part1 | Part2 | Plumbing | Base  |
@@ -453,11 +453,11 @@ in code::
 
 summary:
 
-K-N: attributes defined by parts, plumbing class and base classes
-d = ``default`` declaration
-x = declaration on plumbing class or base class
-? = base class declaration is irrelevant
-**Y** = chosen end point
+- K-N: attributes defined by parts, plumbing class and base classes
+- d = ``default`` declaration
+- x = declaration on plumbing class or base class
+- ? = base class declaration is irrelevant
+- **Y** = chosen end point
 
 +-------+-------+-------+----------+-------+
 | Attr  | Part1 | Part2 | Plumbing | Base  |
@@ -499,11 +499,11 @@ in code::
 
 summary:
 
-K-L: attributes defined by parts, plumbing class and base classes
-e = ``extend`` declaration
-f = ``finalize`` declaration
-? = base class declaration is irrelevant
-**Y** = chosen end point
+- K-L: attributes defined by parts, plumbing class and base classes
+- e = ``extend`` declaration
+- f = ``finalize`` declaration
+- ? = base class declaration is irrelevant
+- **Y** = chosen end point
 
 +-------+-------+-------+----------+------+
 | Attr  | Part1 | Part2 | Plumbing | Base |
@@ -540,19 +540,19 @@ in code::
 
 summary:
 
-    K-L: attributes defined by parts, plumbing class and base classes
-    d = ``default`` declaration
-    f = ``finalize`` declaration
-    ? = base class declaration is irrelevant
-    **Y** = chosen end point
+- K-L: attributes defined by parts, plumbing class and base classes
+- d = ``default`` declaration
+- f = ``finalize`` declaration
+- ? = base class declaration is irrelevant
+- **Y** = chosen end point
 
-    +-------+-------+-------+----------+------+
-    | Attr  | Part1 | Part2 | Plumbing | Base |
-    +=======+=======+=======+==========+======+
-    |   K   |   d   | **f** |          |   ?  |
-    +-------+-------+-------+----------+------+
-    |   L   | **f** |   d   |          |   ?  |
-    +-------+-------+-------+----------+------+
++-------+-------+-------+----------+------+
+| Attr  | Part1 | Part2 | Plumbing | Base |
++=======+=======+=======+==========+======+
+|   K   |   d   | **f** |          |   ?  |
++-------+-------+-------+----------+------+
+|   L   | **f** |   d   |          |   ?  |
++-------+-------+-------+----------+------+
 
 Interaction: ``extend`` wins over ``default``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -581,19 +581,19 @@ in code::
 
 summary:
 
-    K-L: attributes defined by parts, plumbing class and base classes
-    d = ``default`` declaration
-    e = ``extend`` declaration
-    ? = base class declaration is irrelevant
-    **Y** = chosen end point
+- K-L: attributes defined by parts, plumbing class and base classes
+- d = ``default`` declaration
+- e = ``extend`` declaration
+- ? = base class declaration is irrelevant
+- **Y** = chosen end point
 
-    +-------+-------+-------+----------+------+
-    | Attr  | Part1 | Part2 | Plumbing | Base |
-    +=======+=======+=======+==========+======+
-    |   K   |   d   | **e** |          |   ?  |
-    +-------+-------+-------+----------+------+
-    |   L   | **e** |   d   |          |   ?  |
-    +-------+-------+-------+----------+------+
++-------+-------+-------+----------+------+
+| Attr  | Part1 | Part2 | Plumbing | Base |
++=======+=======+=======+==========+======+
+|   K   |   d   | **e** |          |   ?  |
++-------+-------+-------+----------+------+
+|   L   | **e** |   d   |          |   ?  |
++-------+-------+-------+----------+------+
 
 Stage 2: Pipeline, docstring and ``zope.interface`` instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
