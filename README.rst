@@ -10,7 +10,7 @@ XXX: Missing for release?
 - adding a so far unset property function (extend?)
 
 .. contents::
-    :depth: 2
+    :depth: 3
 
 Motivation
 ----------
