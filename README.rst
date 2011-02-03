@@ -193,8 +193,8 @@ A plumbing declaration provides a list of parts via the ``__plumbing__``
 attribute. Parts provide instructions to be applied in two stages:
 
 stage1
-  extension via ``default``, ``extend`` and ``finalize``, the result of this
-  stage is the base for stage2.
+  - extension via ``default``, ``extend`` and ``finalize``, the result of this
+    stage is the base for stage2.
 
 stage2
   - creation of pipelines via ``plumb`` and ``plumbifexists``
