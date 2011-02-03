@@ -9,7 +9,7 @@ Motivation
 Plumbing is an alternative to mixin-based extension of classes, motivated by
 limitations and/or design choice of python's subclassing:
 
-.. content::
+.. contents::
     :local:
 
 Control of precedence only through order of mixins
@@ -274,7 +274,7 @@ The extension decorators:
 
 Interaction: ``finalize``, plumbing declaration and base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-in code::
+In code::
 
     >>> from plumber import finalize
 
@@ -302,31 +302,30 @@ in code::
 
 summary:
 
-    K-Q: attributes defined by parts, plumbing class and base classes
-    f: ``finalize`` declaration
-    x: declaration on plumbing class or base class
-    ?: base class declaration is irrelevant
-    **Y**: chosen end point
-    collision: indicates an invalid combination, that raises a
-        ``PlumbingCollision``
+K-Q: attributes defined by parts, plumbing class and base classes
+f: ``finalize`` declaration
+x: declaration on plumbing class or base class
+?: base class declaration is irrelevant
+**Y**: chosen end point
+collision: indicates an invalid combination, that raises a ``PlumbingCollision``
 
-    +-------+-------+-------+----------+-------+-----------+
-    | Attr  | Part1 | Part2 | Plumbing | Base  |    ok?    |
-    +=======+=======+=======+==========+=======+===========|
-    |   K   |       |       |          | **x** |           |
-    +-------+-------+-------+----------+-------+-----------+
-    |   L   |       |       |  **x**   |   ?   |           |
-    +-------+-------+-------+----------+-------+-----------+
-    |   M   |       | **f** |          |   ?   |           |
-    +-------+-------+-------+----------+-------+-----------+
-    |   N   | **f** |       |          |   ?   |           |
-    +-------+-------+-------+----------+-------+-----------+
-    |   O   |   f   |       |    x     |   ?   | collision |
-    +-------+-------+-------+----------+-------+-----------+
-    |   P   |       |   f   |    x     |   ?   | collision |
-    +-------+-------+-------+----------+-------+-----------+
-    |   Q   |   f   |   f   |          |   ?   | collision |
-    +-------+-------+-------+----------+-------+-----------+
++-------+-------+-------+----------+-------+-----------+
+| Attr  | Part1 | Part2 | Plumbing | Base  |    ok?    |
++=======+=======+=======+==========+=======+===========+
+|   K   |       |       |          | **x** |           |
++-------+-------+-------+----------+-------+-----------+
+|   L   |       |       |  **x**   |   ?   |           |
++-------+-------+-------+----------+-------+-----------+
+|   M   |       | **f** |          |   ?   |           |
++-------+-------+-------+----------+-------+-----------+
+|   N   | **f** |       |          |   ?   |           |
++-------+-------+-------+----------+-------+-----------+
+|   O   |   f   |       |    x     |   ?   | collision |
++-------+-------+-------+----------+-------+-----------+
+|   P   |       |   f   |    x     |   ?   | collision |
++-------+-------+-------+----------+-------+-----------+
+|   Q   |   f   |   f   |          |   ?   | collision |
++-------+-------+-------+----------+-------+-----------+
 
 collisions::
 
@@ -407,21 +406,21 @@ in code::
 
 summary:
 
-    K-M: attributes defined by parts, plumbing class and base classes
-    e: ``extend`` declaration
-    x: declaration on plumbing class or base class
-    ?: base class declaration is irrelevant
-    **Y**: chosen end point
+K-M: attributes defined by parts, plumbing class and base classes
+e: ``extend`` declaration
+x: declaration on plumbing class or base class
+?: base class declaration is irrelevant
+**Y**: chosen end point
 
-    +-------+-------+-------+----------+-------+
-    | Attr  | Part1 | Part2 | Plumbing | Base  |
-    +=======+=======+=======+==========+=======+
-    |   K   |   e   |   e   |  **x**   |   ?   |
-    +-------+-------+-------+----------+-------+
-    |   L   |       | **e** |          |   ?   |
-    +-------+-------+-------+----------+-------+
-    |   M   | **e** |   e   |          |   ?   |
-    +-------+-------+-------+----------+-------+
++-------+-------+-------+----------+-------+
+| Attr  | Part1 | Part2 | Plumbing | Base  |
++=======+=======+=======+==========+=======+
+|   K   |   e   |   e   |  **x**   |   ?   |
++-------+-------+-------+----------+-------+
+|   L   |       | **e** |          |   ?   |
++-------+-------+-------+----------+-------+
+|   M   | **e** |   e   |          |   ?   |
++-------+-------+-------+----------+-------+
 
 Interaction: ``default``, plumbing declaration and base class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -454,23 +453,23 @@ in code::
 
 summary:
 
-    K-N: attributes defined by parts, plumbing class and base classes
-    d = ``default`` declaration
-    x = declaration on plumbing class or base class
-    ? = base class declaration is irrelevant
-    **Y** = chosen end point
+K-N: attributes defined by parts, plumbing class and base classes
+d = ``default`` declaration
+x = declaration on plumbing class or base class
+? = base class declaration is irrelevant
+**Y** = chosen end point
 
-    +-------+-------+-------+----------+-------+
-    | Attr  | Part1 | Part2 | Plumbing | Base  |
-    +=======+=======+=======+==========+=======+
-    |   K   |       |   d   |          | **x** |
-    +-------+-------+-------+----------+-------+
-    |   L   |       |   d   |  **x**   |   ?   |
-    +-------+-------+-------+----------+-------+
-    |   M   |       | **d** |          |       |
-    +-------+-------+-------+----------+-------+
-    |   N   | **d** |   d   |          |       |
-    +-------+-------+-------+----------+-------+
++-------+-------+-------+----------+-------+
+| Attr  | Part1 | Part2 | Plumbing | Base  |
++=======+=======+=======+==========+=======+
+|   K   |       |   d   |          | **x** |
++-------+-------+-------+----------+-------+
+|   L   |       |   d   |  **x**   |   ?   |
++-------+-------+-------+----------+-------+
+|   M   |       | **d** |          |       |
++-------+-------+-------+----------+-------+
+|   N   | **d** |   d   |          |       |
++-------+-------+-------+----------+-------+
 
 
 Interaction: ``finalize`` wins over ``extend``
@@ -500,19 +499,19 @@ in code::
 
 summary:
 
-    K-L: attributes defined by parts, plumbing class and base classes
-    e = ``extend`` declaration
-    f = ``finalize`` declaration
-    ? = base class declaration is irrelevant
-    **Y** = chosen end point
+K-L: attributes defined by parts, plumbing class and base classes
+e = ``extend`` declaration
+f = ``finalize`` declaration
+? = base class declaration is irrelevant
+**Y** = chosen end point
 
-    +-------+-------+-------+----------+------+
-    | Attr  | Part1 | Part2 | Plumbing | Base |
-    +=======+=======+=======+==========+======+
-    |   K   |   e   | **f** |          |   ?  |
-    +-------+-------+-------+----------+------+
-    |   L   | **f** |   e   |          |   ?  |
-    +-------+-------+-------+----------+------+
++-------+-------+-------+----------+------+
+| Attr  | Part1 | Part2 | Plumbing | Base |
++=======+=======+=======+==========+======+
+|   K   |   e   | **f** |          |   ?  |
++-------+-------+-------+----------+------+
+|   L   | **f** |   e   |          |   ?  |
++-------+-------+-------+----------+------+
 
 Interaction: ``finalize`` wins over ``default``:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
