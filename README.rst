@@ -1,3 +1,10 @@
+XXX: Missing for release?
+- C3 resolution for instructions from plumbing part bases
+- docstring behaviour
+- adding a so far unset property function (extend?)
+
+
+
 Plumber
 =======
 
@@ -124,8 +131,10 @@ A class' docstring that uses mixins is not build from the docstrings of the
 mixins.
 
 **Solution**: Plumber enables plumbing of docstrings using a special marker
-``.. plbnext::``, which is replaced with the docstring of the next "mixin"
+``__plbnext__``, which is replaced with the docstring of the next "mixin"
 Without the marker, docstrings are concatenated.
+
+.. warning:: The ``__plbnext__`` feature is experimental and might change
 
 
 The plumbing system
@@ -185,6 +194,20 @@ The result is a plumbing class created according to the plumbing declaration::
     >>> Plumbing().bar
     17
     >>> Plumbing().foobar()
+    5
+
+A plumbing class can be subclassed like normal classes::
+
+    >>> class Sub(Plumbing):
+    ...     a = 'Sub'
+
+    >>> Sub.a
+    'Sub'
+    >>> Sub().foo()
+    42
+    >>> Sub().bar
+    17
+    >>> Sub().foobar()
     5
 
 The plumber gathers instructions
@@ -597,12 +620,291 @@ summary:
 
 Stage 2: Pipeline, docstring and ``zope.interface`` instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In stage1 plumbing class attributes were set, which can serve as endpoints for
+plumbing pipelines that are build in stage2. Plumbing pipelines correspond to
+``super``-chains. Elements for plumbing pipelines are declared with the
+``plumb`` and ``plumbifexists`` decorators.
+
+``plumb``
+    Marks a method to be used as part of a plumbing pipeline. The signature of
+    such a plumbing method is ``def foo(_next, self, *args, **kw)``. Via
+    ``_next`` it is passed the next plumbing method to be called.
+
+``plumbifexists``
+    Like ``plumb``, but only used if an endpoint exists.
+
+XXX: explain entrance
+
+XXX
+
+    +---+-------+-------+-------+----------+
+    |   | Part1 | Part2 | Part3 | ENDPOINT |
+    +---+-------+-------+-------+----------+
+    |   |    ----------------------->      |
+    | E |   x   |       |       |    x     |
+    | N |    <-----------------------      |
+    + T +-------+-------+-------+----------+
+    | R |    ------> --------------->      |
+    | A |   y   |   y   |       |    y     |
+    | N |    <------ <---------------      |
+    + C +-------+-------+-------+----------+
+    | E |       |       |    ------->      |
+    |   |       |       |   z   |    z     |
+    |   |       |       |    <-------      |
+    +---+-------+-------+-------+----------+
+
+Method pipelines
+~~~~~~~~~~~~~~~~
+    >>> from plumber import plumb
+
+    >>> class Part1(Part):
+    ...     @plumb
+    ...     def __getitem__(_next, self, key):
+    ...         print "Part1 start"
+    ...         key = key.lower()
+    ...         ret = _next(self, key)
+    ...         print "Part1 stop"
+    ...         return ret
+
+    >>> class Part2(Part):
+    ...     @plumb
+    ...     def __getitem__(_next, self, key):
+    ...         print "Part2 start"
+    ...         ret = 2 * _next(self, key)
+    ...         print "Part2 stop"
+    ...         return ret
+
+    >>> Base = dict
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
+
+    >>> plb = Plumbing()
+    >>> plb['abc'] = 6
+    >>> plb['ABC']
+    Part1 start
+    Part2 start
+    Part2 stop
+    Part1 stop
+    12
+
+Plumbing pipelines need endpoints. If no endpoint is available an
+``AttributeError`` is raised.
+
+    >>> class Part1(Part):
+    ...     @plumb
+    ...     def foo(_next, self):
+    ...         pass
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1
+    Traceback (most recent call last):
+      ...     
+    AttributeError: type object 'Plumbing' has no attribute 'foo'
+
+``plumbifexists``
+
+    >>> from plumber import plumbifexists
+
+    >>> class Part1(Part):
+    ...     @plumbifexists
+    ...     def foo(_next, self):
+    ...         pass
+    ...
+    ...     @plumbifexists
+    ...     def bar(_next, self):
+    ...         return 2 * _next(self)
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1
+    ...
+    ...     def bar(self):
+    ...         return 6
+
+    >>> hasattr(Plumbing, 'foo')
+    False
+    >>> Plumbing().bar()
+    12
+    
+Property pipelines
+~~~~~~~~~~~~~~~~~~
+    >>> class Part1(Part):
+    ...     @plumb
+    ...     @property
+    ...     def foo(_next, self):
+    ...         return 2 * _next(self)
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1
+    ...
+    ...     @property
+    ...     def foo(self):
+    ...         return 3
+
+    >>> Plumbing().foo
+    6
 
 
 
-XXX: start here!
+    #    >>> class Part1(Part):
+    #    ...     @plumb
+    #    ...     @property
+    #    ...     def foo(_next, self):
+    #    ...         return 2 * _next(self)
+    #
+    #    >>> class Part2(Part):
+    #    ...     def set_foo(self, value):
+    #    ...         self._foo = value
+    #    ...     foo = plumb(property(
+    #    ...         None,
+    #    ...         extend(set_foo),
+    #    ...         ))
+    #
+    #    >>> class Plumbing(object):
+    #    ...     __metaclass__ = plumber
+    #    ...     __plumbing__ = Part1, Part2
+    #    ...
+    #    ...     @property
+    #    ...     def foo(self):
+    #    ...         return self._foo
+    #
+    #    >>> Plumbing().foo = 4
+    #    >>> Plumbing().foo
+
+Methods and properties within the same pipeline are invalid
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Within a pipeline all elements need to be of the same type, it is not possible
+to mix properties with methods::
+
+    >>> from plumber import plumb
+
+    >>> class Part1(Part):
+    ...     @plumb
+    ...     def foo(_next, self):
+    ...         return _next(self)
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1
+    ...
+    ...     @property
+    ...     def foo(self):
+    ...         return 5
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision:
+        <plumb 'foo' of <class 'Part1'> payload=<function foo at 0x...>>
+      with:
+        <class 'Plumbing'>
+
+docstrings
+~~~~~~~~~~
+
+Experimental feature, intentionally undocumented.
 
 
+``zope.interface``
+~~~~~~~~~~~~~~~~~~
+
+The plumber does not depend on ``zope.interface`` but is aware of it. That
+means it will try to import it and if available will check plumbing parts for
+implemented interfaces and will make the plumbing class implement them, too::
+
+    >>> from zope.interface import Interface
+    >>> from zope.interface import implements
+
+A class with an interface that will serve as base::
+
+    >>> class IBase(Interface):
+    ...     pass
+
+    >>> class Base(object):
+    ...     implements(IBase)
+
+    >>> IBase.implementedBy(Base)
+    True
+
+Two parts with corresponding interfaces, one with a base class that also
+implements an interface::
+
+    >>> class IPart1(Interface):
+    ...     pass
+
+    >>> class Part1(Part):
+    ...     blub = 1
+    ...     implements(IPart1)
+
+    >>> class IPart2Base(Interface):
+    ...     pass
+
+    >>> class Part2Base(Part):
+    ...     implements(IPart2Base)
+
+    >>> class IPart2(Interface):
+    ...     pass
+
+    >>> class Part2(Part2Base):
+    ...     implements(IPart2)
+
+    >>> IPart1.implementedBy(Part1)
+    True
+    >>> IPart2Base.implementedBy(Part2Base)
+    True
+    >>> IPart2Base.implementedBy(Part2)
+    True
+    >>> IPart2.implementedBy(Part2)
+    True
+
+A plumbing based on ``Base`` using ``Part1`` and ``Part2`` and implementing
+``IPlumbingClass``::
+
+    >>> class IPlumbingClass(Interface):
+    ...     pass
+
+    >>> class PlumbingClass(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
+    ...     implements(IPlumbingClass)
+
+The directly declared and inherited interfaces are implemented::
+
+    >>> IPlumbingClass.implementedBy(PlumbingClass)
+    True
+    >>> IBase.implementedBy(PlumbingClass)
+    True
+
+The interfaces implemented by the parts are also implemented::
+
+    >>> IPart1.implementedBy(PlumbingClass)
+    True
+    >>> IPart2.implementedBy(PlumbingClass)
+    True
+    >>> IPart2Base.implementedBy(PlumbingClass)
+    True
+
+An instance of the class provides the interfaces::
+
+    >>> plumbing = PlumbingClass()
+
+    >>> IPlumbingClass.providedBy(plumbing)
+    True
+    >>> IBase.providedBy(plumbing)
+    True
+    >>> IPart1.providedBy(plumbing)
+    True
+    >>> IPart2.providedBy(plumbing)
+    True
+    >>> IPart2Base.providedBy(plumbing)
+    True
+
+The reasoning behind this is: the plumbing classes are behaving as close as
+possible to base classes of our class, but without using subclassing. For an
+additional maybe future approach see Discussion.
+
+XXX
 
 
 
@@ -690,6 +992,28 @@ end-point (method)
     3. plumbing default attribute,
     4. bases of the plumbing class.
 
+Design choices
+--------------
+
+Currently instructions of stage1 may be left of stage2 instructions. We
+consider to forbid this. For now a warning is raised if you do it::
+
+    #    >>> class Part1(Part):
+    #    ...     @extend
+    #    ...     def foo(self):
+    #    ...         return 5
+    #
+    #    >>> class Part2(Part):
+    #    ...     @plumb
+    #    ...     def foo(_next, self):
+    #    ...         return 2 * _next(self)
+    #
+    #    >>> class Plumbing(object):
+    #    ...     __metaclass__ = plumber
+    #    ...     __plumbing__ = Part1, Part2
+    #
+    #    >>> Plumbing().foo()
+    #    BANG
 
 Test Coverage
 -------------

@@ -45,6 +45,19 @@ class partmetaclass(type):
 
     Turn __doc__ and implemented zope interfaces into instructions and tell
     existing instructions their name and parent, for subclasses of ``Part``.
+
+        >>> class A(object):
+        ...     __metaclass__ = partmetaclass
+
+        >>> getattr(A, '__plumbing_instructions__', 'No part')
+        'No part'
+
+        >>> class A(Part):
+        ...     __metaclass__ = partmetaclass
+
+        >>> getattr(A, '__plumbing_instructions__', None) and 'Part'
+        'Part'
+
     """
     def __init__(cls, name, bases, dct):
         super(partmetaclass, cls).__init__(name, bases, dct)

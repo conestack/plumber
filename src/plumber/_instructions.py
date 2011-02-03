@@ -32,22 +32,22 @@ def payload(item):
 def plumb_str(leftdoc, rightdoc):
     """helper function to plumb two doc strings together
 
-    A ``.. plbnext::`` tag is replaced with rightdoc::
+    A ``__plbnext__`` tag is replaced with rightdoc::
 
         >>> leftdoc = '''Left head
-        ... .. plbnext::
+        ... __plbnext__
         ... Left tail
         ... '''
 
         >>> rightdoc = '''Right head
-        ... .. plbnext::
+        ... __plbnext__
         ... Right tail
         ... '''
 
         >>> print plumb_str(leftdoc, rightdoc)
         Left head
         Right head
-        .. plbnext::
+        __plbnext__
         Right tail
         <BLANKLINE>
         Left tail
@@ -77,7 +77,7 @@ def plumb_str(leftdoc, rightdoc):
         return rightdoc
     if rightdoc is None:
         return leftdoc
-    _next = re.search("\n".join(('', "\s*.. plbnext::\s*", '')), leftdoc)
+    _next = re.search("\n".join(('', "\s*__plbnext__\s*", '')), leftdoc)
     if not _next:
         return "\n".join((leftdoc, rightdoc))
     return "\n".join((
@@ -412,6 +412,27 @@ class plumb(Stage2Instruction):
     def foo
     """
     def __add__(self, right):
+        """
+            >>> plb1 = plumb(1)
+            >>> plb1 + plumb(1) is plb1
+            True
+
+            >>> plb1 + Instruction(1)
+            Traceback (most recent call last):
+              ...
+            PlumbingCollision: 
+                <plumb 'None' of None payload=1>
+              with:
+                <Instruction 'None' of None payload=1>
+
+            >>> plumb(lambda x: None) + plumb(property(lambda x: None))
+            Traceback (most recent call last):
+              ...
+            PlumbingCollision: 
+                <plumb 'None' of None payload=<function <lambda> at 0x...>>
+              with:
+                <plumb 'None' of None payload=<property object at 0x...>>
+        """
         if self == right:
             return self
         if not isinstance(right, plumb):
@@ -423,6 +444,15 @@ class plumb(Stage2Instruction):
 
     def ok(self, p1, p2):
         """Check whether we can merge two payloads
+
+            >>> plumb(1) + plumb(2)
+            Traceback (most recent call last):
+              ...
+            PlumbingCollision: 
+                <plumb 'None' of None payload=1>
+              with:
+                <plumb 'None' of None payload=2>
+
         """
         if isinstance(p1, basestring):
             return isinstance(p2, basestring) or p2 is None
