@@ -12,8 +12,8 @@ XXX: Missing for release?
 .. contents::
     :depth: 3
 
-Motivation
-----------
+Motivation: limitations of subclassing
+--------------------------------------
 
 Plumbing is an alternative to mixin-based extension of classes, motivated by
 limitations and/or design choice of python's subclassing:
