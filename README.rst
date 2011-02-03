@@ -302,9 +302,17 @@ in code::
 
 summary:
 
+    K-Q: attributes defined by parts, plumbing class and base classes
+    f: ``finalize`` declaration
+    x: declaration on plumbing class or base class
+    ?: base class declaration is irrelevant
+    **Y**: chosen end point
+    collision: indicates an invalid combination, that raises a
+        ``PlumbingCollision``
+
     +-------+-------+-------+----------+-------+-----------+
     | Attr  | Part1 | Part2 | Plumbing | Base  |    ok?    |
-    +=======+=======+=======+==========+======-+===========|
+    +=======+=======+=======+==========+=======+===========|
     |   K   |       |       |          | **x** |           |
     +-------+-------+-------+----------+-------+-----------+
     |   L   |       |       |  **x**   |   ?   |           |
@@ -399,9 +407,15 @@ in code::
 
 summary:
 
+    K-M: attributes defined by parts, plumbing class and base classes
+    e: ``extend`` declaration
+    x: declaration on plumbing class or base class
+    ?: base class declaration is irrelevant
+    **Y**: chosen end point
+
     +-------+-------+-------+----------+-------+
     | Attr  | Part1 | Part2 | Plumbing | Base  |
-    +=======+=======+==========+=======+
+    +=======+=======+=======+==========+=======+
     |   K   |   e   |   e   |  **x**   |   ?   |
     +-------+-------+-------+----------+-------+
     |   L   |       | **e** |          |   ?   |
@@ -440,100 +454,147 @@ in code::
 
 summary:
 
+    K-N: attributes defined by parts, plumbing class and base classes
     d = ``default`` declaration
     x = declaration on plumbing class or base class
     ? = base class declaration is irrelevant
     **Y** = chosen end point
 
-    +-------+-------+----------+-------+
-    | Part1 | Part2 | Plumbing | Base  |
-    +=======+=======+==========+=======+
-    |       |   d   |          | **x** |
-    +-------+-------+----------+-------+
-    |       |   d   |  **x**   |   ?   |
-    +-------+-------+----------+-------+
-    |       | **d** |          |       |
-    +-------+-------+----------+-------+
-    | **d** |   d   |          |       |
-    +-------+-------+----------+-------+
+    +-------+-------+-------+----------+-------+
+    | Attr  | Part1 | Part2 | Plumbing | Base  |
+    +=======+=======+=======+==========+=======+
+    |   K   |       |   d   |          | **x** |
+    +-------+-------+-------+----------+-------+
+    |   L   |       |   d   |  **x**   |   ?   |
+    +-------+-------+-------+----------+-------+
+    |   M   |       | **d** |          |       |
+    +-------+-------+-------+----------+-------+
+    |   N   | **d** |   d   |          |       |
+    +-------+-------+-------+----------+-------+
 
 
-``finalize`` wins over ``extend``:
+Interaction: ``finalize`` wins over ``extend``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+in code::
 
-        e = ``extend`` declaration
-        f = ``finalize`` declaration
-        ? = base class declaration is irrelevant
-        **Y** = chosen end point
+    >>> class Part1(Part):
+    ...     K = extend('Part1')
+    ...     L = finalize('Part1')
 
-        +-------+-------+----------+------+
-        | Part1 | Part2 | Plumbing | Base |
-        +=======+=======+==========+======+
-        |   e   | **f** |          |   ?  |
-        +-------+-------+----------+------+
-        | **f** |   e   |          |   ?  |
-        +-------+-------+----------+------+
+    >>> class Part2(Part):
+    ...     K = finalize('Part2')
+    ...     L = extend('Part2')
 
-``extend`` wins over ``default``, but loses against plumbing class declaration:
+    >>> class Base(object):
+    ...     K = 'Base'
+    ...     L = 'Base'
 
-        d = ``default`` declaration
-        e = ``extend`` declaration
-        x = declaration on plumbing class or base class
-        ? = base class declaration is irrelevant
-        **Y** = chosen end point
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
 
-        +-------+-------+----------+------+
-        | Part1 | Part2 | Plumbing | Base |
-        +=======+=======+==========+======+
-        |   d   |   e   |  **x**   |   ?  |
-        +-------+-------+----------+------+
-        |   d   | **e** |          |   ?  |
-        +-------+-------+----------+------+
-        | **e** |   d   |          |   ?  |
-        +-------+-------+----------+------+
+    >>> for x in ['K', 'L']:
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    K from Part2
+    L from Part1
 
-``finalize`` wins over ``default``:
+summary:
 
-        d = ``default`` declaration
-        f = ``finalize`` declaration
-        ? = base class declaration is irrelevant
-        **Y** = chosen end point
+    K-L: attributes defined by parts, plumbing class and base classes
+    e = ``extend`` declaration
+    f = ``finalize`` declaration
+    ? = base class declaration is irrelevant
+    **Y** = chosen end point
 
-        +-------+-------+----------+------+
-        | Part1 | Part2 | Plumbing | Base |
-        +=======+=======+==========+======+
-        |   d   | **f** |          |   ?  |
-        +-------+-------+----------+------+
-        | **f** |   d   |          |   ?  |
-        +-------+-------+----------+------+
+    +-------+-------+-------+----------+------+
+    | Attr  | Part1 | Part2 | Plumbing | Base |
+    +=======+=======+=======+==========+======+
+    |   K   |   e   | **f** |          |   ?  |
+    +-------+-------+-------+----------+------+
+    |   L   | **f** |   e   |          |   ?  |
+    +-------+-------+-------+----------+------+
 
-``finalize`` wins over any combination of ``default`` and ``extend``:
+Interaction: ``finalize`` wins over ``default``:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+in code::
 
-        d = ``default`` declaration
-        e = ``extend`` declaration
-        f = ``finalize`` declaration
-        ? = base class declaration is irrelevant
-        **Y** = chosen end point
+    >>> class Part1(Part):
+    ...     K = default('Part1')
+    ...     L = finalize('Part1')
 
-        +-------+-------+-------+----------+------+
-        | Part1 | Part2 | Part3 | Plumbing | Base |
-        +=======+=======+=======+==========+======+
-        |   e   |   d   | **f** |          |   ?  |
-        +-------+-------+-------+----------+------+
-        |   d   |   e   | **f** |          |   ?  |
-        +-------+-------+-------+----------+------+
-        |   e   | **f** |   d   |          |   ?  |
-        +-------+-------+-------+----------+------+
-        |   d   | **f** |   e   |          |   ?  |
-        +-------+-------+-------+----------+------+
-        | **f** |   d   |   e   |          |   ?  |
-        +-------+-------+-------+----------+------+
-        | **f** |   e   |   e   |          |   ?  |
-        +-------+-------+-------+----------+------+
+    >>> class Part2(Part):
+    ...     K = finalize('Part2')
+    ...     L = default('Part2')
 
+    >>> class Base(object):
+    ...     K = 'Base'
+    ...     L = 'Base'
 
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
 
-XXX: use cases for the instructions
+    >>> for x in ['K', 'L']:
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    K from Part2
+    L from Part1
 
+summary:
+
+    K-L: attributes defined by parts, plumbing class and base classes
+    d = ``default`` declaration
+    f = ``finalize`` declaration
+    ? = base class declaration is irrelevant
+    **Y** = chosen end point
+
+    +-------+-------+-------+----------+------+
+    | Attr  | Part1 | Part2 | Plumbing | Base |
+    +=======+=======+=======+==========+======+
+    |   K   |   d   | **f** |          |   ?  |
+    +-------+-------+-------+----------+------+
+    |   L   | **f** |   d   |          |   ?  |
+    +-------+-------+-------+----------+------+
+
+Interaction: ``extend`` wins over ``default``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+in code::
+
+    >>> class Part1(Part):
+    ...     K = default('Part1')
+    ...     L = extend('Part1')
+
+    >>> class Part2(Part):
+    ...     K = extend('Part2')
+    ...     L = default('Part2')
+
+    >>> class Base(object):
+    ...     K = 'Base'
+    ...     L = 'Base'
+
+    >>> class Plumbing(Base):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
+
+    >>> for x in ['K', 'L']:
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    K from Part2
+    L from Part1
+
+summary:
+
+    K-L: attributes defined by parts, plumbing class and base classes
+    d = ``default`` declaration
+    e = ``extend`` declaration
+    ? = base class declaration is irrelevant
+    **Y** = chosen end point
+
+    +-------+-------+-------+----------+------+
+    | Attr  | Part1 | Part2 | Plumbing | Base |
+    +=======+=======+=======+==========+======+
+    |   K   |   d   | **e** |          |   ?  |
+    +-------+-------+-------+----------+------+
+    |   L   | **e** |   d   |          |   ?  |
+    +-------+-------+-------+----------+------+
 
 Stage 2: Pipelines
 ~~~~~~~~~~~~~~~~~~

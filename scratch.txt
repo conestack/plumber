@@ -1,3 +1,28 @@
+Interaction: ``finalize`` wins over any combination of ``default`` and ``extend``
+
+        d = ``default`` declaration
+        e = ``extend`` declaration
+        f = ``finalize`` declaration
+        ? = base class declaration is irrelevant
+        **Y** = chosen end point
+
+        +-------+-------+-------+----------+------+
+        | Part1 | Part2 | Part3 | Plumbing | Base |
+        +=======+=======+=======+==========+======+
+        |   e   |   d   | **f** |          |   ?  |
+        +-------+-------+-------+----------+------+
+        |   d   |   e   | **f** |          |   ?  |
+        +-------+-------+-------+----------+------+
+        |   e   | **f** |   d   |          |   ?  |
+        +-------+-------+-------+----------+------+
+        |   d   | **f** |   e   |          |   ?  |
+        +-------+-------+-------+----------+------+
+        | **f** |   d   |   e   |          |   ?  |
+        +-------+-------+-------+----------+------+
+        | **f** |   e   |   e   |          |   ?  |
+        +-------+-------+-------+----------+------+
+
+
 Plumbings in conjunction to extensions (or defaults)
 
 +---------------+-------------------------------------------------+
