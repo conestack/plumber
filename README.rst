@@ -1,8 +1,6 @@
 Plumber
 =======
 
-.. contents::
-
 XXX: Intro
 
 XXX: Missing for release?
@@ -11,7 +9,7 @@ XXX: Missing for release?
 - docstring behaviour
 - adding a so far unset property function (extend?)
 
-
+.. contents::
 
 Motivation
 ----------
