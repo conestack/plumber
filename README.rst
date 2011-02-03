@@ -146,6 +146,9 @@ found on plumbing parts.
 
 XXX:
 
+.. contents::
+    :local:
+
 Plumbing parts provide instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Plumbing parts correspond to mixins, but are more powerful and flexible. A
@@ -295,6 +298,9 @@ The extension decorators:
     ``default`` is the weakest extension instruction. It will not even override
     declarations of base classes. The first default takes precendence over
     later defaults.
+
+.. contents::
+    :local:
 
 Interaction: ``finalize``, plumbing declaration and base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -653,6 +659,9 @@ XXX
     |   |       |       |   z   |    z     |
     |   |       |       |    <-------      |
     +---+-------+-------+-------+----------+
+
+.. contents::
+    :local:
 
 Method pipelines
 ~~~~~~~~~~~~~~~~
