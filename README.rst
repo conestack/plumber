@@ -302,12 +302,12 @@ In code::
 
 summary:
 
-K-Q: attributes defined by parts, plumbing class and base classes
-f: ``finalize`` declaration
-x: declaration on plumbing class or base class
-?: base class declaration is irrelevant
-**Y**: chosen end point
-collision: indicates an invalid combination, that raises a ``PlumbingCollision``
+- K-Q: attributes defined by parts, plumbing class and base classes
+- f: ``finalize`` declaration
+- x: declaration on plumbing class or base class
+- ?: base class declaration is irrelevant
+- **Y**: chosen end point
+- collision: indicates an invalid combination, that raises a ``PlumbingCollision``
 
 +-------+-------+-------+----------+-------+-----------+
 | Attr  | Part1 | Part2 | Plumbing | Base  |    ok?    |
