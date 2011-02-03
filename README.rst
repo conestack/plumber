@@ -596,12 +596,13 @@ summary:
     |   L   | **e** |   d   |          |   ?  |
     +-------+-------+-------+----------+------+
 
-Stage 2: Pipelines
-~~~~~~~~~~~~~~~~~~
+
+Stage 2: Pipeline, docstring and ``zope.interface`` instructions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 
-
+XXX: start here!
 
 
 
@@ -766,151 +767,6 @@ closures which get called for defined endpoints.
 - iter[Part1, Part2, Part3] -> write endpoints
 - iter[Part1, Part2, Part3] -> create pipelines
 
-
-Endpoints
----------
-
-Endpoints are the functions, attributes and properties available on the
-plumbing class after plumber has done its work.
-
-This endpoints could be defined either by parts using the ``default`` or
-``extend`` decorator, or by the plumbing class itself.
-
-
-Defining defaults
------------------
-
-The ``default`` decorator is used for providing functions, properties and
-attribues on the plumbing class which could be overwritten either by another
-part, the bases of the plumbing class or by the plumbing class itself.
-
-Resolution matrix for ``default``::
-
-    +---------------+---------------------------------------+
-    |               |  DEFAULT ENDPOINT RESOLUTION          |
-    +---------------+---------+---------+---------+---------+
-    | Endpoints     |  x(p)   |  y(b)   |  z(p1)  |  w(p2)  |
-    +---------------+---------+---------+---------+---------+
-    | Plumbing      |  x(p)   |         |         |         |
-    +---------------+---------+---------+---------+---------+
-    | Base          |  x(b)   |  y(b)   |         |         |
-    +---------------+---------+---------+---------+---------+
-    | Part1         |  x(p1)  |  y(p1)  |  z(p1)  |         |
-    +---------------+---------+---------+---------+---------+
-    | Part2         |  x(p2)  |  y(p2)  |  z(p2)  |  w(b2)  |
-    +---------------+---------+---------+---------+---------+
-
-Example::
-    
-    >>> from plumber import plumber
-    >>> from plumber import Part
-    >>> from plumber import default
-    
-    >>> class Part1(Part):
-    ...     x = default('x(p1)')
-    ...     y = default('y(p1)')
-    ...     z = default('z(p1)')
-    
-    >>> class Part2(Part):
-    ...     x = default('x(p2)')
-    ...     y = default('y(p2)')
-    ...     z = default('z(p2)')
-    ...     w = default('w(p2)')
-    
-    >>> class Base(object):
-    ...     x = 'x(b)'
-    ...     y = 'y(b)'
-    
-    >>> class PlumbingClass(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
-    ...     x = 'x(p)'
-    
-Console::
-
-    >>> plumbing = PlumbingClass()
-    >>> plumbing.x
-    'x(p)'
-    >>> plumbing.y
-    'y(b)'
-    >>> plumbing.z
-    'z(p1)'
-    >>> plumbing.w
-    'w(p2)'
-
-
-Defining extensions
--------------------
-
-The ``extend`` decorator is used to explicitly define functions, properties and
-attribues as endpoints for a plumbing which are immutable.
-
-They overwrite existing functions, properties and attribues defined by
-``default`` decorator.
-
-They must not be overwritten by another part, this raises an error.
-
-Use ``extend`` decorator if you know that a function must not be overwritten
-by anything else, like storage related stuff, et cetera.
-
-Resolution matrix for ``extend``::
-    
-    +---------------+-------------------------------------------------+
-    |               |  EXTEND ENDPOINT RESOLUTION                     |
-    +---------------+---------+---------+---------+---------+---------+
-    | Endpoints     |  x(p)   |  y(p1)  |  z(p2)  |  w(p3)  |  v(p4)  |
-    +---------------+---------+---------+---------+---------+---------+
-    | Plumbing      |  x(p)   |         |         |         |         |
-    +---------------+---------+---------+---------+---------+---------+
-    | Part1         |         |  y(p1)  |         |         |         |
-    +---------------+---------+---------+---------+---------+---------+
-    | Part2         |         |         |  z(p2)  |         |         |
-    +---------------+---------+---------+---------+---------+---------+
-    | Part3         |         |         |         |  w(p3)  |         |
-    +---------------+---------+---------+---------+---------+---------+
-    | Base          |  x(b)   |  y(b)   |  z(b)   |  w(b)   |  v(b)   |
-    +---------------+---------+---------+---------+---------+---------+
-
-Example::
-
-    >>> from plumber import plumber
-    >>> from plumber import Part
-    >>> from plumber import extend
-    
-    >>> class Part1(Part):
-    ...     y = extend('y(p1)')
-    
-    >>> class Part2(Part):
-    ...     z = extend('z(p2)')
-    
-    >>> class Part3(Part):
-    ...     w = extend('w(p3)')
-    
-    >>> class Base(object):
-    ...     x = 'x(b)'
-    ...     y = 'y(b)'
-    ...     z = 'z(b)'
-    ...     w = 'w(b)'
-    ...     v = 'v(b)' 
-    
-    >>> class PlumbingClass(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2, Part3
-    ...     x = 'x(p)'
-
-Console::
-    
-    >>> plumbing = PlumbingClass()
-    >>> plumbing.x
-    'x(p)'
-    >>> plumbing.y
-    'y(p1)'
-    >>> plumbing.z
-    'z(p2)'
-    >>> plumbing.w
-    'w(p3)'
-    >>> plumbing.v
-    'v(b)'
 
 
 Defining pipelines
@@ -2002,94 +1858,13 @@ possible to base classes of our class, but without using subclassing.  For an
 additional maybe future approach see Discussion.
 
 
-Nomenclature
-------------
-
-The nomenclature is just forming and still inconsistent.
-
-plumber
-    Metaclass that creates a plumbing system according to the instructions on
-    plumbing parts: ``default``, ``extend`` and ``plumb``.
-
-plumbing (system)
-    A plumbing is the result of what the plumber produces. It is built of
-    methods declared on base classes, the plumbing class and plumbing parts
-    according to ``default``, ``extend`` and ``plumb`` directives. Parts
-    involved are listed in a class' ``__plumbing__`` attribute.
-
-pipeline attribute
-    The attribute a class uses to define the order of plumbing class to be used
-    to create the plumbing.
-
-plumbing class
-    Synonymous for plumbing system, but sometimes also only the class that asks
-    to be turned into a plumbing, esp. when referring to attributes declared on
-    it.
-
-(plumbing) part / part class
-    A plumbing part provides attributes to be used for the plumbing through
-    ``default``, ``extend`` and ``plumb`` declarations.
-
-``default`` decorator
-    Instruct the plumber to set a default value: first default wins, ``extend``
-    and declaration on plumbing class takes precedence.
-
-``extend`` decorator
-    Instruct the plumber to set an attribute on the plumbing: ``extend``
-    overrides ``default``, two ``extend`` collide.
-
-``plumb`` decorator
-    Instruct the plumber to make a function part of a plumbing chain and turns
-    the function into a classmethod bound to the plumbing part declaring it
-    with a signature of: ``def foo(_next, self, *args, **kw)``.
-    ``prt`` is the part class declaring it, ``_next`` a wrapper for the next
-    method in chain and ``self`` and instance of the plumbing
-
-default attribute
-    Attribute set via the ``default`` decorator.
-
-extension attribute
-    Attribute set via the ``extend`` decorator.
-
-plumbing method
-    Method declared via the ``plumb`` decoarator.
-
-plumbing chain
-    The methods of a pipeline with the same name plumbed together. The entrance
-    and end-point have the signature of normal methods: ``def foo(self, *args,
-    **kw)``. The plumbing chain is a series of nested closures (see ``_next``).
-
-entrance method
-    A method with a normal signature. i.e. expecting ``self`` as first
-    argument, that is used to enter a plumbing chain. It is a ``_next``
-    function. A method declared on the class with the same name, will be
-    overwritten, but referenced in the chain as the innermost method, the
-    end-point.
-
-``_next`` function
-    The ``_next`` function is used to call the next method in a chain: in case of
-    a plumbing method, a wrapper of it that passes the correct next ``_next``
-    as first argument and in case of an end-point, just the end-point method
-    itself.
-
-end-point (method)
-    Method retrieved from the plumbing class with ``getattr()``, before setting
-    the entrance method on the class. It is provided with the following
-    precedence:
-
-    1. plumbing class itself,
-    2. plumbing extension attribute,
-    3. plumbing default attribute,
-    4. bases of the plumbing class.
-
-
 Test Coverage
 -------------
 
 XXX: automatic update of coverage report
 
 Summary of the test coverage report::
-    
+
     lines   cov%   module   (path)
         5   100%   plumber.__init__
       157    92%   plumber._instructions
@@ -2106,9 +1881,11 @@ Contributors
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
 - Jens W. Klein <jens@bluedynamics.com>
+- Marco Lempen
 - Attila Oláh
-- thanks to WSGI for the concept
-- thanks to #python (for trying) to block stupid ideas
+- thanks to WSGI for the initial concept
+- thanks to #python (for trying) to block stupid ideas, if there are any left,
+  please let us know
 
 
 Changes
