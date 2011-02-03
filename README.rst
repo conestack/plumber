@@ -1,14 +1,17 @@
+Plumber
+=======
+
+.. contents::
+
+XXX: Intro
+
 XXX: Missing for release?
+
 - C3 resolution for instructions from plumbing part bases
 - docstring behaviour
 - adding a so far unset property function (extend?)
 
 
-
-Plumber
-=======
-
-XXX: Intro
 
 Motivation
 ----------
