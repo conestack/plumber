@@ -622,9 +622,9 @@ Stage 2: Pipeline, docstring and ``zope.interface`` instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In stage1 plumbing class attributes were set, which can serve as endpoints for
 plumbing pipelines that are build in stage2. Plumbing pipelines correspond to
-``super``-chains.
-
-Docstrings are plumbed in a way
+``super``-chains. Docstrings of parts, methods in a pipeline and properties in
+a pipeline are accumulated. Plumber is ``zope.interface`` aware and takes
+implemeneted interfaces from parts, if it can be imported.
 
 .. contents::
     :local:
