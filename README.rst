@@ -648,6 +648,9 @@ after the pipelines are built, an entrance method is generated for each pipe,
 that wraps the first plumbing method passing it the correct ``_next``. Each
 ``_next`` method is an entrance to the rest of the pipeline.
 
+
+
+
 The pipelines are build in part order, skipping parts that do not define a
 pipeline element with the same attribute name::
 
@@ -835,7 +838,7 @@ docstrings of classes, methods and properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Normal docstrings of the plumbing declaration and the part classes, plumbed
 methods and plumbed properties are joined by newlines starting with the
-plumbing declaration and followed by the parts in reverse order.
+plumbing declaration and followed by the parts in reverse order::
 
     >>> class P1(Part):
     ...     """P1
@@ -976,8 +979,126 @@ An instance of the class provides the interfaces::
     >>> IPart2Base.providedBy(plumbing)
     True
 
+Design choices and ongoing discussions
+--------------------------------------
 
+Currently instructions of stage1 may be left of stage2 instructions. We
+consider to forbid this::
 
+    #    >>> class Part1(Part):
+    #    ...     @extend
+    #    ...     def foo(self):
+    #    ...         return 5
+    #
+    #    >>> class Part2(Part):
+    #    ...     @plumb
+    #    ...     def foo(_next, self):
+    #    ...         return 2 * _next(self)
+    #
+    #    >>> class Plumbing(object):
+    #    ...     __metaclass__ = plumber
+    #    ...     __plumbing__ = Part1, Part2
+    #
+    #    >>> Plumbing().foo()
+    #    BANG
+
+Where is the plumbing
+^^^^^^^^^^^^^^^^^^^^^
+It is in front of the class and its MRO. If you feel it should be between the
+class and its base classes, consider subclassing the class that uses the
+plumbing system and put your code there. If you have a strong point why this is
+not a solution, please let us know. However, the point must be stronger than
+saving 3 lines of which two are pep8-conform whitespace.
+
+Signature of _next function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Currently ``self`` needs to be passed to the ``_next`` function. This could be
+wrapped, too. However, it might enable cool stuff, because you can decide to
+pass something else than self to be processed further.
+
+Implementation of this would slightly increase the complexity in the plumber,
+result in less flexibility, but save passing ``self`` to ``_next``.
+
+Instance based plumbing system
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+At various points it felt tempting to be able to instantiate plumbing elements
+to configure them. For that we need ``__init__``, which woul mean that plumbing
+``__init__`` would need a different name, eg. ``prt_``-prefix. Consequently
+this could then be done for all plumbing methods instead of decorating them.
+The decorator is really just used for marking them and turning them into
+classmethods. The plumbing decorator is just a subclass of the classmethod
+decorator.
+
+Reasoning why currently the methods are not prefixed and are classmethods:
+Plumbing elements are simply not meant to be normal classes. Their methods have
+the single purpose to be called as part of some other class' method calls,
+never directly. Configuration of plumbing elements can either be achieved by
+subclassing them or by putting the configuration on the objects/class they are
+used for.
+
+The current system is slim, clear and easy to use. An instance based plumbing
+system would be far more complex. It could be implemented to exist alongside
+the current system. But it won't be implemented by us, without seeing a real use
+case first.
+
+Different zope.interface.Interfaces for plumbing and created class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A different approach to the currently implemented system is having different
+interfaces for the parts and the class that is created::
+
+    #    >>> class IPart1Behaviour(Interface):
+    #    ...     pass
+    #
+    #    >>> class Part1(Part):
+    #    ...     implements(IPart1)
+    #    ...     interfaces = (IPart1Behaviour,)
+    #
+    #    >>> class IPart2(Interface):
+    #    ...     pass
+    #
+    #    >>> class Part2(Part):
+    #    ...     implements(IPart2)
+    #    ...     interfaces = (IPart2Behaviour,)
+    #
+    #    >>> IUs.implementedBy(Us)
+    #    True
+    #    >>> IBase.implementedBy(Us)
+    #    True
+    #    >>> IPart1.implementedBy(Us)
+    #    False
+    #    >>> IPart2.implementedBy(Us)
+    #    False
+    #    >>> IPart1Behaviour.implementedBy(Us)
+    #    False
+    #    >>> IPart2Behaviour.implementedBy(Us)
+    #    False
+
+Same reasoning as before: up to now unnecessary complexity. It could make sense
+in combination with an instance based plumbing system and could be implemented
+as part of it alongside the current class based system.
+
+Implicit subclass generation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Currently the whole plumbing system is implemented within one class that is
+based on the base classes defined in the class declaration. During class
+creation the plumber determines all functions involved in the plumbing,
+generates pipelines of methods and plumbs them together.
+
+An alternative approach would be to take one plumbing elements after another
+and create a subclass chain. However, I currently don't know how this could be
+achieved, believe that it is not possible and think that the current approach
+is better.
+
+Dynamic Plumbing
+^^^^^^^^^^^^^^^^
+The plumber could replace the ``__plumbing__`` attribute with a property of the
+same name. Changing the attribute during runtime would result in a plumbing
+specific to the object. A plumbing cache could further be used to reduce the
+number of plumbing chains in case of many dynamic plumbings. Realised eg by a
+descriptor.
+
+Miscellanea
+-----------
 
 Nomenclature
 ^^^^^^^^^^^^
@@ -1061,32 +1182,8 @@ end-point (method)
     3. plumbing default attribute,
     4. bases of the plumbing class.
 
-Design choices
---------------
-
-Currently instructions of stage1 may be left of stage2 instructions. We
-consider to forbid this. For now a warning is raised if you do it::
-
-    #    >>> class Part1(Part):
-    #    ...     @extend
-    #    ...     def foo(self):
-    #    ...         return 5
-    #
-    #    >>> class Part2(Part):
-    #    ...     @plumb
-    #    ...     def foo(_next, self):
-    #    ...         return 2 * _next(self)
-    #
-    #    >>> class Plumbing(object):
-    #    ...     __metaclass__ = plumber
-    #    ...     __plumbing__ = Part1, Part2
-    #
-    #    >>> Plumbing().foo()
-    #    BANG
-
 Test Coverage
--------------
-
+^^^^^^^^^^^^^
 Summary of the test coverage report::
 
     lines   cov%   module   (path)
@@ -1100,8 +1197,7 @@ Summary of the test coverage report::
 
 
 Contributors
-------------
-
+^^^^^^^^^^^^
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
 - Jens W. Klein <jens@bluedynamics.com>
@@ -1113,8 +1209,7 @@ Contributors
 
 
 Changes
--------
-
+^^^^^^^
 - ``.. plbnext::`` instead of ``.. plb_next::``
   [chaoflow 2011-02-02]
 
@@ -1154,8 +1249,7 @@ Changes
 
 
 TODO
-----
-
+^^^^
 - traceback should show in which plumbing class we are, not something inside
   the plumber. yafowil is doing it. jensens: would you be so kind.
 - verify behaviour with pickling
@@ -1166,6 +1260,5 @@ TODO
 
 
 Disclaimer
-----------
-
+^^^^^^^^^^
 TODO
