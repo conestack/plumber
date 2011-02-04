@@ -3,11 +3,6 @@ Plumber
 
 XXX: Intro
 
-XXX: Missing for release?
-
-- C3 resolution for instructions from plumbing part bases
-- adding a so far unset property function (extend?)
-
 .. contents::
     :depth: 3
 
@@ -135,16 +130,14 @@ mixins.
 ``__plbnext__``, which is replaced with the docstring of the next "mixin"
 Without the marker, docstrings are concatenated.
 
-.. warning:: The ``__plbnext__`` feature is experimental and might change
-
 
 The plumbing system
 -------------------
 
 The ``plumber`` metaclass creates plumbing classes according to instructions
-found on plumbing parts.
-
-XXX:
+found on plumbing parts. First all instructions are gathered, then they are
+applied in two stages: extension and pipelines, docstrings and
+optional ``zope.interfaces``.
 
 .. contents::
     :local:
@@ -740,6 +733,10 @@ Plumbing pipelines need endpoints. If no endpoint is available an
     
 Property pipelines
 ~~~~~~~~~~~~~~~~~~
+
+Plumbing of properties is experimental and might or might not to what you
+expect::
+
     >>> class Part1(Part):
     ...     @plumb
     ...     @property
@@ -754,35 +751,40 @@ Property pipelines
     ...     def foo(self):
     ...         return 3
 
-    >>> Plumbing().foo
+    >>> plb = Plumbing()
+    >>> plb.foo
     6
 
+It is possible to extend a property with so far unset getter/setter/deleter.
+The feature is experimental, might not fit the expected behavior and probably
+about to change::
 
+    >>> class Part1(Part):
+    ...     @plumb
+    ...     @property
+    ...     def foo(_next, self):
+    ...         return 2 * _next(self)
 
-    #    >>> class Part1(Part):
-    #    ...     @plumb
-    #    ...     @property
-    #    ...     def foo(_next, self):
-    #    ...         return 2 * _next(self)
-    #
-    #    >>> class Part2(Part):
-    #    ...     def set_foo(self, value):
-    #    ...         self._foo = value
-    #    ...     foo = plumb(property(
-    #    ...         None,
-    #    ...         extend(set_foo),
-    #    ...         ))
-    #
-    #    >>> class Plumbing(object):
-    #    ...     __metaclass__ = plumber
-    #    ...     __plumbing__ = Part1, Part2
-    #    ...
-    #    ...     @property
-    #    ...     def foo(self):
-    #    ...         return self._foo
-    #
-    #    >>> Plumbing().foo = 4
-    #    >>> Plumbing().foo
+    >>> class Part2(Part):
+    ...     def set_foo(self, value):
+    ...         self._foo = value
+    ...     foo = plumb(property(
+    ...         None,
+    ...         extend(set_foo),
+    ...         ))
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Part1, Part2
+    ...
+    ...     @property
+    ...     def foo(self):
+    ...         return self._foo
+
+    >>> plb = Plumbing()
+    >>> plb.foo = 4
+    >>> plb.foo
+    8
 
 Methods and properties within the same pipeline are invalid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -862,17 +864,16 @@ The accumulation of docstrings is an experimental feature and will probably
 change.
 
 
-``zope.interface``
-~~~~~~~~~~~~~~~~~~
-
+``zope.interface`` (if available)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The plumber does not depend on ``zope.interface`` but is aware of it. That
 means it will try to import it and if available will check plumbing parts for
-implemented interfaces and will make the plumbing class implement them, too::
+implemented interfaces and will make the plumbing implement them, too::
 
     >>> from zope.interface import Interface
     >>> from zope.interface import implements
 
-A class with an interface that will serve as base::
+A class with an interface that will serve as base class of a plumbing::
 
     >>> class IBase(Interface):
     ...     pass
@@ -955,13 +956,6 @@ An instance of the class provides the interfaces::
     True
     >>> IPart2Base.providedBy(plumbing)
     True
-
-The reasoning behind this is: the plumbing classes are behaving as close as
-possible to base classes of our class, but without using subclassing. For an
-additional maybe future approach see Discussion.
-
-XXX
-
 
 
 
@@ -1074,8 +1068,6 @@ consider to forbid this. For now a warning is raised if you do it::
 Test Coverage
 -------------
 
-XXX: automatic update of coverage report
-
 Summary of the test coverage report::
 
     lines   cov%   module   (path)
@@ -1151,6 +1143,7 @@ TODO
 - verify behaviour with ZODB persistence
 - subclassing for plumbing parts
 - plumbing of property getter, setter and deleter for non-lambda properties
+- py26 @foo.setter support in all decorators
 
 
 Disclaimer

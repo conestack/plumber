@@ -477,10 +477,10 @@ class plumb(Stage2Instruction):
             for x in 'fget', 'fset', 'fdel':
                 p1func = getattr(p1, x)
                 p2func = getattr(p2, x)
-                if p1func is None:
-                    propfuncs.append(p2func)
-                elif type(p1func) is extend:
-                    propfuncs.append(p1func.payload)
+                if p2func is None:
+                    propfuncs.append(p1func)
+                elif type(p2func) is extend:
+                    propfuncs.append(p2func.payload)
                 else:
                     propfuncs.append(plbfunc(p1func, p2func))
             propfuncs.append(plumb_str(p1.__doc__, p2.__doc__))
