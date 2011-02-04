@@ -181,6 +181,7 @@ attributes like every normal class, they will be treated as implicit
 
     >>> from plumber import plumber
 
+    >>> Base = dict
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
     ...     __plumbing__ = Part1, Part2
@@ -190,14 +191,18 @@ attributes like every normal class, they will be treated as implicit
 
 The result is a plumbing class created according to the plumbing declaration::
 
-    >>> Plumbing.a
+    >>> plb = Plumbing()
+    >>> plb.a
     True
-    >>> Plumbing().foo()
+    >>> plb.foo()
     42
-    >>> Plumbing().bar
+    >>> plb.bar
     17
-    >>> Plumbing().foobar()
+    >>> plb.foobar()
     5
+    >>> plb['a'] = 1
+    >>> plb['a']
+    1
 
 A plumbing class can be subclassed like normal classes::
 
