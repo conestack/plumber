@@ -135,8 +135,8 @@ The plumbing system
 -------------------
 
 The ``plumber`` metaclass creates plumbing classes according to instructions
-found on plumbing parts. First all instructions are gathered, then they are
-applied in two stages: extension and pipelines, docstrings and
+found on plumbing parts. First, all instructions are gathered, then they are
+applied in two stages: stage1: extension and stage2: pipelines, docstrings and
 optional ``zope.interfaces``.
 
 .. contents::
@@ -240,6 +240,16 @@ of all instructions is kept::
         'stage2':
          {'__interfaces__': [<_implements '__interfaces__' of None payload=()...
 
+Before putting a new instruction onto a stack, it is compared with the latest
+instruction on the stack. It is either taken as is, discarded, merged or a
+``PlumbingCollision`` is raised. This is detailed in the following sections.
+
+After all instructions are gathered onto the stacks, they are applied in two
+stages taking declarations on the plumbing class and base classes into account.
+
+The result of the first stage is the base for the application of the second
+stage.
+
 .. note:: The payload of an instruction is the attribute value passed to the
   instruction via function call or decoration. An instruction knows the part it
   is declared on.
@@ -256,21 +266,11 @@ of all instructions is kept::
   information in there, e.g. to create a plumbing inspector and earn yourself
   a box of your favorite beverage, please let us know.
 
-Before putting a new instruction onto a stack, it is compared with the latest
-instruction on the stack. It is either taken as is, discarded, merged or a
-``PlumbingCollision`` is raised. This is detailed in the following sections.
-
-After all instructions are gathered onto the stacks, they are applied in two
-stages taking declarations on the plumbing class and base classes into account.
-
-The result of the first stage is the base for the application of the second
-stage.
-
 Stage 1: Extension
 ^^^^^^^^^^^^^^^^^^
 The extension stage creates endpoints for the pipelines created in stage 2. If
 no pipeline uses the endpoint, it will just live on as a normal attribute in
-the plumbind class' dictionary.
+the plumbing class' dictionary.
 
 The extension decorators:
 
@@ -622,20 +622,34 @@ Stage 2: Pipeline, docstring and ``zope.interface`` instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In stage1 plumbing class attributes were set, which can serve as endpoints for
 plumbing pipelines that are build in stage2. Plumbing pipelines correspond to
-``super``-chains. Elements for plumbing pipelines are declared with the
-``plumb`` and ``plumbifexists`` decorators.
+``super``-chains.
+
+Docstrings are plumbed in a way
+
+.. contents::
+    :local:
+
+Plumbing Pipelines in general
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Elements for plumbing pipelines are declared with the ``plumb`` and
+``plumbifexists`` decorators:
 
 ``plumb``
-    Marks a method to be used as part of a plumbing pipeline. The signature of
-    such a plumbing method is ``def foo(_next, self, *args, **kw)``. Via
-    ``_next`` it is passed the next plumbing method to be called.
+    Marks a method to be used as part of a plumbing pipeline.  The signature of
+    such a plumbing method is ``def foo(_next, self, *args, **kw)``.  Via
+    ``_next`` it is passed the next plumbing method to be called. ``self`` is
+    an instance of the plumbing class, not the part.
 
 ``plumbifexists``
     Like ``plumb``, but only used if an endpoint exists.
 
-XXX: explain entrance
+The user of a plumbing class does not know which ``_next`` to pass. Therefore,
+after the pipelines are built, an entrance method is generated for each pipe,
+that wraps the first plumbing method passing it the correct ``_next``. Each
+``_next`` method is an entrance to the rest of the pipeline.
 
-XXX::
+The pipelines are build in part order, skipping parts that do not define a
+pipeline element with the same attribute name::
 
     +---+-------+-------+-------+----------+
     |   | Part1 | Part2 | Part3 | ENDPOINT |
@@ -649,15 +663,15 @@ XXX::
     | N |    <------ <---------------      |
     + C +-------+-------+-------+----------+
     | E |       |       |    ------->      |
-    |   |       |       |   z   |    z     |
+    | S |       |       |   z   |    z     |
     |   |       |       |    <-------      |
     +---+-------+-------+-------+----------+
 
-.. contents::
-    :local:
-
 Method pipelines
 ~~~~~~~~~~~~~~~~
+Two plumbing parts and a ``dict`` as base class. ``Part1`` lowercases keys
+before passing them on, ``Part2`` multiplies results before returning them::
+
     >>> from plumber import plumb
 
     >>> class Part1(Part):
@@ -684,7 +698,7 @@ Method pipelines
 
     >>> plb = Plumbing()
     >>> plb['abc'] = 6
-    >>> plb['ABC']
+    >>> plb['AbC']
     Part1 start
     Part2 start
     Part2 stop
@@ -692,7 +706,7 @@ Method pipelines
     12
 
 Plumbing pipelines need endpoints. If no endpoint is available an
-``AttributeError`` is raised.
+``AttributeError`` is raised::
 
     >>> class Part1(Part):
     ...     @plumb
@@ -706,7 +720,8 @@ Plumbing pipelines need endpoints. If no endpoint is available an
       ...     
     AttributeError: type object 'Plumbing' has no attribute 'foo'
 
-``plumbifexists``
+If no endpoint is available and a part does not care about that,
+``plumbifexists`` can be used to only plumb if an endpoint is available::
 
     >>> from plumber import plumbifexists
 
@@ -730,11 +745,15 @@ Plumbing pipelines need endpoints. If no endpoint is available an
     False
     >>> Plumbing().bar()
     12
+
+This enables one implementation of a certain behaviour, e.g. sending events for
+dictionaries, to be used for readwrite dictionaries that implement
+``__getitem__`` and ``__setitem__`` and readonly dictionaries, that only
+implement ``__getitem__`` but no ``__setitem__``.
     
 Property pipelines
 ~~~~~~~~~~~~~~~~~~
-
-Plumbing of properties is experimental and might or might not to what you
+Plumbing of properties is experimental and might or might not do what you
 expect::
 
     >>> class Part1(Part):
@@ -786,8 +805,8 @@ about to change::
     >>> plb.foo
     8
 
-Methods and properties within the same pipeline are invalid
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Mixing methods and properties within the same pipeline is not possible
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Within a pipeline all elements need to be of the same type, it is not possible
 to mix properties with methods::
 
