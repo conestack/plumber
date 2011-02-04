@@ -1,7 +1,13 @@
 Plumber
 =======
 
-XXX: Intro
+Plumbing is an alternative to mixin-based extension of classes.  In motivation
+an incomplete list of limitations and/or design choices of python's subclassing
+are given along with plumber's solutions for them. The plumbing system is
+described in detail with code examples. Some design choices and ongoing
+discussions are explained. Finally, in miscellanea you find nomenclature,
+coverage report, list of contributors, changes and some todos.  All
+non-experimental features are fully test covered.
 
 .. contents::
     :depth: 2
@@ -1188,16 +1194,16 @@ TODO
 ^^^^
 - traceback should show in which plumbing class we are, not something inside
   the plumber. yafowil is doing it. jensens: would you be so kind.
-- verify behaviour with pickling
-- verify behaviour with ZODB persistence
+- verify behaviour with pickling in tests within plumber
+- verify behaviour with ZODB persistence in tests within plumber
 - subclassing for plumbing parts
-- plumbing of property getter, setter and deleter for non-lambda properties
+- mature plumbing of properties
 - py26 @foo.setter support in all decorators
 
 
 License / Disclaimer
 ^^^^^^^^^^^^^^^^^^^^
-Copyright (c) 2010-2011, BlueDynamics Alliance, Austria, Germany, Switzerland
+Copyright (c) 2011, BlueDynamics Alliance, Austria, Germany, Switzerland
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
