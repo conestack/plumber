@@ -6,7 +6,6 @@ XXX: Intro
 XXX: Missing for release?
 
 - C3 resolution for instructions from plumbing part bases
-- docstring behaviour
 - adding a so far unset property function (extend?)
 
 .. contents::
@@ -811,10 +810,56 @@ to mix properties with methods::
       with:
         <class 'Plumbing'>
 
-docstrings
-~~~~~~~~~~
+docstrings of classes, methods and properties
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Normal docstrings of the plumbing declaration and the part classes, plumbed
+methods and plumbed properties are joined by newlines starting with the
+plumbing declaration and followed by the parts in reverse order.
 
-Experimental feature, intentionally undocumented.
+    >>> class P1(Part):
+    ...     """P1
+    ...     """
+    ...     @plumb
+    ...     def foo(self):
+    ...         """P1.foo
+    ...         """
+    ...     bar = plumb(property(None, None, None, "P1.bar"))
+
+    >>> class P2(Part):
+    ...     @extend
+    ...     def foo(self):
+    ...         """P2.foo
+    ...         """
+    ...     bar = plumb(property(None, None, None, "P2.bar"))
+
+    >>> class Plumbing(object):
+    ...     """Plumbing
+    ...     """
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = P1, P2
+    ...     bar = property(None, None, None, "Plumbing.bar")
+
+    >>> print Plumbing.__doc__
+    Plumbing
+    <BLANKLINE>
+    P1
+    <BLANKLINE>
+
+    >>> print Plumbing.foo.__doc__
+    P2.foo
+    <BLANKLINE>
+    P1.foo
+    <BLANKLINE>
+
+    >>> print Plumbing.bar.__doc__
+    Plumbing.bar
+    <BLANKLINE>
+    P2.bar
+    <BLANKLINE>
+    P1.bar
+
+The accumulation of docstrings is an experimental feature and will probably
+change.
 
 
 ``zope.interface``

@@ -32,37 +32,46 @@ def payload(item):
 def plumb_str(leftdoc, rightdoc):
     """helper function to plumb two doc strings together
 
-    A ``__plbnext__`` tag is replaced with rightdoc::
+    A ``__plbnext__`` tag is replaced with rightdoc, it needs to be preceeded
+    and followed by an empty line::
 
         >>> leftdoc = '''Left head
+        ...
         ... __plbnext__
+        ...
         ... Left tail
         ... '''
 
         >>> rightdoc = '''Right head
+        ...
         ... __plbnext__
+        ...
         ... Right tail
         ... '''
 
         >>> print plumb_str(leftdoc, rightdoc)
         Left head
+        <BLANKLINE>
         Right head
+        <BLANKLINE>
         __plbnext__
+        <BLANKLINE>
         Right tail
         <BLANKLINE>
         Left tail
         <BLANKLINE>
 
-    Otherwise rightdoc is just appended to leftdoc, separated by a newline::
+    Otherwise leftdoc is appended to rightdoc, separated by a newline, it is
+    assumed there is a ``__plbnext__`` tag at the beginning of leftdoc::
 
-        >>> leftdoc = '''Left doc
+        >>> leftdoc = '''Left tail
         ... '''
-        >>> rightdoc = '''Right doc
+        >>> rightdoc = '''Right tail
         ... '''
         >>> print plumb_str(leftdoc, rightdoc)
-        Left doc
+        Right tail
         <BLANKLINE>
-        Right doc
+        Left tail
         <BLANKLINE>
 
         >>> class A: pass
@@ -77,14 +86,10 @@ def plumb_str(leftdoc, rightdoc):
         return rightdoc
     if rightdoc is None:
         return leftdoc
-    _next = re.search("\n".join(('', "\s*__plbnext__\s*", '')), leftdoc)
+    _next = re.search("\n\s*\n\s*__plbnext__\s*\n\s*\n", leftdoc)
     if not _next:
-        return "\n".join((leftdoc, rightdoc))
-    return "\n".join((
-            leftdoc[:_next.start()],
-            rightdoc,
-            leftdoc[_next.end():]
-            ))
+        return "\n\n".join((rightdoc.rstrip(), leftdoc))
+    return leftdoc.replace('__plbnext__', rightdoc.rstrip())
 
 
 class Instruction(object):

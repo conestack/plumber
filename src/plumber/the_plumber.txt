@@ -1,0 +1,31 @@
+=============
+ The Plumber
+=============
+
+Plumbings are formed of parts and
+
+o
+
+
+We need a language to create pipelines
+
+In the end the whole application is just one pipeline
+
+if else
+
+for loop
+
+
+Prozesse als pipelines abbilden
+
+Parts als nodes abstrahieren
+
+
+application model ist aus nodes gebaut
+
+
+AST als nodes abstrahieren, automatisiert tests generieren
+
+
+
+
