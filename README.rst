@@ -4,7 +4,7 @@ Plumber
 XXX: Intro
 
 .. contents::
-    :depth: 3
+    :depth: 2
 
 Motivation: limitations of subclassing
 --------------------------------------
@@ -720,7 +720,7 @@ Plumbing pipelines need endpoints. If no endpoint is available an
     ...     __metaclass__ = plumber
     ...     __plumbing__ = Part1
     Traceback (most recent call last):
-      ...     
+      ...
     AttributeError: type object 'Plumbing' has no attribute 'foo'
 
 If no endpoint is available and a part does not care about that,
@@ -753,7 +753,7 @@ This enables one implementation of a certain behaviour, e.g. sending events for
 dictionaries, to be used for readwrite dictionaries that implement
 ``__getitem__`` and ``__setitem__`` and readonly dictionaries, that only
 implement ``__getitem__`` but no ``__setitem__``.
-    
+
 Property pipelines
 ~~~~~~~~~~~~~~~~~~
 Plumbing of properties is experimental and might or might not do what you
@@ -982,6 +982,8 @@ An instance of the class provides the interfaces::
 Design choices and ongoing discussions
 --------------------------------------
 
+Stage1 left of stage2
+^^^^^^^^^^^^^^^^^^^^^
 Currently instructions of stage1 may be left of stage2 instructions. We
 consider to forbid this::
 
@@ -1002,44 +1004,23 @@ consider to forbid this::
     #    >>> Plumbing().foo()
     #    BANG
 
-Where is the plumbing
-^^^^^^^^^^^^^^^^^^^^^
-It is in front of the class and its MRO. If you feel it should be between the
-class and its base classes, consider subclassing the class that uses the
-plumbing system and put your code there. If you have a strong point why this is
-not a solution, please let us know. However, the point must be stronger than
-saving 3 lines of which two are pep8-conform whitespace.
-
-Signature of _next function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Currently ``self`` needs to be passed to the ``_next`` function. This could be
-wrapped, too. However, it might enable cool stuff, because you can decide to
-pass something else than self to be processed further.
-
-Implementation of this would slightly increase the complexity in the plumber,
-result in less flexibility, but save passing ``self`` to ``_next``.
-
 Instance based plumbing system
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 At various points it felt tempting to be able to instantiate plumbing elements
 to configure them. For that we need ``__init__``, which woul mean that plumbing
 ``__init__`` would need a different name, eg. ``prt_``-prefix. Consequently
-this could then be done for all plumbing methods instead of decorating them.
-The decorator is really just used for marking them and turning them into
-classmethods. The plumbing decorator is just a subclass of the classmethod
-decorator.
+this would then be done for all plumbing methods.
 
-Reasoning why currently the methods are not prefixed and are classmethods:
+Reasoning why currently the methods are not prefixed:
 Plumbing elements are simply not meant to be normal classes. Their methods have
 the single purpose to be called as part of some other class' method calls,
 never directly. Configuration of plumbing elements can either be achieved by
 subclassing them or by putting the configuration on the objects/class they are
 used for.
 
-The current system is slim, clear and easy to use. An instance based plumbing
-system would be far more complex. It could be implemented to exist alongside
-the current system. But it won't be implemented by us, without seeing a real use
-case first.
+An instance based plumbing system would be far more complex. It could be
+implemented to exist alongside the current system. But it won't be implemented
+by us, without seeing a real use case first.
 
 Different zope.interface.Interfaces for plumbing and created class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1077,18 +1058,6 @@ Same reasoning as before: up to now unnecessary complexity. It could make sense
 in combination with an instance based plumbing system and could be implemented
 as part of it alongside the current class based system.
 
-Implicit subclass generation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Currently the whole plumbing system is implemented within one class that is
-based on the base classes defined in the class declaration. During class
-creation the plumber determines all functions involved in the plumbing,
-generates pipelines of methods and plumbs them together.
-
-An alternative approach would be to take one plumbing elements after another
-and create a subclass chain. However, I currently don't know how this could be
-achieved, believe that it is not possible and think that the current approach
-is better.
-
 Dynamic Plumbing
 ^^^^^^^^^^^^^^^^
 The plumber could replace the ``__plumbing__`` attribute with a property of the
@@ -1097,15 +1066,15 @@ specific to the object. A plumbing cache could further be used to reduce the
 number of plumbing chains in case of many dynamic plumbings. Realised eg by a
 descriptor.
 
+During discussion on the artssprint we agreed on not changing a plumbing class
+pipelines during runtime, but instead enable plumbing further parts during
+runtime per instance in front of the class' pipeline.
+
 Miscellanea
 -----------
 
 Nomenclature
 ^^^^^^^^^^^^
-
-raw plumbing class
-
-
 ``plumber``
     Metaclass that creates a plumbing according to the instructions declared on
     plumbing parts. Instructions are given by decorators: ``default``,
@@ -1115,85 +1084,52 @@ plumbing
     A plumber is called by a class that declares ``__metaclass__ = plumber``
     and a list of parts to be used for the plumbing ``__plumbing__ = Part1,
     Part2``. Apart from the parts, declarations on base classes and the class
-    asking for the plumber are taken into account.  Once created a plumbing
+    asking for the plumber are taken into account.  Once created, a plumbing
     looks like any other class and can be subclassed as usual.
 
 plumbing part
     A plumbing part provides attributes (functions, properties and plain values)
     along with instructions for how to use them. Instructions are given via
     decorators: ``default``, ``extend``, ``finalize``, ``plumb`` and
-    ``plumbifexists``.
+    ``plumbifexists`` (see Stage 1:... and Stage 2:...).
 
-``default`` decorator
-    Instruct the plumber to set a default value: first default wins, loses
-    against base class declaration, ``extend`` and ``finalize``.
+plumbing pipeline
+    Plumbing methods/properties with the same name form a pipeline. The
+    entrance and end-point have the signature of normal methods: ``def
+    foo(self, *args, **kw)``. The plumbing pipelines is a series of nested
+    closures (see ``_next``).
 
-``extend`` decorator
-    Instruct the plumber to set an attribute on the plumbing: first ``extend``
-    wins, overrides ``default`` and base class, loses against ``finalize``.
-
-``finalize`` decorator
-    Instruct the plumber to definitely use an attribute value, overrides
-``plumb`` decorator
-    Instruct the plumber to make a function part of a plumbing chain and turns
-    the function into a classmethod bound to the plumbing part declaring it
-    with a signature of: ``def foo(_next, self, *args, **kw)``.
-    ``prt`` is the part class declaring it, ``_next`` a wrapper for the next
-    method in chain and ``self`` and instance of the plumbing
-
-
-
-
-
-default attribute
-    Attribute set via the ``default`` decorator.
-
-extension attribute
-    Attribute set via the ``extend`` decorator.
-
-plumbing method
-    Method declared via the ``plumb`` decoarator.
-
-plumbing chain
-    The methods of a pipeline with the same name plumbed together. The entrance
-    and end-point have the signature of normal methods: ``def foo(self, *args,
-    **kw)``. The plumbing chain is a series of nested closures (see ``_next``).
-
-entrance method
+entrance (method)
     A method with a normal signature. i.e. expecting ``self`` as first
-    argument, that is used to enter a plumbing chain. It is a ``_next``
-    function. A method declared on the class with the same name, will be
-    overwritten, but referenced in the chain as the innermost method, the
-    end-point.
+    argument, that is used to enter a pipeline. It is a ``_next`` function. A
+    method declared on the class with the same name, will be overwritten, but
+    referenced in the pipelines as the innermost method, the endpoint.
 
 ``_next`` function
-    The ``_next`` function is used to call the next method in a chain: in case of
-    a plumbing method, a wrapper of it that passes the correct next ``_next``
-    as first argument and in case of an end-point, just the end-point method
-    itself.
+    The ``_next`` function is used to call the next method in a pipelines: in
+    case of a plumbing method, it is a wrapper of it that passes the correct
+    next ``_next`` as first argument and in case of an end-point, just the
+    end-point method itself.
 
 end-point (method)
     Method retrieved from the plumbing class with ``getattr()``, before setting
-    the entrance method on the class. It is provided with the following
-    precedence:
+    the entrance method on the class.
 
-    1. plumbing class itself,
-    2. plumbing extension attribute,
-    3. plumbing default attribute,
-    4. bases of the plumbing class.
+If you feel something is missing, please let us now or write a short
+corresponding text.
 
 Test Coverage
 ^^^^^^^^^^^^^
 Summary of the test coverage report::
 
     lines   cov%   module   (path)
-        5   100%   plumber.__init__
-      157    92%   plumber._instructions
-       41   100%   plumber._part
-       50   100%   plumber._plumber
-       10   100%   plumber.exceptions
+        7   100%   plumber.__init__
+      187   100%   plumber._instructions
+       49    91%   plumber._part
+       58   100%   plumber._plumber
+        9   100%   plumber.exceptions
        18   100%   plumber.tests._globalmetaclasstest
-       16   100%   plumber.tests.test_
+       18   100%   plumber.tests.test_
 
 
 Contributors
@@ -1259,6 +1195,30 @@ TODO
 - py26 @foo.setter support in all decorators
 
 
-Disclaimer
-^^^^^^^^^^
-TODO
+License / Disclaimer
+^^^^^^^^^^^^^^^^^^^^
+Copyright (c) 2010-2011, BlueDynamics Alliance, Austria, Germany, Switzerland
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the following disclaimer in the documentation and/or
+  other materials provided with the distribution.
+* Neither the name of the BlueDynamics Alliance nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY BlueDynamics Alliance ``AS IS`` AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL BlueDynamics Alliance BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
