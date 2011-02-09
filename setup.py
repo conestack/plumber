@@ -10,12 +10,12 @@ setup(name='plumber',
       description=shortdesc,
       long_description=longdesc,
       classifiers=[
-            'Development Status :: 5 - Production/Stable',
-            'License :: OSI Approved :: Python Software Foundation License',
-            'Operating System :: OS Independent',
-            'Programming Language :: Python',
-            'Topic :: Software Development',
-            ], # Get strings from http://www.python.org/pypi?:action=list_classifiers
+        'Development Status :: 5 - Production/Stable',
+        'License :: OSI Approved :: Python Software Foundation License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Software Development',
+        ], # Get strings from http://www.python.org/pypi?:action=list_classifiers
       keywords='',
       author='BlueDynamics Alliance',
       author_email='dev@bluedynamics.com',
@@ -26,16 +26,16 @@ setup(name='plumber',
       include_package_data=True,
       zip_safe=True,
       install_requires=[
-          'setuptools',
-      ],
+        'setuptools',
+        ],
       extras_require={
-          'test': [
-              'interlude',
-              'plone.testing',
-              'unittest2',
-              'zope.interface',
-          ],
-      },
+        'test': [
+            'interlude',
+            'plone.testing',
+            'unittest2',
+            'zope.interface',
+            ],
+        },
       entry_points="""
       """,
       )
