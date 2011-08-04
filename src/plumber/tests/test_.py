@@ -8,7 +8,7 @@ optionflags = doctest.NORMALIZE_WHITESPACE | \
               doctest.REPORT_ONLY_FIRST_FAILURE
 
 TESTFILES = [
-    '../plumber.txt',
+    '../plumber.rst',
 ]
 
 TESTMODULES = [
