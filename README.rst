@@ -343,23 +343,23 @@ summary:
 - **Y**: chosen end point
 - collision: indicates an invalid combination, that raises a ``PlumbingCollision``
 
-+-------+-------+-------+----------+-------+-----------+
-| Attr  | Part1 | Part2 | Plumbing | Base  |    ok?    |
-+=======+=======+=======+==========+=======+===========+
-|   K   |       |       |          | **x** |           |
-+-------+-------+-------+----------+-------+-----------+
-|   L   |       |       |  **x**   |   ?   |           |
-+-------+-------+-------+----------+-------+-----------+
-|   M   |       | **f** |          |   ?   |           |
-+-------+-------+-------+----------+-------+-----------+
-|   N   | **f** |       |          |   ?   |           |
-+-------+-------+-------+----------+-------+-----------+
-|   O   |   f   |       |    x     |   ?   | collision |
-+-------+-------+-------+----------+-------+-----------+
-|   P   |       |   f   |    x     |   ?   | collision |
-+-------+-------+-------+----------+-------+-----------+
-|   Q   |   f   |   f   |          |   ?   | collision |
-+-------+-------+-------+----------+-------+-----------+
++------+-------+-------+----------+-------+-----------+
+| Attr | Part1 | Part2 | Plumbing | Base  | ok?       |
++======+=======+=======+==========+=======+===========+
+| K    |       |       |          | **x** |           |
++------+-------+-------+----------+-------+-----------+
+| L    |       |       | **x**    | ?     |           |
++------+-------+-------+----------+-------+-----------+
+| M    |       | **f** |          | ?     |           |
++------+-------+-------+----------+-------+-----------+
+| N    | **f** |       |          | ?     |           |
++------+-------+-------+----------+-------+-----------+
+| O    | f     |       | x        | ?     | collision |
++------+-------+-------+----------+-------+-----------+
+| P    |       | f     | x        | ?     | collision |
++------+-------+-------+----------+-------+-----------+
+| Q    | f     | f     |          | ?     | collision |
++------+-------+-------+----------+-------+-----------+
 
 collisions::
 
@@ -446,15 +446,15 @@ summary:
 - ?: base class declaration is irrelevant
 - **Y**: chosen end point
 
-+-------+-------+-------+----------+-------+
-| Attr  | Part1 | Part2 | Plumbing | Base  |
-+=======+=======+=======+==========+=======+
-|   K   |   e   |   e   |  **x**   |   ?   |
-+-------+-------+-------+----------+-------+
-|   L   |       | **e** |          |   ?   |
-+-------+-------+-------+----------+-------+
-|   M   | **e** |   e   |          |   ?   |
-+-------+-------+-------+----------+-------+
++------+-------+-------+----------+------+
+| Attr | Part1 | Part2 | Plumbing | Base |
++======+=======+=======+==========+======+
+| K    | e     | e     | **x**    | ?    |
++------+-------+-------+----------+------+
+| L    |       | **e** |          | ?    |
++------+-------+-------+----------+------+
+| M    | **e** | e     |          | ?    |
++------+-------+-------+----------+------+
 
 Interaction: ``default``, plumbing declaration and base class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -493,17 +493,17 @@ summary:
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
-+-------+-------+-------+----------+-------+
-| Attr  | Part1 | Part2 | Plumbing | Base  |
-+=======+=======+=======+==========+=======+
-|   K   |       |   d   |          | **x** |
-+-------+-------+-------+----------+-------+
-|   L   |       |   d   |  **x**   |   ?   |
-+-------+-------+-------+----------+-------+
-|   M   |       | **d** |          |       |
-+-------+-------+-------+----------+-------+
-|   N   | **d** |   d   |          |       |
-+-------+-------+-------+----------+-------+
++------+-------+-------+----------+-------+
+| Attr | Part1 | Part2 | Plumbing | Base  |
++======+=======+=======+==========+=======+
+| K    |       | d     |          | **x** |
++------+-------+-------+----------+-------+
+| L    |       | d     | **x**    | ?     |
++------+-------+-------+----------+-------+
+| M    |       | **d** |          |       |
++------+-------+-------+----------+-------+
+| N    | **d** | d     |          |       |
++------+-------+-------+----------+-------+
 
 
 Interaction: ``finalize`` wins over ``extend``
@@ -539,13 +539,13 @@ summary:
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
-+-------+-------+-------+----------+------+
-| Attr  | Part1 | Part2 | Plumbing | Base |
-+=======+=======+=======+==========+======+
-|   K   |   e   | **f** |          |   ?  |
-+-------+-------+-------+----------+------+
-|   L   | **f** |   e   |          |   ?  |
-+-------+-------+-------+----------+------+
++------+-------+-------+----------+------+
+| Attr | Part1 | Part2 | Plumbing | Base |
++======+=======+=======+==========+======+
+| K    | e     | **f** |          | ?    |
++------+-------+-------+----------+------+
+| L    | **f** | e     |          | ?    |
++------+-------+-------+----------+------+
 
 Interaction: ``finalize`` wins over ``default``:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -580,13 +580,13 @@ summary:
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
-+-------+-------+-------+----------+------+
-| Attr  | Part1 | Part2 | Plumbing | Base |
-+=======+=======+=======+==========+======+
-|   K   |   d   | **f** |          |   ?  |
-+-------+-------+-------+----------+------+
-|   L   | **f** |   d   |          |   ?  |
-+-------+-------+-------+----------+------+
++------+-------+-------+----------+------+
+| Attr | Part1 | Part2 | Plumbing | Base |
++======+=======+=======+==========+======+
+| K    | d     | **f** |          | ?    |
++------+-------+-------+----------+------+
+| L    | **f** | d     |          | ?    |
++------+-------+-------+----------+------+
 
 Interaction: ``extend`` wins over ``default``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -621,13 +621,13 @@ summary:
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
-+-------+-------+-------+----------+------+
-| Attr  | Part1 | Part2 | Plumbing | Base |
-+=======+=======+=======+==========+======+
-|   K   |   d   | **e** |          |   ?  |
-+-------+-------+-------+----------+------+
-|   L   | **e** |   d   |          |   ?  |
-+-------+-------+-------+----------+------+
++------+-------+-------+----------+------+
+| Attr | Part1 | Part2 | Plumbing | Base |
++======+=======+=======+==========+======+
+| K    | d     | **e** |          | ?    |
++------+-------+-------+----------+------+
+| L    | **e** | d     |          | ?    |
++------+-------+-------+----------+------+
 
 Stage 2: Pipeline, docstring and ``zope.interface`` instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -904,15 +904,16 @@ means it will try to import it and if available will check plumbing parts for
 implemented interfaces and will make the plumbing implement them, too::
 
     >>> from zope.interface import Interface
-    >>> from zope.interface import implements
+    >>> from zope.interface import implementer
 
 A class with an interface that will serve as base class of a plumbing::
 
     >>> class IBase(Interface):
     ...     pass
 
-    >>> class Base(object):
-    ...     implements(IBase)
+    >>> @implementer(IBase)
+    ... class Base(object):
+    ...     pass
 
     >>> IBase.implementedBy(Base)
     True
@@ -923,21 +924,23 @@ implements an interface::
     >>> class IPart1(Interface):
     ...     pass
 
-    >>> class Part1(Part):
+    >>> @implementer(IPart1)
+    ... class Part1(Part):
     ...     blub = 1
-    ...     implements(IPart1)
 
     >>> class IPart2Base(Interface):
     ...     pass
 
-    >>> class Part2Base(Part):
-    ...     implements(IPart2Base)
+    >>> @implementer(IPart2Base)
+    ... class Part2Base(Part):
+    ...     pass
 
     >>> class IPart2(Interface):
     ...     pass
 
-    >>> class Part2(Part2Base):
-    ...     implements(IPart2)
+    >>> @implementer(IPart2)
+    ... class Part2(Part2Base):
+    ...     pass
 
     >>> IPart1.implementedBy(Part1)
     True
@@ -954,10 +957,10 @@ A plumbing based on ``Base`` using ``Part1`` and ``Part2`` and implementing
     >>> class IPlumbingClass(Interface):
     ...     pass
 
-    >>> class PlumbingClass(Base):
+    >>> @implementer(IPlumbingClass)
+    ... class PlumbingClass(Base):
     ...     __metaclass__ = plumber
     ...     __plumbing__ = Part1, Part2
-    ...     implements(IPlumbingClass)
 
 The directly declared and inherited interfaces are implemented::
 
@@ -1041,15 +1044,15 @@ interfaces for the parts and the class that is created::
     #    >>> class IPart1Behaviour(Interface):
     #    ...     pass
     #
-    #    >>> class Part1(Part):
-    #    ...     implements(IPart1)
+    #    >>> @implementer(IPart1)
+    #    ... class Part1(Part):
     #    ...     interfaces = (IPart1Behaviour,)
     #
     #    >>> class IPart2(Interface):
     #    ...     pass
     #
-    #    >>> class Part2(Part):
-    #    ...     implements(IPart2)
+    #    >>> @implementer(IPart2)
+    #    ... class Part2(Part):
     #    ...     interfaces = (IPart2Behaviour,)
     #
     #    >>> IUs.implementedBy(Us)
@@ -1131,6 +1134,7 @@ corresponding text.
 
 Test Coverage
 ^^^^^^^^^^^^^
+
 Summary of the test coverage report::
 
     lines   cov%   module   (path)
@@ -1145,6 +1149,7 @@ Summary of the test coverage report::
 
 Contributors
 ^^^^^^^^^^^^
+
 - Florian Friesdorf <flo@chaoflow.net>
 - Robert Niederreiter <rnix@squarewave.at>
 - Jens W. Klein <jens@bluedynamics.com>
@@ -1157,6 +1162,18 @@ Contributors
 
 Changes
 ^^^^^^^
+
+
+1.1dev
+------
+
+- Use ``zope.interface.implementer`` instead of ``zope.interface.implements``.
+  [rnix, 2012-05-18]
+
+
+1.0
+---
+
 - ``.. plbnext::`` instead of ``.. plb_next::``
   [chaoflow 2011-02-02]
 

@@ -6,7 +6,7 @@ Mostly here for understanding what's going on.
 """
 
 from zope.interface import Interface
-from zope.interface import implements
+from zope.interface import implementer
 
 from plumber import plumber
 from plumber import Part
@@ -37,8 +37,9 @@ class Foo:
     """
 
 
+@implementer(IPart1)
 class Part1(Part):
-    implements(IPart1)
+    pass
 
 
 class ClassMaybeUsingAPlumbing(object):
