@@ -1164,8 +1164,8 @@ Changes
 ^^^^^^^
 
 
-1.1dev
-------
+1.1
+---
 
 - Use ``zope.interface.implementer`` instead of ``zope.interface.implements``.
   [rnix, 2012-05-18]
