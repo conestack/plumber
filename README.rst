@@ -1137,14 +1137,13 @@ Test Coverage
 Summary of the test coverage report::
 
     lines   cov%   module   (path)
-        7   100%   plumber.__init__
-      187   100%   plumber._instructions
-       49    91%   plumber._behavior
+        9   100%   plumber.__init__
+       53    92%   plumber._behavior
+      191   100%   plumber._instructions
        58   100%   plumber._plumber
         9   100%   plumber.exceptions
-       18   100%   plumber.tests._globalmetaclasstest
+       19   100%   plumber.tests._globalmetaclasstest
        18   100%   plumber.tests.test_
-
 
 Contributors
 ^^^^^^^^^^^^
@@ -1165,10 +1164,10 @@ Changes
 1.2dev
 ------
 
-- Rename ``plumber.extend`` to ``plumber.override``.
+- Deprecate ``plumber.extend``. Use ``plumber.override`` instead.
   [rnix, 2012-07-28]
 
-- Rename ``plumber.Part`` to ``plumber.Behavior``.
+- Deprecate ``plumber.Part``. Use ``plumber.Behavior`` instead.
   [rnix, 2012-07-28]
 
 1.1
