@@ -49,7 +49,7 @@ There is no way for a mixin later in the chain to take precedence over an
 earlier one.
 
 **Solution**: plumber provides 3 decorators to enable finer control of
-precedence (``default``, ``extend``, ``finalize``).
+precedence (``default``, ``override``, ``finalize``).
 
 Impossible to provide default values to fill gaps on a base class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -224,7 +224,7 @@ A plumbing declaration provides a list of behaviors via the ``__plumbing__``
 attribute. Behaviors provide instructions to be applied in two stages:
 
 stage1
-  - extension via ``default``, ``extend`` and ``finalize``, the result of this
+  - extension via ``default``, ``override`` and ``finalize``, the result of this
     stage is the base for stage2.
 
 stage2
@@ -288,14 +288,14 @@ The extension decorators:
 ``finalize``
     ``finalize`` is the strongest extension instruction. It will override
     declarations on base classes and all other extension instructions
-    (``extend`` and ``default``). Attributes declared as behavior of the
+    (``override`` and ``default``). Attributes declared as behavior of the
     plumbing declaration are implicit ``finalize`` declarations. Two 
     ``finalize`` for one attribute name will collide and raise a 
     ``PlumbingCollision`` during class creation.
 
-``extend``
-    ``extend`` is weaker than ``finalize`` and overrides declarations on base
-    classes and ``default`` declarations. Two ``extend`` instructions for the
+``override``
+    ``override`` is weaker than ``finalize`` and overrides declarations on base
+    classes and ``default`` declarations. Two ``override`` instructions for the
     same attribute name do not collide, instead the first one will be used.
 
 ``default``
@@ -407,20 +407,20 @@ collisions::
       with:
         <finalize 'Q' of <class 'Behavior2'> payload=True>
 
-Interaction: ``extend``, plumbing declaration and base classes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interaction: ``override``, plumbing declaration and base classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 in code::
 
-    >>> from plumber import extend
+    >>> from plumber import override
 
     >>> class Behavior1(Behavior):
-    ...     K = extend('Behavior1')
-    ...     M = extend('Behavior1')
+    ...     K = override('Behavior1')
+    ...     M = override('Behavior1')
 
     >>> class Behavior2(Behavior):
-    ...     K = extend('Behavior2')
-    ...     L = extend('Behavior2')
-    ...     M = extend('Behavior2')
+    ...     K = override('Behavior2')
+    ...     L = override('Behavior2')
+    ...     M = override('Behavior2')
 
     >>> class Base(object):
     ...     K = 'Base'
@@ -441,7 +441,7 @@ in code::
 summary:
 
 - K-M: attributes defined by behaviors, plumbing class and base classes
-- e: ``extend`` declaration
+- e: ``override`` declaration
 - x: declaration on plumbing class or base class
 - ?: base class declaration is irrelevant
 - **Y**: chosen end point
@@ -506,17 +506,17 @@ summary:
 +------+-----------+-----------+----------+-------+
 
 
-Interaction: ``finalize`` wins over ``extend``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interaction: ``finalize`` wins over ``override``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 in code::
 
     >>> class Behavior1(Behavior):
-    ...     K = extend('Behavior1')
+    ...     K = override('Behavior1')
     ...     L = finalize('Behavior1')
 
     >>> class Behavior2(Behavior):
     ...     K = finalize('Behavior2')
-    ...     L = extend('Behavior2')
+    ...     L = override('Behavior2')
 
     >>> class Base(object):
     ...     K = 'Base'
@@ -534,7 +534,7 @@ in code::
 summary:
 
 - K-L: attributes defined by behaviors, plumbing class and base classes
-- e = ``extend`` declaration
+- e = ``override`` declaration
 - f = ``finalize`` declaration
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
@@ -588,16 +588,16 @@ summary:
 | L    | **f**     | d         |          | ?    |
 +------+-----------+-----------+----------+------+
 
-Interaction: ``extend`` wins over ``default``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interaction: ``override`` wins over ``default``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 in code::
 
     >>> class Behavior1(Behavior):
     ...     K = default('Behavior1')
-    ...     L = extend('Behavior1')
+    ...     L = override('Behavior1')
 
     >>> class Behavior2(Behavior):
-    ...     K = extend('Behavior2')
+    ...     K = override('Behavior2')
     ...     L = default('Behavior2')
 
     >>> class Base(object):
@@ -617,7 +617,7 @@ summary:
 
 - K-L: attributes defined by behaviors, plumbing class and base classes
 - d = ``default`` declaration
-- e = ``extend`` declaration
+- e = ``override`` declaration
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
@@ -801,7 +801,7 @@ about to change::
     ...         self._foo = value
     ...     foo = plumb(property(
     ...         None,
-    ...         extend(set_foo),
+    ...         override(set_foo),
     ...         ))
 
     >>> class Plumbing(object):
@@ -859,7 +859,7 @@ plumbing declaration and followed by the behaviors in reverse order::
     ...     bar = plumb(property(None, None, None, "P1.bar"))
 
     >>> class P2(Behavior):
-    ...     @extend
+    ...     @override
     ...     def foo(self):
     ...         """P2.foo
     ...         """
@@ -1000,7 +1000,7 @@ Currently instructions of stage1 may be left of stage2 instructions. We
 consider to forbid this::
 
     #    >>> class Behavior1(Behavior):
-    #    ...     @extend
+    #    ...     @override
     #    ...     def foo(self):
     #    ...         return 5
     #
@@ -1090,7 +1090,7 @@ Nomenclature
 ``plumber``
     Metaclass that creates a plumbing according to the instructions declared on
     plumbing behaviors. Instructions are given by decorators: ``default``,
-    ``extend``, ``finalize``, ``plumb`` and ``plumbifexists``.
+    ``override``, ``finalize``, ``plumb`` and ``plumbifexists``.
 
 plumbing
     A plumber is called by a class that declares ``__metaclass__ = plumber``
@@ -1103,7 +1103,7 @@ plumbing
 plumbing behavior
     A plumbing behavior provides attributes (functions, properties and plain
     values) along with instructions for how to use them. Instructions are given
-    via decorators: ``default``, ``extend``, ``finalize``, ``plumb`` and
+    via decorators: ``default``, ``override``, ``finalize``, ``plumb`` and
     ``plumbifexists`` (see Stage 1:... and Stage 2:...).
 
 plumbing pipeline
@@ -1166,10 +1166,10 @@ Changes
 ------
 
 - Rename ``plumber.extend`` to ``plumber.override``.
-  [rnix, 2012-05-18]
+  [rnix, 2012-07-28]
 
 - Rename ``plumber.Part`` to ``plumber.Behavior``.
-  [rnix, 2012-05-18]
+  [rnix, 2012-07-28]
 
 1.1
 ---

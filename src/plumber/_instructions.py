@@ -2,6 +2,7 @@
 """
 import re
 import types
+from zope.deprecation import deprecated
 
 try:
     from zope.interface import classImplements
@@ -182,7 +183,7 @@ class Stage1Instruction(Instruction):
     """Instructions installed in stage1
 
     - default
-    - extend
+    - override
     - finalize
     """
     __stage__ = 'stage1'
@@ -194,8 +195,8 @@ class default(Stage1Instruction):
     A default attribute is used, if neither the class nor one of its bases
     declare the attribute.
 
-    For default/extend/finalize merging see ``__add__`` here,
-    ``extend.__add__`` and ``finalize.__add__``.
+    For default/override/finalize merging see ``__add__`` here,
+    ``override.__add__`` and ``finalize.__add__``.
     """
     def __add__(self, right):
         """
@@ -210,9 +211,9 @@ class default(Stage1Instruction):
             >>> def2 + def1 is def2
             True
 
-        Extend wins over default::
+        Override wins over default::
 
-            >>> ext3 = extend(3)
+            >>> ext3 = override(3)
             >>> def1 + ext3 is ext3
             True
 
@@ -222,7 +223,7 @@ class default(Stage1Instruction):
             >>> def1 + fin4 is fin4
             True
 
-        Adding with something else than default/extend, raises
+        Adding with something else than default/override, raises
         ``PlumbingCollision``::
 
             >>> def1 + Instruction('foo')
@@ -237,7 +238,7 @@ class default(Stage1Instruction):
             return self
         if isinstance(right, default):
             return self
-        if isinstance(right, extend):
+        if isinstance(right, override):
             return right
         if isinstance(right, finalize):
             return right
@@ -248,29 +249,29 @@ class default(Stage1Instruction):
             dct[self.name] = self.payload
 
 
-class extend(Stage1Instruction):
-    """Extend the class with an attribute
+class override(Stage1Instruction):
+    """Override a class attribute
 
-    An ``extend`` attribute overrides an attribute defined on a base class or
+    An ``override`` attribute overrides an attribute defined on a base class or
     provided by ``default``, but is overridden by ``finalize`` and attributes
     declared on the plumbing class (implicit ``finalize``).
 
-    The first ``extend`` will be picked over later ``extend``.
+    The first ``override`` will be picked over later ``override``.
 
-    For default/extend/finalize merging see ``__add__`` here,
+    For default/override/finalize merging see ``__add__`` here,
     ``default.__add__`` and ``finalize.__add__``.
     """
     def __add__(self, right):
         """
-        First extend wins against following equal extends and arbitrary
+        First override wins against following equal overrides and arbitrary
         defaults::
 
-            >>> ext1 = extend(1)
+            >>> ext1 = override(1)
             >>> ext1 + ext1 is ext1
             True
-            >>> ext1 + extend(1) is ext1
+            >>> ext1 + override(1) is ext1
             True
-            >>> ext1 + extend(2) is ext1
+            >>> ext1 + override(2) is ext1
             True
             >>> ext1 + default(2) is ext1
             True
@@ -278,13 +279,13 @@ class extend(Stage1Instruction):
             >>> ext1 + fin3 is fin3
             True
 
-        Everything except default/extend collides::
+        Everything except default/override collides::
 
             >>> ext1 + Instruction(1)
             Traceback (most recent call last):
               ...
             PlumbingCollision:
-                <extend 'None' of None payload=1>
+                <override 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
         """
@@ -292,7 +293,7 @@ class extend(Stage1Instruction):
             return self
         if isinstance(right, default):
             return self
-        if isinstance(right, extend):
+        if isinstance(right, override):
             return self
         if isinstance(right, finalize):
             return right
@@ -304,6 +305,12 @@ class extend(Stage1Instruction):
         dct[self.name] = self.payload
 
 
+extend = override
+deprecated('extend', """
+``plumber.extend`` is deprecated as of plumber 1.2 and will be removed in 
+plumber 1.3. Use ``plumber.override`` instead.""")
+
+
 class finalize(Stage1Instruction):
     """Insist on the final value / finalize the endpoint
 
@@ -311,12 +318,12 @@ class finalize(Stage1Instruction):
     collide, declarations on the plumbing class are implicit ``finalize``
     declarations.
 
-    For default/extend/finalize merging see ``__add__`` here,
-    ``default.__add__`` and ``extend.__add__``.
+    For default/override/finalize merging see ``__add__`` here,
+    ``default.__add__`` and ``override.__add__``.
     """
     def __add__(self, right):
         """
-        First extend wins against following equal extends and arbitrary
+        First override wins against following equal overrides and arbitrary
         defaults::
 
             >>> fin1 = finalize(1)
@@ -326,7 +333,7 @@ class finalize(Stage1Instruction):
             True
             >>> fin1 + default(2) is fin1
             True
-            >>> fin1 + extend(2) is fin1
+            >>> fin1 + override(2) is fin1
             True
 
         Two unequal finalize collide::
@@ -339,7 +346,7 @@ class finalize(Stage1Instruction):
               with:
                 <finalize 'None' of None payload=2>
 
-        Everything except default/extend collides::
+        Everything except default/override collides::
 
             >>> fin1 + Instruction(1)
             Traceback (most recent call last):
@@ -353,7 +360,7 @@ class finalize(Stage1Instruction):
             return self
         if isinstance(right, default):
             return self
-        if isinstance(right, extend):
+        if isinstance(right, override):
             return self
         raise PlumbingCollision(self, right)
 
@@ -479,7 +486,7 @@ class plumb(Stage2Instruction):
                 p2func = getattr(p2, x)
                 if p2func is None:
                     propfuncs.append(p1func)
-                elif type(p2func) is extend:
+                elif type(p2func) is override:
                     propfuncs.append(p2func.payload)
                 else:
                     propfuncs.append(plbfunc(p1func, p2func))

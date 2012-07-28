@@ -108,6 +108,6 @@ class Behavior(_Behavior):
 
 
 Part = Behavior # B/C
-deprecated('Part',
-           ('Part is deprecated as of plumber 1.2 and will be removed '
-            'in plumber 1.3'))
+deprecated('Part', """
+``plumber.Part`` is deprecated as of plumber 1.2 and will be removed in
+plumber 1.3. Use ``plumber.Behavior`` instead.""")
