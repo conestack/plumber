@@ -9,16 +9,16 @@ from zope.interface import Interface
 from zope.interface import implementer
 
 from plumber import plumber
-from plumber import Part
+from plumber import Behavior
 
 __metaclass__ = plumber
 
 
-class IPart1(Interface):
+class IBehavior1(Interface):
     """
     A zope.interface.Interface is not affected by the global ``__metaclass__``.
     ::
-        >>> IPart1.__class__
+        >>> IBehavior1.__class__
         <class 'zope.interface.interface.InterfaceClass'>
     """
     pass
@@ -37,8 +37,8 @@ class Foo:
     """
 
 
-@implementer(IPart1)
-class Part1(Part):
+@implementer(IBehavior1)
+class Behavior1(Behavior):
     pass
 
 
@@ -59,7 +59,7 @@ class ClassReallyUsingAPlumbing:
         >>> issubclass(ClassReallyUsingAPlumbing, object)
         True
 
-        >>> IPart1.implementedBy(ClassReallyUsingAPlumbing)
+        >>> IBehavior1.implementedBy(ClassReallyUsingAPlumbing)
         True
     """
-    __plumbing__ = Part1
+    __plumbing__ = Behavior1

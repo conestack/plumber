@@ -1,4 +1,4 @@
-import zope.deprecation
+from zope.deprecation import deprecated
 from plumber.exceptions import PlumbingCollision
 from plumber._instructions import Instruction
 from plumber._instructions import plumb

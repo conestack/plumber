@@ -13,7 +13,7 @@ TESTFILES = [
 
 TESTMODULES = [
     'plumber._instructions',
-    'plumber._part',
+    'plumber._behavior',
     'plumber._plumber',
     'plumber.tests._globalmetaclasstest',
 ]

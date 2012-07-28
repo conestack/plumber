@@ -141,41 +141,41 @@ The plumbing system
 -------------------
 
 The ``plumber`` metaclass creates plumbing classes according to instructions
-found on plumbing parts. First, all instructions are gathered, then they are
+found on plumbing behaviors. First, all instructions are gathered, then they are
 applied in two stages: stage1: extension and stage2: pipelines, docstrings and
 optional ``zope.interfaces``.
 
 .. contents::
     :local:
 
-Plumbing parts provide instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Plumbing parts correspond to mixins, but are more powerful and flexible. A
-plumbing part needs to inherit from ``plumber.Part`` and declares attributes
-with instructions on how to use them, here by example of the ``default``
-instruction (more later)::
+Plumbing behaviors provide instructions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Plumbing behaviors correspond to mixins, but are more powerful and flexible. A
+plumbing behavior needs to inherit from ``plumber.Behavior`` and declares 
+attributes with instructions on how to use them, here by example of the 
+``default`` instruction (more later)::
 
-    >>> from plumber import Part
+    >>> from plumber import Behavior
     >>> from plumber import default
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     a = default(True)
     ...
     ...     @default
     ...     def foo(self):
     ...         return 42
 
-    >>> class Part2(Part):
+    >>> class Behavior2(Behavior):
     ...     @default
     ...     @property
     ...     def bar(self):
     ...         return 17
 
-The instructions are given as part of assignments (``a = default(None)``) or as
-decorators (``@default``).
+The instructions are given as behavior of assignments (``a = default(None)``) 
+or as decorators (``@default``).
 
 A plumbing declaration defines the ``plumber`` as metaclass and one or more
-plumbing parts to be processed from left to right. Further it may declare
+plumbing behaviors to be processed from left to right. Further it may declare
 attributes like every normal class, they will be treated as implicit
 ``finalize`` instructions (see Stage 1: Extension)::
 
@@ -184,7 +184,7 @@ attributes like every normal class, they will be treated as implicit
     >>> Base = dict
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
     ...
     ...     def foobar(self):
     ...         return 5
@@ -220,8 +220,8 @@ A plumbing class can be subclassed like normal classes::
 
 The plumber gathers instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A plumbing declaration provides a list of parts via the ``__plumbing__``
-attribute. Parts provide instructions to be applied in two stages:
+A plumbing declaration provides a list of behaviors via the ``__plumbing__``
+attribute. Behaviors provide instructions to be applied in two stages:
 
 stage1
   - extension via ``default``, ``extend`` and ``finalize``, the result of this
@@ -232,22 +232,22 @@ stage2
   - plumbing of docstrings
   - implemented interfaces from ``zope.interface``, iff available
 
-The plumber walks the part list from left to right (part order). On its way it
-gathers instructions onto stacks, sorted by stage and attribute name. A history
-of all instructions is kept::
+The plumber walks the Behavior list from left to right (behavior order). On its
+way it gathers instructions onto stacks, sorted by stage and attribute name. A 
+history of all instructions is kept::
 
     >>> pprint(Plumbing.__plumbing_stacks__)
     {'history':
       [<_implements '__interfaces__' of None payload=()>,
-       <default 'a' of <class 'Part1'> payload=True>,
-       <default 'foo' of <class 'Part1'> payload=<function foo at 0x...>>,
+       <default 'a' of <class 'Behavior1'> payload=True>,
+       <default 'foo' of <class 'Behavior1'> payload=<function foo at 0x...>>,
        <_implements '__interfaces__' of None payload=()>,
-       <default 'bar' of <class 'Part2'> payload=<property object at 0x...>>],
+       <default 'bar' of <class 'Behavior2'> payload=<property object at 0x...>>],
      'stages':
        {'stage1':
-         {'a': [<default 'a' of <class 'Part1'> payload=True>],
-          'bar': [<default 'bar' of <class 'Part2'> payload=<property ...
-          'foo': [<default 'foo' of <class 'Part1'> payload=<function foo ...
+         {'a': [<default 'a' of <class 'Behavior1'> payload=True>],
+          'bar': [<default 'bar' of <class 'Behavior2'> payload=<property ...
+          'foo': [<default 'foo' of <class 'Behavior1'> payload=<function foo ...
         'stage2':
          {'__interfaces__': [<_implements '__interfaces__' of None payload=()...
 
@@ -262,15 +262,15 @@ The result of the first stage is the base for the application of the second
 stage.
 
 .. note:: The payload of an instruction is the attribute value passed to the
-  instruction via function call or decoration. An instruction knows the part it
-  is declared on.
+  instruction via function call or decoration. An instruction knows the
+  behavior it is declared on.
 
-.. note:: Parts are created by ``partmetaclass``. If ``zope.interface`` is
-  available, it will generate ``_implements`` instructions for each part.
-  During part creation the interfaces are not yet implemented, they are checked
-  at a later stage. Therefore the ``_implements`` instructions are generated
-  even if the parts do not implement interfaces, which results in the empty
-  tuple as payload (see also ``zope.interface support``.
+.. note:: Behaviors are created by ``behaviormetaclass``. If ``zope.interface``
+  is available, it will generate ``_implements`` instructions for each behavior.
+  During behavior creation the interfaces are not yet implemented, they are
+  checked at a later stage. Therefore the ``_implements`` instructions are 
+  generated even if the behaviors do not implement interfaces, which results in
+  the empty tuple as payload (see also ``zope.interface support``.
 
 .. warning:: Do not rely on this structure within your programs it might change
   at any time. If you need information from the ``__plumbing_stacks__`` or lack
@@ -288,10 +288,10 @@ The extension decorators:
 ``finalize``
     ``finalize`` is the strongest extension instruction. It will override
     declarations on base classes and all other extension instructions
-    (``extend`` and ``default``). Attributes declared as part of the plumbing
-    declaration are implicit ``finalize`` declarations. Two ``finalize`` for
-    one attribute name will collide and raise a ``PlumbingCollision`` during
-    class creation.
+    (``extend`` and ``default``). Attributes declared as behavior of the
+    plumbing declaration are implicit ``finalize`` declarations. Two 
+    ``finalize`` for one attribute name will collide and raise a 
+    ``PlumbingCollision`` during class creation.
 
 ``extend``
     ``extend`` is weaker than ``finalize`` and overrides declarations on base
@@ -312,100 +312,100 @@ In code::
 
     >>> from plumber import finalize
 
-    >>> class Part1(Part):
-    ...     N = finalize('Part1')
+    >>> class Behavior1(Behavior):
+    ...     N = finalize('Behavior1')
     ...
 
-    >>> class Part2(Part):
-    ...     M = finalize('Part2')
+    >>> class Behavior2(Behavior):
+    ...     M = finalize('Behavior2')
 
     >>> class Base(object):
     ...     K = 'Base'
 
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Base
     L from Plumbing
-    M from Part2
-    N from Part1
+    M from Behavior2
+    N from Behavior1
 
 summary:
 
-- K-Q: attributes defined by parts, plumbing class and base classes
+- K-Q: attributes defined by behaviors, plumbing class and base classes
 - f: ``finalize`` declaration
 - x: declaration on plumbing class or base class
 - ?: base class declaration is irrelevant
 - **Y**: chosen end point
 - collision: indicates an invalid combination, that raises a ``PlumbingCollision``
 
-+------+-------+-------+----------+-------+-----------+
-| Attr | Part1 | Part2 | Plumbing | Base  | ok?       |
-+======+=======+=======+==========+=======+===========+
-| K    |       |       |          | **x** |           |
-+------+-------+-------+----------+-------+-----------+
-| L    |       |       | **x**    | ?     |           |
-+------+-------+-------+----------+-------+-----------+
-| M    |       | **f** |          | ?     |           |
-+------+-------+-------+----------+-------+-----------+
-| N    | **f** |       |          | ?     |           |
-+------+-------+-------+----------+-------+-----------+
-| O    | f     |       | x        | ?     | collision |
-+------+-------+-------+----------+-------+-----------+
-| P    |       | f     | x        | ?     | collision |
-+------+-------+-------+----------+-------+-----------+
-| Q    | f     | f     |          | ?     | collision |
-+------+-------+-------+----------+-------+-----------+
++------+-----------+-----------+----------+-------+-----------+
+| Attr | Behavior1 | Behavior2 | Plumbing | Base  | ok?       |
++======+===========+===========+==========+=======+===========+
+| K    |           |           |          | **x** |           |
++------+-----------+-----------+----------+-------+-----------+
+| L    |           |           | **x**    | ?     |           |
++------+-----------+-----------+----------+-------+-----------+
+| M    |           | **f**     |          | ?     |           |
++------+-----------+-----------+----------+-------+-----------+
+| N    | **f**     |           |          | ?     |           |
++------+-----------+-----------+----------+-------+-----------+
+| O    | f         |           | x        | ?     | collision |
++------+-----------+-----------+----------+-------+-----------+
+| P    |           | f         | x        | ?     | collision |
++------+-----------+-----------+----------+-------+-----------+
+| Q    | f         | f         |          | ?     | collision |
++------+-----------+-----------+----------+-------+-----------+
 
 collisions::
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     O = finalize(False)
 
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1
+    ...     __plumbing__ = Behavior1
     ...     O = True
     Traceback (most recent call last):
       ...
     PlumbingCollision:
         Plumbing class
       with:
-        <finalize 'O' of <class 'Part1'> payload=False>
+        <finalize 'O' of <class 'Behavior1'> payload=False>
 
-    >>> class Part2(Part):
+    >>> class Behavior2(Behavior):
     ...     P = finalize(False)
 
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part2
+    ...     __plumbing__ = Behavior2
     ...     P = True
     Traceback (most recent call last):
       ...
     PlumbingCollision:
         Plumbing class
       with:
-        <finalize 'P' of <class 'Part2'> payload=False>
+        <finalize 'P' of <class 'Behavior2'> payload=False>
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     Q = finalize(False)
 
-    >>> class Part2(Part):
+    >>> class Behavior2(Behavior):
     ...     Q = finalize(True)
 
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
     Traceback (most recent call last):
       ...
     PlumbingCollision:
-        <finalize 'Q' of <class 'Part1'> payload=False>
+        <finalize 'Q' of <class 'Behavior1'> payload=False>
       with:
-        <finalize 'Q' of <class 'Part2'> payload=True>
+        <finalize 'Q' of <class 'Behavior2'> payload=True>
 
 Interaction: ``extend``, plumbing declaration and base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -413,14 +413,14 @@ in code::
 
     >>> from plumber import extend
 
-    >>> class Part1(Part):
-    ...     K = extend('Part1')
-    ...     M = extend('Part1')
+    >>> class Behavior1(Behavior):
+    ...     K = extend('Behavior1')
+    ...     M = extend('Behavior1')
 
-    >>> class Part2(Part):
-    ...     K = extend('Part2')
-    ...     L = extend('Part2')
-    ...     M = extend('Part2')
+    >>> class Behavior2(Behavior):
+    ...     K = extend('Behavior2')
+    ...     L = extend('Behavior2')
+    ...     M = extend('Behavior2')
 
     >>> class Base(object):
     ...     K = 'Base'
@@ -429,45 +429,45 @@ in code::
 
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
     ...     K = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Plumbing
-    L from Part2
-    M from Part1
+    L from Behavior2
+    M from Behavior1
 
 summary:
 
-- K-M: attributes defined by parts, plumbing class and base classes
+- K-M: attributes defined by behaviors, plumbing class and base classes
 - e: ``extend`` declaration
 - x: declaration on plumbing class or base class
 - ?: base class declaration is irrelevant
 - **Y**: chosen end point
 
-+------+-------+-------+----------+------+
-| Attr | Part1 | Part2 | Plumbing | Base |
-+======+=======+=======+==========+======+
-| K    | e     | e     | **x**    | ?    |
-+------+-------+-------+----------+------+
-| L    |       | **e** |          | ?    |
-+------+-------+-------+----------+------+
-| M    | **e** | e     |          | ?    |
-+------+-------+-------+----------+------+
++------+-----------+-----------+----------+------+
+| Attr | Behavior1 | Behavior2 | Plumbing | Base |
++======+===========+===========+==========+======+
+| K    | e         | e         | **x**    | ?    |
++------+-----------+-----------+----------+------+
+| L    |           | **e**     |          | ?    |
++------+-----------+-----------+----------+------+
+| M    | **e**     | e         |          | ?    |
++------+-----------+-----------+----------+------+
 
 Interaction: ``default``, plumbing declaration and base class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 in code::
 
-    >>> class Part1(Part):
-    ...     N = default('Part1')
+    >>> class Behavior1(Behavior):
+    ...     N = default('Behavior1')
 
-    >>> class Part2(Part):
-    ...     K = default('Part2')
-    ...     L = default('Part2')
-    ...     M = default('Part2')
-    ...     N = default('Part2')
+    >>> class Behavior2(Behavior):
+    ...     K = default('Behavior2')
+    ...     L = default('Behavior2')
+    ...     M = default('Behavior2')
+    ...     N = default('Behavior2')
 
     >>> class Base(object):
     ...     K = 'Base'
@@ -475,48 +475,48 @@ in code::
 
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Base
     L from Plumbing
-    M from Part2
-    N from Part1
+    M from Behavior2
+    N from Behavior1
 
 summary:
 
-- K-N: attributes defined by parts, plumbing class and base classes
+- K-N: attributes defined by behaviors, plumbing class and base classes
 - d = ``default`` declaration
 - x = declaration on plumbing class or base class
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
-+------+-------+-------+----------+-------+
-| Attr | Part1 | Part2 | Plumbing | Base  |
-+======+=======+=======+==========+=======+
-| K    |       | d     |          | **x** |
-+------+-------+-------+----------+-------+
-| L    |       | d     | **x**    | ?     |
-+------+-------+-------+----------+-------+
-| M    |       | **d** |          |       |
-+------+-------+-------+----------+-------+
-| N    | **d** | d     |          |       |
-+------+-------+-------+----------+-------+
++------+-----------+-----------+----------+-------+
+| Attr | Behavior1 | Behavior2 | Plumbing | Base  |
++======+===========+===========+==========+=======+
+| K    |           | d         |          | **x** |
++------+-----------+-----------+----------+-------+
+| L    |           | d         | **x**    | ?     |
++------+-----------+-----------+----------+-------+
+| M    |           | **d**     |          |       |
++------+-----------+-----------+----------+-------+
+| N    | **d**     | d         |          |       |
++------+-----------+-----------+----------+-------+
 
 
 Interaction: ``finalize`` wins over ``extend``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 in code::
 
-    >>> class Part1(Part):
-    ...     K = extend('Part1')
-    ...     L = finalize('Part1')
+    >>> class Behavior1(Behavior):
+    ...     K = extend('Behavior1')
+    ...     L = finalize('Behavior1')
 
-    >>> class Part2(Part):
-    ...     K = finalize('Part2')
-    ...     L = extend('Part2')
+    >>> class Behavior2(Behavior):
+    ...     K = finalize('Behavior2')
+    ...     L = extend('Behavior2')
 
     >>> class Base(object):
     ...     K = 'Base'
@@ -524,40 +524,40 @@ in code::
 
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
 
     >>> for x in ['K', 'L']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
-    K from Part2
-    L from Part1
+    K from Behavior2
+    L from Behavior1
 
 summary:
 
-- K-L: attributes defined by parts, plumbing class and base classes
+- K-L: attributes defined by behaviors, plumbing class and base classes
 - e = ``extend`` declaration
 - f = ``finalize`` declaration
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
-+------+-------+-------+----------+------+
-| Attr | Part1 | Part2 | Plumbing | Base |
-+======+=======+=======+==========+======+
-| K    | e     | **f** |          | ?    |
-+------+-------+-------+----------+------+
-| L    | **f** | e     |          | ?    |
-+------+-------+-------+----------+------+
++------+-----------+-----------+----------+------+
+| Attr | Behavior1 | Behavior2 | Plumbing | Base |
++======+===========+===========+==========+======+
+| K    | e         | **f**     |          | ?    |
++------+-----------+-----------+----------+------+
+| L    | **f**     | e         |          | ?    |
++------+-----------+-----------+----------+------+
 
 Interaction: ``finalize`` wins over ``default``:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 in code::
 
-    >>> class Part1(Part):
-    ...     K = default('Part1')
-    ...     L = finalize('Part1')
+    >>> class Behavior1(Behavior):
+    ...     K = default('Behavior1')
+    ...     L = finalize('Behavior1')
 
-    >>> class Part2(Part):
-    ...     K = finalize('Part2')
-    ...     L = default('Part2')
+    >>> class Behavior2(Behavior):
+    ...     K = finalize('Behavior2')
+    ...     L = default('Behavior2')
 
     >>> class Base(object):
     ...     K = 'Base'
@@ -565,40 +565,40 @@ in code::
 
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
 
     >>> for x in ['K', 'L']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
-    K from Part2
-    L from Part1
+    K from Behavior2
+    L from Behavior1
 
 summary:
 
-- K-L: attributes defined by parts, plumbing class and base classes
+- K-L: attributes defined by behaviors, plumbing class and base classes
 - d = ``default`` declaration
 - f = ``finalize`` declaration
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
-+------+-------+-------+----------+------+
-| Attr | Part1 | Part2 | Plumbing | Base |
-+======+=======+=======+==========+======+
-| K    | d     | **f** |          | ?    |
-+------+-------+-------+----------+------+
-| L    | **f** | d     |          | ?    |
-+------+-------+-------+----------+------+
++------+-----------+-----------+----------+------+
+| Attr | Behavior1 | Behavior2 | Plumbing | Base |
++======+===========+===========+==========+======+
+| K    | d         | **f**     |          | ?    |
++------+-----------+-----------+----------+------+
+| L    | **f**     | d         |          | ?    |
++------+-----------+-----------+----------+------+
 
 Interaction: ``extend`` wins over ``default``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 in code::
 
-    >>> class Part1(Part):
-    ...     K = default('Part1')
-    ...     L = extend('Part1')
+    >>> class Behavior1(Behavior):
+    ...     K = default('Behavior1')
+    ...     L = extend('Behavior1')
 
-    >>> class Part2(Part):
-    ...     K = extend('Part2')
-    ...     L = default('Part2')
+    >>> class Behavior2(Behavior):
+    ...     K = extend('Behavior2')
+    ...     L = default('Behavior2')
 
     >>> class Base(object):
     ...     K = 'Base'
@@ -606,36 +606,36 @@ in code::
 
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
 
     >>> for x in ['K', 'L']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
-    K from Part2
-    L from Part1
+    K from Behavior2
+    L from Behavior1
 
 summary:
 
-- K-L: attributes defined by parts, plumbing class and base classes
+- K-L: attributes defined by behaviors, plumbing class and base classes
 - d = ``default`` declaration
 - e = ``extend`` declaration
 - ? = base class declaration is irrelevant
 - **Y** = chosen end point
 
-+------+-------+-------+----------+------+
-| Attr | Part1 | Part2 | Plumbing | Base |
-+======+=======+=======+==========+======+
-| K    | d     | **e** |          | ?    |
-+------+-------+-------+----------+------+
-| L    | **e** | d     |          | ?    |
-+------+-------+-------+----------+------+
++------+-----------+-----------+----------+------+
+| Attr | Behavior1 | Behavior2 | Plumbing | Base |
++======+===========+===========+==========+======+
+| K    | d         | **e**     |          | ?    |
++------+-----------+-----------+----------+------+
+| L    | **e**     | d         |          | ?    |
++------+-----------+-----------+----------+------+
 
 Stage 2: Pipeline, docstring and ``zope.interface`` instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In stage1 plumbing class attributes were set, which can serve as endpoints for
 plumbing pipelines that are build in stage2. Plumbing pipelines correspond to
-``super``-chains. Docstrings of parts, methods in a pipeline and properties in
-a pipeline are accumulated. Plumber is ``zope.interface`` aware and takes
-implemeneted interfaces from parts, if it can be imported.
+``super``-chains. Docstrings of behaviors, methods in a pipeline and properties
+in a pipeline are accumulated. Plumber is ``zope.interface`` aware and takes
+implemeneted interfaces from behaviors, if it can be imported.
 
 .. contents::
     :local:
@@ -646,10 +646,10 @@ Elements for plumbing pipelines are declared with the ``plumb`` and
 ``plumbifexists`` decorators:
 
 ``plumb``
-    Marks a method to be used as part of a plumbing pipeline.  The signature of
+    Marks a method to be used as behavior of a plumbing pipeline.  The signature of
     such a plumbing method is ``def foo(_next, self, *args, **kw)``.  Via
     ``_next`` it is passed the next plumbing method to be called. ``self`` is
-    an instance of the plumbing class, not the part.
+    an instance of the plumbing class, not the behavior.
 
 ``plumbifexists``
     Like ``plumb``, but only used if an endpoint exists.
@@ -659,87 +659,85 @@ after the pipelines are built, an entrance method is generated for each pipe,
 that wraps the first plumbing method passing it the correct ``_next``. Each
 ``_next`` method is an entrance to the rest of the pipeline.
 
+The pipelines are build in behavior order, skipping behaviors that do not
+define a pipeline element with the same attribute name::
 
-
-
-The pipelines are build in part order, skipping parts that do not define a
-pipeline element with the same attribute name::
-
-    +---+-------+-------+-------+----------+
-    |   | Part1 | Part2 | Part3 | ENDPOINT |
-    +---+-------+-------+-------+----------+
-    |   |    ----------------------->      |
-    | E |   x   |       |       |    x     |
-    | N |    <-----------------------      |
-    + T +-------+-------+-------+----------+
-    | R |    ------> --------------->      |
-    | A |   y   |   y   |       |    y     |
-    | N |    <------ <---------------      |
-    + C +-------+-------+-------+----------+
-    | E |       |       |    ------->      |
-    | S |       |       |   z   |    z     |
-    |   |       |       |    <-------      |
-    +---+-------+-------+-------+----------+
+    +---+-----------+-----------+-----------+----------+
+    |   | Behavior1 | Behavior2 | Behavior3 | ENDPOINT |
+    +---+-----------+-----------+-----------+----------+
+    |   |      --------------------------------->      |
+    | E |     x     |           |           |    x     |
+    | N |      <---------------------------------      |
+    + T +-----------+-----------+-----------+----------+
+    | R |      ----------> --------------------->      |
+    | A |     y     |     y     |           |    y     |
+    | N |      <---------- <---------------------      |
+    + C +-----------+-----------+-----------+----------+
+    | E |           |           |      --------->      |
+    | S |           |           |     z     |    z     |
+    |   |           |           |      <---------      |
+    +---+-----------+-----------+-----------+----------+
 
 Method pipelines
 ~~~~~~~~~~~~~~~~
-Two plumbing parts and a ``dict`` as base class. ``Part1`` lowercases keys
-before passing them on, ``Part2`` multiplies results before returning them::
+Two plumbing behaviors and a ``dict`` as base class. ``Behavior1`` lowercases
+keys before passing them on, ``Behavior2`` multiplies results before returning
+them::
 
     >>> from plumber import plumb
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     @plumb
     ...     def __getitem__(_next, self, key):
-    ...         print "Part1 start"
+    ...         print "Behavior1 start"
     ...         key = key.lower()
     ...         ret = _next(self, key)
-    ...         print "Part1 stop"
+    ...         print "Behavior1 stop"
     ...         return ret
 
-    >>> class Part2(Part):
+    >>> class Behavior2(Behavior):
     ...     @plumb
     ...     def __getitem__(_next, self, key):
-    ...         print "Part2 start"
+    ...         print "Behavior2 start"
     ...         ret = 2 * _next(self, key)
-    ...         print "Part2 stop"
+    ...         print "Behavior2 stop"
     ...         return ret
 
     >>> Base = dict
     >>> class Plumbing(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
 
     >>> plb = Plumbing()
     >>> plb['abc'] = 6
     >>> plb['AbC']
-    Part1 start
-    Part2 start
-    Part2 stop
-    Part1 stop
+    Behavior1 start
+    Behavior2 start
+    Behavior2 stop
+    Behavior1 stop
     12
 
 Plumbing pipelines need endpoints. If no endpoint is available an
 ``AttributeError`` is raised::
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     @plumb
     ...     def foo(_next, self):
     ...         pass
 
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1
+    ...     __plumbing__ = Behavior1
     Traceback (most recent call last):
       ...
     AttributeError: type object 'Plumbing' has no attribute 'foo'
 
-If no endpoint is available and a part does not care about that,
+If no endpoint is available and a behavior does not care about that,
 ``plumbifexists`` can be used to only plumb if an endpoint is available::
 
     >>> from plumber import plumbifexists
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     @plumbifexists
     ...     def foo(_next, self):
     ...         pass
@@ -750,7 +748,7 @@ If no endpoint is available and a part does not care about that,
 
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1
+    ...     __plumbing__ = Behavior1
     ...
     ...     def bar(self):
     ...         return 6
@@ -770,7 +768,7 @@ Property pipelines
 Plumbing of properties is experimental and might or might not do what you
 expect::
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     @plumb
     ...     @property
     ...     def foo(_next, self):
@@ -778,7 +776,7 @@ expect::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1
+    ...     __plumbing__ = Behavior1
     ...
     ...     @property
     ...     def foo(self):
@@ -792,13 +790,13 @@ It is possible to extend a property with so far unset getter/setter/deleter.
 The feature is experimental, might not fit the expected behavior and probably
 about to change::
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     @plumb
     ...     @property
     ...     def foo(_next, self):
     ...         return 2 * _next(self)
 
-    >>> class Part2(Part):
+    >>> class Behavior2(Behavior):
     ...     def set_foo(self, value):
     ...         self._foo = value
     ...     foo = plumb(property(
@@ -808,7 +806,7 @@ about to change::
 
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
     ...
     ...     @property
     ...     def foo(self):
@@ -826,14 +824,14 @@ to mix properties with methods::
 
     >>> from plumber import plumb
 
-    >>> class Part1(Part):
+    >>> class Behavior1(Behavior):
     ...     @plumb
     ...     def foo(_next, self):
     ...         return _next(self)
 
     >>> class Plumbing(object):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1
+    ...     __plumbing__ = Behavior1
     ...
     ...     @property
     ...     def foo(self):
@@ -841,17 +839,17 @@ to mix properties with methods::
     Traceback (most recent call last):
       ...
     PlumbingCollision:
-        <plumb 'foo' of <class 'Part1'> payload=<function foo at 0x...>>
+        <plumb 'foo' of <class 'Behavior1'> payload=<function foo at 0x...>>
       with:
         <class 'Plumbing'>
 
 docstrings of classes, methods and properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Normal docstrings of the plumbing declaration and the part classes, plumbed
+Normal docstrings of the plumbing declaration and the behavior classes, plumbed
 methods and plumbed properties are joined by newlines starting with the
-plumbing declaration and followed by the parts in reverse order::
+plumbing declaration and followed by the behaviors in reverse order::
 
-    >>> class P1(Part):
+    >>> class P1(Behavior):
     ...     """P1
     ...     """
     ...     @plumb
@@ -860,7 +858,7 @@ plumbing declaration and followed by the parts in reverse order::
     ...         """
     ...     bar = plumb(property(None, None, None, "P1.bar"))
 
-    >>> class P2(Part):
+    >>> class P2(Behavior):
     ...     @extend
     ...     def foo(self):
     ...         """P2.foo
@@ -900,8 +898,8 @@ change.
 ``zope.interface`` (if available)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The plumber does not depend on ``zope.interface`` but is aware of it. That
-means it will try to import it and if available will check plumbing parts for
-implemented interfaces and will make the plumbing implement them, too::
+means it will try to import it and if available will check plumbing behaviors
+for implemented interfaces and will make the plumbing implement them, too::
 
     >>> from zope.interface import Interface
     >>> from zope.interface import implementer
@@ -918,41 +916,41 @@ A class with an interface that will serve as base class of a plumbing::
     >>> IBase.implementedBy(Base)
     True
 
-Two parts with corresponding interfaces, one with a base class that also
+Two behaviors with corresponding interfaces, one with a base class that also
 implements an interface::
 
-    >>> class IPart1(Interface):
+    >>> class IBehavior1(Interface):
     ...     pass
 
-    >>> @implementer(IPart1)
-    ... class Part1(Part):
+    >>> @implementer(IBehavior1)
+    ... class Behavior1(Behavior):
     ...     blub = 1
 
-    >>> class IPart2Base(Interface):
+    >>> class IBehavior2Base(Interface):
     ...     pass
 
-    >>> @implementer(IPart2Base)
-    ... class Part2Base(Part):
+    >>> @implementer(IBehavior2Base)
+    ... class Behavior2Base(Behavior):
     ...     pass
 
-    >>> class IPart2(Interface):
+    >>> class IBehavior2(Interface):
     ...     pass
 
-    >>> @implementer(IPart2)
-    ... class Part2(Part2Base):
+    >>> @implementer(IBehavior2)
+    ... class Behavior2(Behavior2Base):
     ...     pass
 
-    >>> IPart1.implementedBy(Part1)
+    >>> IBehavior1.implementedBy(Behavior1)
     True
-    >>> IPart2Base.implementedBy(Part2Base)
+    >>> IBehavior2Base.implementedBy(Behavior2Base)
     True
-    >>> IPart2Base.implementedBy(Part2)
+    >>> IBehavior2Base.implementedBy(Behavior2)
     True
-    >>> IPart2.implementedBy(Part2)
+    >>> IBehavior2.implementedBy(Behavior2)
     True
 
-A plumbing based on ``Base`` using ``Part1`` and ``Part2`` and implementing
-``IPlumbingClass``::
+A plumbing based on ``Base`` using ``Behavior1`` and ``Behavior2`` and
+implementing ``IPlumbingClass``::
 
     >>> class IPlumbingClass(Interface):
     ...     pass
@@ -960,7 +958,7 @@ A plumbing based on ``Base`` using ``Part1`` and ``Part2`` and implementing
     >>> @implementer(IPlumbingClass)
     ... class PlumbingClass(Base):
     ...     __metaclass__ = plumber
-    ...     __plumbing__ = Part1, Part2
+    ...     __plumbing__ = Behavior1, Behavior2
 
 The directly declared and inherited interfaces are implemented::
 
@@ -969,13 +967,13 @@ The directly declared and inherited interfaces are implemented::
     >>> IBase.implementedBy(PlumbingClass)
     True
 
-The interfaces implemented by the parts are also implemented::
+The interfaces implemented by the Behaviors are also implemented::
 
-    >>> IPart1.implementedBy(PlumbingClass)
+    >>> IBehavior1.implementedBy(PlumbingClass)
     True
-    >>> IPart2.implementedBy(PlumbingClass)
+    >>> IBehavior2.implementedBy(PlumbingClass)
     True
-    >>> IPart2Base.implementedBy(PlumbingClass)
+    >>> IBehavior2Base.implementedBy(PlumbingClass)
     True
 
 An instance of the class provides the interfaces::
@@ -986,11 +984,11 @@ An instance of the class provides the interfaces::
     True
     >>> IBase.providedBy(plumbing)
     True
-    >>> IPart1.providedBy(plumbing)
+    >>> IBehavior1.providedBy(plumbing)
     True
-    >>> IPart2.providedBy(plumbing)
+    >>> IBehavior2.providedBy(plumbing)
     True
-    >>> IPart2Base.providedBy(plumbing)
+    >>> IBehavior2Base.providedBy(plumbing)
     True
 
 Design choices and ongoing discussions
@@ -1001,19 +999,19 @@ Stage1 left of stage2
 Currently instructions of stage1 may be left of stage2 instructions. We
 consider to forbid this::
 
-    #    >>> class Part1(Part):
+    #    >>> class Behavior1(Behavior):
     #    ...     @extend
     #    ...     def foo(self):
     #    ...         return 5
     #
-    #    >>> class Part2(Part):
+    #    >>> class Behavior2(Behavior):
     #    ...     @plumb
     #    ...     def foo(_next, self):
     #    ...         return 2 * _next(self)
     #
     #    >>> class Plumbing(object):
     #    ...     __metaclass__ = plumber
-    #    ...     __plumbing__ = Part1, Part2
+    #    ...     __plumbing__ = Behavior1, Behavior2
     #
     #    >>> Plumbing().foo()
     #    BANG
@@ -1027,7 +1025,7 @@ this would then be done for all plumbing methods.
 
 Reasoning why currently the methods are not prefixed:
 Plumbing elements are simply not meant to be normal classes. Their methods have
-the single purpose to be called as part of some other class' method calls,
+the single purpose to be called as behavior of some other class' method calls,
 never directly. Configuration of plumbing elements can either be achieved by
 subclassing them or by putting the configuration on the objects/class they are
 used for.
@@ -1039,38 +1037,38 @@ by us, without seeing a real use case first.
 Different zope.interface.Interfaces for plumbing and created class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A different approach to the currently implemented system is having different
-interfaces for the parts and the class that is created::
+interfaces for the behaviors and the class that is created::
 
-    #    >>> class IPart1Behaviour(Interface):
+    #    >>> class IBehavior1Behaviour(Interface):
     #    ...     pass
     #
-    #    >>> @implementer(IPart1)
-    #    ... class Part1(Part):
-    #    ...     interfaces = (IPart1Behaviour,)
+    #    >>> @implementer(IBehavior1)
+    #    ... class Behavior1(Behavior):
+    #    ...     interfaces = (IBehavior1Behaviour,)
     #
-    #    >>> class IPart2(Interface):
+    #    >>> class IBehavior2(Interface):
     #    ...     pass
     #
-    #    >>> @implementer(IPart2)
-    #    ... class Part2(Part):
-    #    ...     interfaces = (IPart2Behaviour,)
+    #    >>> @implementer(IBehavior2)
+    #    ... class Behavior2(Behavior):
+    #    ...     interfaces = (IBehavior2Behaviour,)
     #
     #    >>> IUs.implementedBy(Us)
     #    True
     #    >>> IBase.implementedBy(Us)
     #    True
-    #    >>> IPart1.implementedBy(Us)
+    #    >>> IBehavior1.implementedBy(Us)
     #    False
-    #    >>> IPart2.implementedBy(Us)
+    #    >>> IBehavior2.implementedBy(Us)
     #    False
-    #    >>> IPart1Behaviour.implementedBy(Us)
+    #    >>> IBehavior1Behaviour.implementedBy(Us)
     #    False
-    #    >>> IPart2Behaviour.implementedBy(Us)
+    #    >>> IBehavior2Behaviour.implementedBy(Us)
     #    False
 
 Same reasoning as before: up to now unnecessary complexity. It could make sense
 in combination with an instance based plumbing system and could be implemented
-as part of it alongside the current class based system.
+as behavior of it alongside the current class based system.
 
 Dynamic Plumbing
 ^^^^^^^^^^^^^^^^
@@ -1081,7 +1079,7 @@ number of plumbing chains in case of many dynamic plumbings. Realised eg by a
 descriptor.
 
 During discussion on the artssprint we agreed on not changing a plumbing class
-pipelines during runtime, but instead enable plumbing further parts during
+pipelines during runtime, but instead enable plumbing further behaviors during
 runtime per instance in front of the class' pipeline.
 
 Miscellanea
@@ -1091,20 +1089,21 @@ Nomenclature
 ^^^^^^^^^^^^
 ``plumber``
     Metaclass that creates a plumbing according to the instructions declared on
-    plumbing parts. Instructions are given by decorators: ``default``,
+    plumbing behaviors. Instructions are given by decorators: ``default``,
     ``extend``, ``finalize``, ``plumb`` and ``plumbifexists``.
 
 plumbing
     A plumber is called by a class that declares ``__metaclass__ = plumber``
-    and a list of parts to be used for the plumbing ``__plumbing__ = Part1,
-    Part2``. Apart from the parts, declarations on base classes and the class
-    asking for the plumber are taken into account.  Once created, a plumbing
-    looks like any other class and can be subclassed as usual.
+    and a list of behaviors to be used for the plumbing
+    ``__plumbing__ = Behavior1, Behavior2``. Apart from the behaviors,
+    declarations on base classes and the class asking for the plumber are taken
+    into account. Once created, a plumbing looks like any other class and can
+    be subclassed as usual.
 
-plumbing part
-    A plumbing part provides attributes (functions, properties and plain values)
-    along with instructions for how to use them. Instructions are given via
-    decorators: ``default``, ``extend``, ``finalize``, ``plumb`` and
+plumbing behavior
+    A plumbing behavior provides attributes (functions, properties and plain
+    values) along with instructions for how to use them. Instructions are given
+    via decorators: ``default``, ``extend``, ``finalize``, ``plumb`` and
     ``plumbifexists`` (see Stage 1:... and Stage 2:...).
 
 plumbing pipeline
@@ -1140,7 +1139,7 @@ Summary of the test coverage report::
     lines   cov%   module   (path)
         7   100%   plumber.__init__
       187   100%   plumber._instructions
-       49    91%   plumber._part
+       49    91%   plumber._behavior
        58   100%   plumber._plumber
         9   100%   plumber.exceptions
        18   100%   plumber.tests._globalmetaclasstest
@@ -1226,7 +1225,7 @@ TODO
   the plumber. yafowil is doing it. jensens: would you be so kind.
 - verify behaviour with pickling in tests within plumber
 - verify behaviour with ZODB persistence in tests within plumber
-- subclassing for plumbing parts
+- subclassing for plumbing behaviors
 - mature plumbing of properties
 - py26 @foo.setter support in all decorators
 

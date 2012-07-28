@@ -1,9 +1,9 @@
-from plumber._part import Instructions
-from plumber._part import partmetaclass
+from plumber._behavior import Instructions
+from plumber._behavior import behaviormetaclass
 
 
 class Stacks(object):
-    """organize stacks for parsing parts, stored in the class' dict
+    """organize stacks for parsing behaviors, stored in the class' dict
     """
     attrname = "__plumbing_stacks__"
 
@@ -63,16 +63,16 @@ class plumber(type):
         if not dct.has_key('__plumbing__'):
             return type.__new__(meta, name, bases, dct)
 
-        # turn single part into a tuple of one part
+        # turn single behavior into a tuple of one behavior
         if type(dct['__plumbing__']) is not tuple:
             dct['__plumbing__'] = (dct['__plumbing__'],)
 
         # stacks for parsing instructions
         stacks = Stacks(dct)
 
-        # parse the parts
-        for part in dct['__plumbing__']:
-            for instruction in Instructions(part):
+        # parse the behaviors
+        for behavior in dct['__plumbing__']:
+            for instruction in Instructions(behavior):
                 stage = stacks.stages[instruction.__stage__]
                 stack = stage.setdefault(instruction.__name__, [])
                 stacks.history.append(instruction)
