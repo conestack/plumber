@@ -1163,6 +1163,14 @@ Contributors
 Changes
 ^^^^^^^
 
+1.2dev
+------
+
+- Rename ``plumber.extend`` to ``plumber.override``.
+  [rnix, 2012-05-18]
+
+- Rename ``plumber.Part`` to ``plumber.Behavior``.
+  [rnix, 2012-05-18]
 
 1.1
 ---
@@ -1225,7 +1233,7 @@ TODO
 
 License / Disclaimer
 ^^^^^^^^^^^^^^^^^^^^
-Copyright (c) 2011, BlueDynamics Alliance, Austria, Germany, Switzerland
+Copyright (c) 2011-2012, BlueDynamics Alliance, Austria, Germany, Switzerland
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

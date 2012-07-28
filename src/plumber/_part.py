@@ -1,3 +1,4 @@
+import zope.deprecation
 from plumber.exceptions import PlumbingCollision
 from plumber._instructions import Instruction
 from plumber._instructions import plumb
@@ -11,20 +12,20 @@ except ImportError: #pragma NO COVERAGE
     ZOPE_INTERFACE_AVAILABLE = False #pragma NO COVERAGE
 
 
-class _Part(object):
+class _Behavior(object):
     """Just here to solve a dependency loop
     """
 
 
 class Instructions(object):
-    """Adapter to set instructions on a part
+    """Adapter to set instructions on a behavior
     """
     attrname = "__plumbing_instructions__"
 
-    def __init__(self, part):
-        self.part = part
-        if not part.__dict__.has_key(self.attrname):
-            setattr(part, self.attrname, [])
+    def __init__(self, behavior):
+        self.behavior = behavior
+        if not behavior.__dict__.has_key(self.attrname):
+            setattr(behavior, self.attrname, [])
 
     def __contains__(self, item):
         return item in self.instructions
@@ -37,34 +38,34 @@ class Instructions(object):
 
     @property
     def instructions(self):
-        return getattr(self.part, self.attrname)
+        return getattr(self.behavior, self.attrname)
 
 
-class partmetaclass(type):
-    """Metaclass for part creation
+class behaviormetaclass(type):
+    """Metaclass for behavior creation
 
     Turn __doc__ and implemented zope interfaces into instructions and tell
-    existing instructions their name and parent, for subclasses of ``Part``.
+    existing instructions their name and parent, for subclasses of ``Behavior``.
 
         >>> class A(object):
-        ...     __metaclass__ = partmetaclass
+        ...     __metaclass__ = behaviormetaclass
 
-        >>> getattr(A, '__plumbing_instructions__', 'No part')
-        'No part'
+        >>> getattr(A, '__plumbing_instructions__', 'No behavior')
+        'No behavior'
 
-        >>> class A(Part):
-        ...     __metaclass__ = partmetaclass
+        >>> class A(Behavior):
+        ...     __metaclass__ = behaviormetaclass
 
-        >>> getattr(A, '__plumbing_instructions__', None) and 'Part'
-        'Part'
+        >>> getattr(A, '__plumbing_instructions__', None) and 'Behavior'
+        'Behavior'
 
     """
     def __init__(cls, name, bases, dct):
-        super(partmetaclass, cls).__init__(name, bases, dct)
-        if not issubclass(cls, _Part):
+        super(behaviormetaclass, cls).__init__(name, bases, dct)
+        if not issubclass(cls, _Behavior):
             return
 
-        # Get the part's instructions list
+        # Get the behavior's instructions list
         instructions = Instructions(cls)
 
         # An existing docstring is an implicit plumb instruction for __doc__
@@ -100,7 +101,13 @@ class partmetaclass(type):
                 instructions.append(instr)
 
 
-# Base class for plumbing parts: identification and metaclass setting
+# Base class for plumbing behaviors: identification and metaclass setting
 # No doctest allowed here, it would be recognized as an instruction.
-class Part(_Part):
-    __metaclass__ = partmetaclass
+class Behavior(_Behavior):
+    __metaclass__ = behaviormetaclass
+
+
+Part = Behavior # B/C
+deprecated('Part',
+           ('Part is deprecated as of plumber 1.2 and will be removed '
+            'in plumber 1.3'))
