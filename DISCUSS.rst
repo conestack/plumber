@@ -25,8 +25,7 @@ consider to forbid this::
     10
 
 - [rnix, 2012-07-29]: I still see no advantage in forbidding to define an
-                      endpoint on the left of a plumbing to the same. It's
-                      different semantics.
+  endpoint on the left of a plumbing to the same. It's different semantics.
 
 
 Instance based plumbing system
@@ -45,8 +44,8 @@ subclassing them or by putting the configuration on the objects/class they are
 used for.
 
 - [rnix, 2012-07-29]: It turned out that providing necessary plumbing behavior
-                      configuration via plumbed classes is quite handy and
-                      readable. I would suggest to stick to this strategy.
+  configuration via plumbed classes is quite handy and readable. I would
+  suggest to stick to this strategy.
 
 An instance based plumbing system would be far more complex. It could be
 implemented to exist alongside the current system.
@@ -95,8 +94,7 @@ in combination with an instance based plumbing system and could be implemented
 as behavior of it alongside the current class based system.
 
 - [rnix, 2012-07-29]: One of the advantages of interfaces is to ask whether an
-                      object instanciates it. By applying a behavior
-                      implementing some interface to a class this class indeed
-                      implements this interface. For later instance based
-                      plumbing ``zope.interface.alsoProvides`` can be used in
-                      order to keep things sane.
+  object instanciates it. By applying a behavior implementing some interface to
+  a class this class indeed implements this interface. For later instance based
+  plumbing ``zope.interface.alsoProvides`` can be used in order to keep things
+  sane.
