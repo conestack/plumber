@@ -12,6 +12,7 @@ non-experimental features are fully test covered.
 .. contents::
     :depth: 2
 
+
 Motivation: limitations of subclassing
 --------------------------------------
 
@@ -21,8 +22,10 @@ limitations and/or design choice of python's subclassing:
 .. contents::
     :local:
 
+
 Control of precedence only through order of mixins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Mixins are commonly used to extend classes with pre-defined behaviours: an
 attribute on the first mixin overwrites attributes with the same name on all
 following mixins and the base class being extended::
@@ -51,8 +54,10 @@ earlier one.
 **Solution**: plumber provides 3 decorators to enable finer control of
 precedence (``default``, ``override``, ``finalize``).
 
+
 Impossible to provide default values to fill gaps on a base class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 A dictionary-like storage at least needs to provide ``__getitem__``,
 ``__setitem__``, ``__delitem__`` and ``__iter__``, all other methods of a
 dictionary can be build upon these. A mixin that turns storages into full
@@ -62,8 +67,10 @@ class does not provide a (more efficient) implementation.
 **Solution**: plumber provides the ``default`` decorator to enable such
 defaults.
 
+
 ``super``-chains are not verified during class creation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 It is possible to build a chain of methods using ``super``: ``Mixin1`` turns
 the key lowercase before passing it on, ``Mixin2`` multiplies the result by 2
 before returning it and both are chatty about start/stop::
@@ -118,8 +125,10 @@ creation::
 **Solution**: Plumber provides the ``plumb`` decorator to build similar chains
 using nested closures. These are create and verified during class creation.
 
+
 No conditional ``super``-chains
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 A mixin with subclassing needs to fit exactly the base class, there is no way
 to conditionally hook into method calls depending on whether the base class
 provides a method.
@@ -127,8 +136,10 @@ provides a method.
 **Solution**: Plumber provides the ``plumbifexists`` decorator that behaves
 like ``plumb``, if there is an endpoint available.
 
+
 Docstrings are not accumulated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 A class' docstring that uses mixins is not build from the docstrings of the
 mixins.
 
@@ -148,8 +159,10 @@ optional ``zope.interfaces``.
 .. contents::
     :local:
 
+
 Plumbing behaviors provide instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Plumbing behaviors correspond to mixins, but are more powerful and flexible. A
 plumbing behavior needs to inherit from ``plumber.Behavior`` and declares 
 attributes with instructions on how to use them, here by example of the 
@@ -218,8 +231,10 @@ A plumbing class can be subclassed like normal classes::
     >>> Sub().foobar()
     5
 
+
 The plumber gathers instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 A plumbing declaration provides a list of behaviors via the ``__plumbing__``
 attribute. Behaviors provide instructions to be applied in two stages:
 
@@ -277,8 +292,10 @@ stage.
   information in there, e.g. to create a plumbing inspector and earn yourself
   a box of your favorite beverage, please let us know.
 
+
 Stage 1: Extension
 ^^^^^^^^^^^^^^^^^^
+
 The extension stage creates endpoints for the pipelines created in stage 2. If
 no pipeline uses the endpoint, it will just live on as a normal attribute in
 the plumbing class' dictionary.
@@ -306,8 +323,10 @@ The extension decorators:
 .. contents::
     :local:
 
+
 Interaction: ``finalize``, plumbing declaration and base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 In code::
 
     >>> from plumber import finalize
@@ -407,8 +426,10 @@ collisions::
       with:
         <finalize 'Q' of <class 'Behavior2'> payload=True>
 
+
 Interaction: ``override``, plumbing declaration and base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 in code::
 
     >>> from plumber import override
@@ -456,8 +477,10 @@ summary:
 | M    | **e**     | e         |          | ?    |
 +------+-----------+-----------+----------+------+
 
+
 Interaction: ``default``, plumbing declaration and base class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 in code::
 
     >>> class Behavior1(Behavior):
@@ -508,6 +531,7 @@ summary:
 
 Interaction: ``finalize`` wins over ``override``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 in code::
 
     >>> class Behavior1(Behavior):
@@ -547,8 +571,10 @@ summary:
 | L    | **f**     | e         |          | ?    |
 +------+-----------+-----------+----------+------+
 
+
 Interaction: ``finalize`` wins over ``default``:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 in code::
 
     >>> class Behavior1(Behavior):
@@ -588,8 +614,10 @@ summary:
 | L    | **f**     | d         |          | ?    |
 +------+-----------+-----------+----------+------+
 
+
 Interaction: ``override`` wins over ``default``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 in code::
 
     >>> class Behavior1(Behavior):
@@ -629,8 +657,45 @@ summary:
 | L    | **e**     | d         |          | ?    |
 +------+-----------+-----------+----------+------+
 
-Stage 2: Pipeline, docstring and ``zope.interface`` instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Subclassing Behaviors
+~~~~~~~~~~~~~~~~~~~~~
+
+in code::
+
+    >>> class Behavior1(Behavior):
+    ...     J = default('Behavior1')
+    ...     K = default('Behavior1')
+    ...     M = override('Behavior1')
+
+    >>> class Behavior2(Behavior1):
+    ...     J = default('Behavior2') # overrides ``J`` of ``Behavior1``
+    ...     L = default('Behavior2')
+    ...     M = default('Behavior2') # this one wins, even if ``M`` on
+    ...                              # superclass is ``override`` instruction.
+    ...                              # due to ordinary inheritance behavior.
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Behavior2
+    
+    >>> plb = Plumbing()
+    >>> plb.J
+    'Behavior2'
+    
+    >>> plb.K
+    'Behavior1'
+    
+    >>> plb.L
+    'Behavior2'
+    
+    >>> plb.M
+    'Behavior2'
+
+
+Stage 2: Pipeline, docstrings and ``zope.interface`` instructions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 In stage1 plumbing class attributes were set, which can serve as endpoints for
 plumbing pipelines that are build in stage2. Plumbing pipelines correspond to
 ``super``-chains. Docstrings of behaviors, methods in a pipeline and properties
@@ -640,8 +705,10 @@ implemeneted interfaces from behaviors, if it can be imported.
 .. contents::
     :local:
 
+
 Plumbing Pipelines in general
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Elements for plumbing pipelines are declared with the ``plumb`` and
 ``plumbifexists`` decorators:
 
@@ -678,8 +745,10 @@ define a pipeline element with the same attribute name::
     |   |           |           |      <---------      |
     +---+-----------+-----------+-----------+----------+
 
+
 Method pipelines
 ~~~~~~~~~~~~~~~~
+
 Two plumbing behaviors and a ``dict`` as base class. ``Behavior1`` lowercases
 keys before passing them on, ``Behavior2`` multiplies results before returning
 them::
@@ -763,10 +832,11 @@ dictionaries, to be used for readwrite dictionaries that implement
 ``__getitem__`` and ``__setitem__`` and readonly dictionaries, that only
 implement ``__getitem__`` but no ``__setitem__``.
 
+
 Property pipelines
 ~~~~~~~~~~~~~~~~~~
-Plumbing of properties is experimental and might or might not do what you
-expect::
+
+Plumbing of read only properties::
 
     >>> class Behavior1(Behavior):
     ...     @plumb
@@ -786,9 +856,7 @@ expect::
     >>> plb.foo
     6
 
-It is possible to extend a property with so far unset getter/setter/deleter.
-The feature is experimental, might not fit the expected behavior and probably
-about to change::
+It is possible to extend a property with so far unset getter/setter/deleter::
 
     >>> class Behavior1(Behavior):
     ...     @plumb
@@ -817,12 +885,53 @@ about to change::
     >>> plb.foo
     8
 
+
+Subclassing Behaviors
+~~~~~~~~~~~~~~~~~~~~~
+
+Other than stage 1 instructions, which extend a class with properties
+and functions and thus override each other by the rules of ordinary
+subclassing, pipeline instructions are aggregated::
+
+    >>> class Behavior1(Behavior):
+    ... 
+    ...     @plumb
+    ...     def foo(_next, self):
+    ...         return 'Behavior1 ' + _next(self)
+    ... 
+    ...     @plumb
+    ...     def bar(_next, self):
+    ...         return 'Behavior1 ' + _next(self)
+
+    >>> class Behavior2(Behavior1):
+    ... 
+    ...     @plumb
+    ...     def foo(_next, self):
+    ...         return 'Behavior2 ' + _next(self)
+
+    >>> class Plumbing(object):
+    ...     __metaclass__ = plumber
+    ...     __plumbing__ = Behavior2
+    ... 
+    ...     def foo(self):
+    ...         return 'foo'
+    ... 
+    ...     def bar(self):
+    ...         return 'bar'
+
+    >>> plb = Plumbing()
+    >>> plb.foo()
+    'Behavior2 Behavior1 foo'
+    
+    >>> plb.bar()
+    'Behavior1 bar'
+
+
 Mixing methods and properties within the same pipeline is not possible
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Within a pipeline all elements need to be of the same type, it is not possible
 to mix properties with methods::
-
-    >>> from plumber import plumb
 
     >>> class Behavior1(Behavior):
     ...     @plumb
@@ -843,8 +952,10 @@ to mix properties with methods::
       with:
         <class 'Plumbing'>
 
+
 docstrings of classes, methods and properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Normal docstrings of the plumbing declaration and the behavior classes, plumbed
 methods and plumbed properties are joined by newlines starting with the
 plumbing declaration and followed by the behaviors in reverse order::
@@ -897,6 +1008,7 @@ change.
 
 ``zope.interface`` (if available)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The plumber does not depend on ``zope.interface`` but is aware of it. That
 means it will try to import it and if available will check plumbing behaviors
 for implemented interfaces and will make the plumbing implement them, too::
@@ -942,10 +1054,13 @@ implements an interface::
 
     >>> IBehavior1.implementedBy(Behavior1)
     True
+    
     >>> IBehavior2Base.implementedBy(Behavior2Base)
     True
+    
     >>> IBehavior2Base.implementedBy(Behavior2)
     True
+    
     >>> IBehavior2.implementedBy(Behavior2)
     True
 
@@ -964,6 +1079,7 @@ The directly declared and inherited interfaces are implemented::
 
     >>> IPlumbingClass.implementedBy(PlumbingClass)
     True
+    
     >>> IBase.implementedBy(PlumbingClass)
     True
 
@@ -971,8 +1087,10 @@ The interfaces implemented by the Behaviors are also implemented::
 
     >>> IBehavior1.implementedBy(PlumbingClass)
     True
+    
     >>> IBehavior2.implementedBy(PlumbingClass)
     True
+    
     >>> IBehavior2Base.implementedBy(PlumbingClass)
     True
 
@@ -982,117 +1100,32 @@ An instance of the class provides the interfaces::
 
     >>> IPlumbingClass.providedBy(plumbing)
     True
+    
     >>> IBase.providedBy(plumbing)
     True
+    
     >>> IBehavior1.providedBy(plumbing)
     True
+    
     >>> IBehavior2.providedBy(plumbing)
     True
+    
     >>> IBehavior2Base.providedBy(plumbing)
     True
 
-Design choices and ongoing discussions
---------------------------------------
-
-Stage1 left of stage2
-^^^^^^^^^^^^^^^^^^^^^
-Currently instructions of stage1 may be left of stage2 instructions. We
-consider to forbid this::
-
-    #    >>> class Behavior1(Behavior):
-    #    ...     @override
-    #    ...     def foo(self):
-    #    ...         return 5
-    #
-    #    >>> class Behavior2(Behavior):
-    #    ...     @plumb
-    #    ...     def foo(_next, self):
-    #    ...         return 2 * _next(self)
-    #
-    #    >>> class Plumbing(object):
-    #    ...     __metaclass__ = plumber
-    #    ...     __plumbing__ = Behavior1, Behavior2
-    #
-    #    >>> Plumbing().foo()
-    #    BANG
-
-Instance based plumbing system
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-At various points it felt tempting to be able to instantiate plumbing elements
-to configure them. For that we need ``__init__``, which woul mean that plumbing
-``__init__`` would need a different name, eg. ``prt_``-prefix. Consequently
-this would then be done for all plumbing methods.
-
-Reasoning why currently the methods are not prefixed:
-Plumbing elements are simply not meant to be normal classes. Their methods have
-the single purpose to be called as behavior of some other class' method calls,
-never directly. Configuration of plumbing elements can either be achieved by
-subclassing them or by putting the configuration on the objects/class they are
-used for.
-
-An instance based plumbing system would be far more complex. It could be
-implemented to exist alongside the current system. But it won't be implemented
-by us, without seeing a real use case first.
-
-Different zope.interface.Interfaces for plumbing and created class
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A different approach to the currently implemented system is having different
-interfaces for the behaviors and the class that is created::
-
-    #    >>> class IBehavior1Behaviour(Interface):
-    #    ...     pass
-    #
-    #    >>> @implementer(IBehavior1)
-    #    ... class Behavior1(Behavior):
-    #    ...     interfaces = (IBehavior1Behaviour,)
-    #
-    #    >>> class IBehavior2(Interface):
-    #    ...     pass
-    #
-    #    >>> @implementer(IBehavior2)
-    #    ... class Behavior2(Behavior):
-    #    ...     interfaces = (IBehavior2Behaviour,)
-    #
-    #    >>> IUs.implementedBy(Us)
-    #    True
-    #    >>> IBase.implementedBy(Us)
-    #    True
-    #    >>> IBehavior1.implementedBy(Us)
-    #    False
-    #    >>> IBehavior2.implementedBy(Us)
-    #    False
-    #    >>> IBehavior1Behaviour.implementedBy(Us)
-    #    False
-    #    >>> IBehavior2Behaviour.implementedBy(Us)
-    #    False
-
-Same reasoning as before: up to now unnecessary complexity. It could make sense
-in combination with an instance based plumbing system and could be implemented
-as behavior of it alongside the current class based system.
-
-Dynamic Plumbing
-^^^^^^^^^^^^^^^^
-The plumber could replace the ``__plumbing__`` attribute with a property of the
-same name. Changing the attribute during runtime would result in a plumbing
-specific to the object. A plumbing cache could further be used to reduce the
-number of plumbing chains in case of many dynamic plumbings. Realised eg by a
-descriptor.
-
-During discussion on the artssprint we agreed on not changing a plumbing class
-pipelines during runtime, but instead enable plumbing further behaviors during
-runtime per instance in front of the class' pipeline.
 
 Miscellanea
 -----------
 
 Nomenclature
 ^^^^^^^^^^^^
-``plumber``
+
+**``plumber``**
     Metaclass that creates a plumbing according to the instructions declared on
     plumbing behaviors. Instructions are given by decorators: ``default``,
     ``override``, ``finalize``, ``plumb`` and ``plumbifexists``.
 
-plumbing
+**plumbing**
     A plumber is called by a class that declares ``__metaclass__ = plumber``
     and a list of behaviors to be used for the plumbing
     ``__plumbing__ = Behavior1, Behavior2``. Apart from the behaviors,
@@ -1100,36 +1133,37 @@ plumbing
     into account. Once created, a plumbing looks like any other class and can
     be subclassed as usual.
 
-plumbing behavior
+**plumbing behavior**
     A plumbing behavior provides attributes (functions, properties and plain
     values) along with instructions for how to use them. Instructions are given
     via decorators: ``default``, ``override``, ``finalize``, ``plumb`` and
     ``plumbifexists`` (see Stage 1:... and Stage 2:...).
 
-plumbing pipeline
+**plumbing pipeline**
     Plumbing methods/properties with the same name form a pipeline. The
     entrance and end-point have the signature of normal methods: ``def
     foo(self, *args, **kw)``. The plumbing pipelines is a series of nested
     closures (see ``_next``).
 
-entrance (method)
+**entrance (method)**
     A method with a normal signature. i.e. expecting ``self`` as first
     argument, that is used to enter a pipeline. It is a ``_next`` function. A
     method declared on the class with the same name, will be overwritten, but
     referenced in the pipelines as the innermost method, the endpoint.
 
-``_next`` function
+**``_next`` function**
     The ``_next`` function is used to call the next method in a pipelines: in
     case of a plumbing method, it is a wrapper of it that passes the correct
     next ``_next`` as first argument and in case of an end-point, just the
     end-point method itself.
 
-end-point (method)
+**end-point (method)**
     Method retrieved from the plumbing class with ``getattr()``, before setting
     the entrance method on the class.
 
 If you feel something is missing, please let us now or write a short
 corresponding text.
+
 
 Test Coverage
 ^^^^^^^^^^^^^
@@ -1138,24 +1172,36 @@ Summary of the test coverage report::
 
     lines   cov%   module
        14   100%   plumber.__init__
-       49    91%   plumber._behavior
-      187   100%   plumber._instructions
+       49   100%   plumber._behavior
+      186   100%   plumber._instructions
        58   100%   plumber._plumber
         9   100%   plumber.exceptions
        19   100%   plumber.tests._globalmetaclasstest
        18   100%   plumber.tests.test_
 
+
 Contributors
 ^^^^^^^^^^^^
 
-- Florian Friesdorf <flo@chaoflow.net>
-- Robert Niederreiter <rnix@squarewave.at>
-- Jens W. Klein <jens@bluedynamics.com>
+- Florian Friesdorf <flo [at] chaoflow [dot] net>
+
+- Robert Niederreiter <rnix [at] squarewave [dot] at>
+
+- Jens W. Klein <jens [at] bluedynamics [dot] com>
+
 - Marco Lempen
+
 - Attila Oláh
+
+
+Credits
+^^^^^^^
+
 - thanks to WSGI for the initial concept
+
 - thanks to #python (for trying) to block stupid ideas, if there are any left,
   please let us know
+
 
 Changes
 ^^^^^^^
@@ -1215,17 +1261,6 @@ Changes
 
 - initial
   [chaoflow, 2011-01-04]
-
-
-TODO
-^^^^
-- traceback should show in which plumbing class we are, not something inside
-  the plumber. yafowil is doing it. jensens: would you be so kind.
-- verify behaviour with pickling in tests within plumber
-- verify behaviour with ZODB persistence in tests within plumber
-- subclassing for plumbing behaviors
-- mature plumbing of properties
-- py26 @foo.setter support in all decorators
 
 
 License / Disclaimer

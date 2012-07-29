@@ -1,7 +1,6 @@
-"""Instructions to be used in a plumbing part's declaration
-"""
 import re
 import types
+
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
