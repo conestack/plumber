@@ -2,8 +2,6 @@
 """
 import re
 import types
-from zope.deprecation import deprecated
-
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
@@ -303,12 +301,6 @@ class override(Stage1Instruction):
         if dct.has_key(self.name):
             return
         dct[self.name] = self.payload
-
-
-extend = override
-deprecated('extend', """
-``plumber.extend`` is deprecated as of plumber 1.2 and will be removed in 
-plumber 1.3. Use ``plumber.override`` instead.""")
 
 
 class finalize(Stage1Instruction):

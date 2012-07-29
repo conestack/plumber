@@ -1136,10 +1136,10 @@ Test Coverage
 
 Summary of the test coverage report::
 
-    lines   cov%   module   (path)
-        9   100%   plumber.__init__
-       53    92%   plumber._behavior
-      191   100%   plumber._instructions
+    lines   cov%   module
+       14   100%   plumber.__init__
+       49    91%   plumber._behavior
+      187   100%   plumber._instructions
        58   100%   plumber._plumber
         9   100%   plumber.exceptions
        19   100%   plumber.tests._globalmetaclasstest
@@ -1156,7 +1156,6 @@ Contributors
 - thanks to WSGI for the initial concept
 - thanks to #python (for trying) to block stupid ideas, if there are any left,
   please let us know
-
 
 Changes
 ^^^^^^^

@@ -1,4 +1,3 @@
-from zope.deprecation import deprecated
 from plumber.exceptions import PlumbingCollision
 from plumber._instructions import Instruction
 from plumber._instructions import plumb
@@ -105,9 +104,3 @@ class behaviormetaclass(type):
 # No doctest allowed here, it would be recognized as an instruction.
 class Behavior(_Behavior):
     __metaclass__ = behaviormetaclass
-
-
-Part = Behavior # B/C
-deprecated('Part', """
-``plumber.Part`` is deprecated as of plumber 1.2 and will be removed in
-plumber 1.3. Use ``plumber.Behavior`` instead.""")
