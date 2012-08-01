@@ -1206,8 +1206,8 @@ Credits
 Changes
 ^^^^^^^
 
-1.2dev
-------
+1.2
+---
 
 - Deprecate ``plumber.extend``. Use ``plumber.override`` instead.
   [rnix, 2012-07-28]
