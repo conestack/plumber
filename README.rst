@@ -1130,12 +1130,11 @@ Nomenclature
     ``override``, ``finalize``, ``plumb`` and ``plumbifexists``.
 
 **plumbing**
-    A plumbing is a class decorated by ``plumbing`` decorator function which
-    gets passed the behviors to apply,
-    e.g. ``@plumbing(Behavior1, Behavior2)``. Apart from the behaviors,
-    declarations on base classes and the class asking for the plumber are taken
-    into account. Once created, a plumbing looks like any other class and can
-    be subclassed as usual.
+    A plumbing is a class decorated by ``plumbing`` decorator which gets passed
+    the behviors to apply, e.g. ``@plumbing(Behavior1, Behavior2)``. Apart from
+    the behaviors, declarations on base classes and the class asking for the
+    plumber are taken into account. Once created, a plumbing looks like any
+    other class and can be subclassed as usual.
 
 **plumbing behavior**
     A plumbing behavior provides attributes (functions, properties and plain
@@ -1214,7 +1213,7 @@ Changes
 1.3 (unreleased)
 ----------------
 
-- Introduce ``plumbing decorator``.
+- Introduce ``plumbing`` decorator.
   [rnix, 2014-07-31]
 
 - Remove deprecated ``plumber.extend`` and ``plumber.Part``.
