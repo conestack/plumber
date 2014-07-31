@@ -1,5 +1,4 @@
 import re
-import types
 
 try:
     from zope.interface import classImplements

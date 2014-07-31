@@ -1,5 +1,4 @@
 from plumber._behavior import Instructions
-from plumber._behavior import behaviormetaclass
 
 
 class Stacks(object):
@@ -108,3 +107,26 @@ class plumber(type):
             for stack in stacks.stage2.values():
                 instruction = stack[-1]
                 instruction(cls)
+
+
+class plumbing(object):
+    """Plumbeing decorator.
+    """
+
+    def __init__(self, *behaviors):
+        assert len(behaviors) > 0
+        self.behaviors = behaviors
+
+    def __call__(self, cls):
+        # Basically taken from six
+        orig_vars = cls.__dict__.copy()
+        orig_vars.pop('__dict__', None)
+        orig_vars.pop('__weakref__', None)
+        slots = orig_vars.get('__slots__')
+        if slots is not None:
+            if isinstance(slots, str):
+                slots = [slots]
+            for slots_var in slots:
+                orig_vars.pop(slots_var)
+        orig_vars['__plumbing__'] = self.behaviors
+        return plumber(cls.__name__, cls.__bases__, orig_vars)

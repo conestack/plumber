@@ -1,6 +1,6 @@
-from plumber.exceptions import PlumbingCollision
 from plumber._instructions import Instruction
 from plumber._instructions import plumb
+from plumber.compat import add_metaclass
 
 try:
     from plumber._instructions import _implements
@@ -44,14 +44,18 @@ class behaviormetaclass(type):
     Turn __doc__ and implemented zope interfaces into instructions and tell
     existing instructions their name and parent, for subclasses of ``Behavior``.
 
-        >>> class A(object):
-        ...     __metaclass__ = behaviormetaclass
+        >>> from plumber.compat import add_metaclass
+
+        >>> @add_metaclass(behaviormetaclass)
+        ... class A(object):
+        ...     pass
 
         >>> getattr(A, '__plumbing_instructions__', 'No behavior')
         'No behavior'
 
-        >>> class A(Behavior):
-        ...     __metaclass__ = behaviormetaclass
+        >>> @add_metaclass(behaviormetaclass)
+        ... class A(Behavior):
+        ...     pass
 
         >>> getattr(A, '__plumbing_instructions__', None) and 'Behavior'
         'Behavior'
@@ -100,5 +104,6 @@ class behaviormetaclass(type):
 
 # Base class for plumbing behaviors: identification and metaclass setting
 # No doctest allowed here, it would be recognized as an instruction.
+@add_metaclass(behaviormetaclass)
 class Behavior(_Behavior):
-    __metaclass__ = behaviormetaclass
+    pass

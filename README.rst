@@ -154,7 +154,8 @@ The plumbing system
 The ``plumber`` metaclass creates plumbing classes according to instructions
 found on plumbing behaviors. First, all instructions are gathered, then they are
 applied in two stages: stage1: extension and stage2: pipelines, docstrings and
-optional ``zope.interfaces``.
+optional ``zope.interfaces``. There exists a class decorator ``plumbing`` which
+should be used in favor of setting metaclass directly as of plumber 1.3.
 
 .. contents::
     :local:
@@ -192,12 +193,12 @@ plumbing behaviors to be processed from left to right. Further it may declare
 attributes like every normal class, they will be treated as implicit
 ``finalize`` instructions (see Stage 1: Extension)::
 
-    >>> from plumber import plumber
+    >>> from plumber import plumbing
 
     >>> Base = dict
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(Base):
     ...
     ...     def foobar(self):
     ...         return 5
@@ -341,9 +342,8 @@ In code::
     >>> class Base(object):
     ...     K = 'Base'
 
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(Base):
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
@@ -385,9 +385,8 @@ collisions::
     >>> class Behavior1(Behavior):
     ...     O = finalize(False)
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1
+    >>> @plumbing(Behavior1)
+    ... class Plumbing(object):
     ...     O = True
     Traceback (most recent call last):
       ...
@@ -399,9 +398,8 @@ collisions::
     >>> class Behavior2(Behavior):
     ...     P = finalize(False)
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior2
+    >>> @plumbing(Behavior2)
+    ... class Plumbing(object):
     ...     P = True
     Traceback (most recent call last):
       ...
@@ -416,9 +414,9 @@ collisions::
     >>> class Behavior2(Behavior):
     ...     Q = finalize(True)
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(object):
+    ...     pass
     Traceback (most recent call last):
       ...
     PlumbingCollision:
@@ -448,9 +446,8 @@ in code::
     ...     L = 'Base'
     ...     M = 'Base'
 
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(Base):
     ...     K = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M']:
@@ -496,9 +493,8 @@ in code::
     ...     K = 'Base'
     ...     L = 'Base'
 
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(Base):
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
@@ -546,9 +542,9 @@ in code::
     ...     K = 'Base'
     ...     L = 'Base'
 
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(Base):
+    ...     pass
 
     >>> for x in ['K', 'L']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
@@ -589,9 +585,9 @@ in code::
     ...     K = 'Base'
     ...     L = 'Base'
 
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(Base):
+    ...     pass
 
     >>> for x in ['K', 'L']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
@@ -632,9 +628,9 @@ in code::
     ...     K = 'Base'
     ...     L = 'Base'
 
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(Base):
+    ...     pass
 
     >>> for x in ['K', 'L']:
     ...     print "%s from %s" % (x, getattr(Plumbing, x))
@@ -675,9 +671,9 @@ in code::
     ...                              # superclass is ``override`` instruction.
     ...                              # due to ordinary inheritance behavior.
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior2
+    >>> @plumbing(Behavior2)
+    ... class Plumbing(object):
+    ...     pass
     
     >>> plb = Plumbing()
     >>> plb.J
@@ -773,9 +769,10 @@ them::
     ...         return ret
 
     >>> Base = dict
-    >>> class Plumbing(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(Base):
+    ...     pass
 
     >>> plb = Plumbing()
     >>> plb['abc'] = 6
@@ -794,9 +791,9 @@ Plumbing pipelines need endpoints. If no endpoint is available an
     ...     def foo(_next, self):
     ...         pass
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1
+    >>> @plumbing(Behavior1)
+    ... class Plumbing(object):
+    ...     pass
     Traceback (most recent call last):
       ...
     AttributeError: type object 'Plumbing' has no attribute 'foo'
@@ -815,9 +812,8 @@ If no endpoint is available and a behavior does not care about that,
     ...     def bar(_next, self):
     ...         return 2 * _next(self)
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1
+    >>> @plumbing(Behavior1)
+    ... class Plumbing(object):
     ...
     ...     def bar(self):
     ...         return 6
@@ -844,9 +840,8 @@ Plumbing of read only properties::
     ...     def foo(_next, self):
     ...         return 2 * _next(self)
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1
+    >>> @plumbing(Behavior1)
+    ... class Plumbing(object):
     ...
     ...     @property
     ...     def foo(self):
@@ -872,9 +867,8 @@ It is possible to extend a property with so far unset getter/setter/deleter::
     ...         override(set_foo),
     ...         ))
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(object):
     ...
     ...     @property
     ...     def foo(self):
@@ -909,9 +903,8 @@ subclassing, pipeline instructions are aggregated::
     ...     def foo(_next, self):
     ...         return 'Behavior2 ' + _next(self)
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior2
+    >>> @plumbing(Behavior2)
+    ... class Plumbing(object):
     ... 
     ...     def foo(self):
     ...         return 'foo'
@@ -938,9 +931,8 @@ to mix properties with methods::
     ...     def foo(_next, self):
     ...         return _next(self)
 
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1
+    >>> @plumbing(Behavior1)
+    ... class Plumbing(object):
     ...
     ...     @property
     ...     def foo(self):
@@ -976,11 +968,10 @@ plumbing declaration and followed by the behaviors in reverse order::
     ...         """
     ...     bar = plumb(property(None, None, None, "P2.bar"))
 
-    >>> class Plumbing(object):
+    >>> @plumbing(P1, P2)
+    ... class Plumbing(object):
     ...     """Plumbing
     ...     """
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = P1, P2
     ...     bar = property(None, None, None, "Plumbing.bar")
 
     >>> print Plumbing.__doc__
@@ -1004,6 +995,19 @@ plumbing declaration and followed by the behaviors in reverse order::
 
 The accumulation of docstrings is an experimental feature and will probably
 change.
+
+
+Slots on plumbings
+~~~~~~~~~~~~~~~~~~
+
+Some might use slots plumbing classes::
+
+    >>> class P1(Behavior):
+    ...     foo = default('foo')
+
+    >>> @plumbing(P1)
+    ... class Plumbing(object):
+    ...     __slots__ = 'foo'
 
 
 ``zope.interface`` (if available)
@@ -1071,9 +1075,9 @@ implementing ``IPlumbingClass``::
     ...     pass
 
     >>> @implementer(IPlumbingClass)
+    ... @plumbing(Behavior1, Behavior2)
     ... class PlumbingClass(Base):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
+    ...     pass
 
 The directly declared and inherited interfaces are implemented::
 
@@ -1126,9 +1130,9 @@ Nomenclature
     ``override``, ``finalize``, ``plumb`` and ``plumbifexists``.
 
 **plumbing**
-    A plumber is called by a class that declares ``__metaclass__ = plumber``
-    and a list of behaviors to be used for the plumbing
-    ``__plumbing__ = Behavior1, Behavior2``. Apart from the behaviors,
+    A plumbing is a class decorated by ``plumbing`` decorator function which
+    gets passed the behviors to apply,
+    e.g. ``@plumbing(Behavior1, Behavior2)``. Apart from the behaviors,
     declarations on base classes and the class asking for the plumber are taken
     into account. Once created, a plumbing looks like any other class and can
     be subclassed as usual.
@@ -1171,11 +1175,12 @@ Test Coverage
 Summary of the test coverage report::
 
     lines   cov%   module
-       14   100%   plumber.__init__
-       49   100%   plumber._behavior
-      186   100%   plumber._instructions
-       58   100%   plumber._plumber
+        8   100%   plumber.__init__
+       50   100%   plumber._behavior
+      185   100%   plumber._instructions
+       74   100%   plumber._plumber
         9   100%   plumber.exceptions
+        1   100%   plumber.tests.__init__
        19   100%   plumber.tests._globalmetaclasstest
        18   100%   plumber.tests.test_
 
@@ -1206,6 +1211,16 @@ Credits
 Changes
 ^^^^^^^
 
+1.3 (unreleased)
+----------------
+
+- Introduce ``plumbing decorator``.
+  [rnix, 2014-07-31]
+
+- Remove deprecated ``plumber.extend`` and ``plumber.Part``.
+  [rnix, 2014-07-31]
+
+
 1.2
 ---
 
@@ -1214,6 +1229,7 @@ Changes
 
 - Deprecate ``plumber.Part``. Use ``plumber.Behavior`` instead.
   [rnix, 2012-07-28]
+
 
 1.1
 ---
@@ -1265,7 +1281,7 @@ Changes
 
 License / Disclaimer
 ^^^^^^^^^^^^^^^^^^^^
-Copyright (c) 2011-2012, BlueDynamics Alliance, Austria, Germany, Switzerland
+Copyright (c) 2011-2014, BlueDynamics Alliance, Austria, Germany, Switzerland
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
