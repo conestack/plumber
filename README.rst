@@ -236,8 +236,8 @@ A plumbing class can be subclassed like normal classes::
 The plumber gathers instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A plumbing declaration provides a list of behaviors via the ``__plumbing__``
-attribute. Behaviors provide instructions to be applied in two stages:
+A plumbing declaration provides a list of behaviors via the ``plumbing``
+decorator. Behaviors provide instructions to be applied in two stages:
 
 stage1
   - extension via ``default``, ``override`` and ``finalize``, the result of this
