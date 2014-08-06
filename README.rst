@@ -1210,8 +1210,8 @@ Credits
 Changes
 ^^^^^^^
 
-1.3 (unreleased)
-----------------
+1.3
+---
 
 - Introduce ``plumbing`` decorator.
   [rnix, 2014-07-31]
@@ -1280,6 +1280,7 @@ Changes
 
 License / Disclaimer
 ^^^^^^^^^^^^^^^^^^^^
+
 Copyright (c) 2011-2014, BlueDynamics Alliance, Austria, Germany, Switzerland
 All rights reserved.
 
