@@ -1213,10 +1213,11 @@ Credits
 Changes
 ^^^^^^^
 
-1.4 (unreleased)
-----------------
+1.3.1 (unreleased)
+------------------
 
-- No changes yet.
+- Avoid use of deprecated ``dict.has_key``.
+  [rnix, 2015-10-05]
 
 
 1.3
@@ -1290,7 +1291,7 @@ Changes
 License / Disclaimer
 ^^^^^^^^^^^^^^^^^^^^
 
-Copyright (c) 2011-2014, BlueDynamics Alliance, Austria, Germany, Switzerland
+Copyright (c) 2011-2015, BlueDynamics Alliance, Austria, Germany, Switzerland
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
