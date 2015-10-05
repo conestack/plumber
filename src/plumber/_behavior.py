@@ -5,8 +5,8 @@ from plumber.compat import add_metaclass
 try:
     from plumber._instructions import _implements
     ZOPE_INTERFACE_AVAILABLE = True
-except ImportError: #pragma NO COVERAGE
-    ZOPE_INTERFACE_AVAILABLE = False #pragma NO COVERAGE
+except ImportError:                                         #pragma NO COVER
+    ZOPE_INTERFACE_AVAILABLE = False                        #pragma NO COVER
 
 
 class _Behavior(object):
@@ -21,7 +21,7 @@ class Instructions(object):
 
     def __init__(self, behavior):
         self.behavior = behavior
-        if not behavior.__dict__.has_key(self.attrname):
+        if self.attrname not in behavior.__dict__:
             setattr(behavior, self.attrname, [])
 
     def __contains__(self, item):
@@ -42,7 +42,8 @@ class behaviormetaclass(type):
     """Metaclass for behavior creation
 
     Turn __doc__ and implemented zope interfaces into instructions and tell
-    existing instructions their name and parent, for subclasses of ``Behavior``.
+    existing instructions their name and parent, for subclasses of
+    ``Behavior``.
 
         >>> from plumber.compat import add_metaclass
 
@@ -97,7 +98,7 @@ class behaviormetaclass(type):
                     continue
                 # stage1 instructions with the same name are ignored
                 if instr.__name__ in [x.__name__ for x in instructions if
-                        x.__stage__ == 'stage1']:
+                                      x.__stage__ == 'stage1']:
                     continue
                 instructions.append(instr)
 

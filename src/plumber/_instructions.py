@@ -4,8 +4,8 @@ try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
     ZOPE_INTERFACE_AVAILABLE = True
-except ImportError: #pragma NO COVERAGE
-    ZOPE_INTERFACE_AVAILABLE = False #pragma NO COVERAGE
+except ImportError:                                         #pragma NO COVER
+    ZOPE_INTERFACE_AVAILABLE = False                        #pragma NO COVER
 
 from plumber.exceptions import PlumbingCollision
 
@@ -146,7 +146,7 @@ class Instruction(object):
         # coverage
         if self is right:
             return True
-        if not self.__class__ is right.__class__:
+        if self.__class__ is not right.__class__:
             return False
         if self.name == right.name:
             if self.payload == right.payload:
@@ -241,7 +241,7 @@ class default(Stage1Instruction):
         raise PlumbingCollision(self, right)
 
     def __call__(self, dct, bases):
-        if not dct.has_key(self.name) and not self.name in bases:
+        if self.name not in dct and self.name not in bases:
             dct[self.name] = self.payload
 
 
@@ -296,7 +296,7 @@ class override(Stage1Instruction):
         raise PlumbingCollision(self, right)
 
     def __call__(self, dct, bases):
-        if dct.has_key(self.name):
+        if self.name in dct:
             return
         dct[self.name] = self.payload
 
@@ -355,7 +355,7 @@ class finalize(Stage1Instruction):
         raise PlumbingCollision(self, right)
 
     def __call__(self, dct, bases):
-        if dct.has_key(self.name):
+        if self.name in dct:
             raise PlumbingCollision('Plumbing class', self)
         dct[self.name] = self.payload
 
@@ -372,7 +372,7 @@ class Stage2Instruction(Instruction):
     def __call__(self, cls):
         """cls is the plumbing class, type finished its work already
         """
-        raise NotImplementedError #pragma NO COVERAGE
+        raise NotImplementedError                           #pragma NO COVER
 
 
 def entrancefor(plumbing_method, _next):
@@ -422,7 +422,7 @@ class plumb(Stage2Instruction):
             >>> plb1 + Instruction(1)
             Traceback (most recent call last):
               ...
-            PlumbingCollision: 
+            PlumbingCollision:
                 <plumb 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
@@ -430,7 +430,7 @@ class plumb(Stage2Instruction):
             >>> plumb(lambda x: None) + plumb(property(lambda x: None))
             Traceback (most recent call last):
               ...
-            PlumbingCollision: 
+            PlumbingCollision:
                 <plumb 'None' of None payload=<function <lambda> at 0x...>>
               with:
                 <plumb 'None' of None payload=<property object at 0x...>>
@@ -450,7 +450,7 @@ class plumb(Stage2Instruction):
             >>> plumb(1) + plumb(2)
             Traceback (most recent call last):
               ...
-            PlumbingCollision: 
+            PlumbingCollision:
                 <plumb 'None' of None payload=1>
               with:
                 <plumb 'None' of None payload=2>
@@ -484,7 +484,7 @@ class plumb(Stage2Instruction):
             return p1.__class__(*propfuncs)
         if callable(p1):
             return plbfunc(p1, p2)
-        raise RuntimeError("We should not reach this code!") #pragma NO COVERAGE
+        raise RuntimeError("We should not reach this code!")  #pragma NO COVER
 
     def __call__(self, cls):
         # Check for a method on the plumbing class itself.

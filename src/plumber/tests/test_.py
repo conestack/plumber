@@ -18,6 +18,7 @@ TESTMODULES = [
     'plumber.tests._globalmetaclasstest',
 ]
 
+
 def test_suite():
     return unittest.TestSuite([
         doctest.DocTestSuite(
@@ -33,5 +34,6 @@ def test_suite():
             ) for file in TESTFILES
         ])
 
+
 if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite') #pragma NO COVERAGE
+    unittest.main(defaultTest='test_suite')                 #pragma NO COVER

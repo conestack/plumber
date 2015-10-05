@@ -1000,14 +1000,17 @@ change.
 Slots on plumbings
 ~~~~~~~~~~~~~~~~~~
 
-Some might use slots plumbing classes::
+A plumbing class can have __slots__ like normal classes. ::
 
     >>> class P1(Behavior):
     ...     foo = default('foo')
 
     >>> @plumbing(P1)
-    ... class Plumbing(object):
+    ... class WithSlots(object):
     ...     __slots__ = 'foo'
+
+    >>> WithSlots().foo
+    'foo'
 
 
 ``zope.interface`` (if available)
