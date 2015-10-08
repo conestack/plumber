@@ -3,7 +3,7 @@ from setuptools import setup
 import os
 
 
-version = '1.3.1'
+version = '1.4.dev0'
 shortdesc = "An alternative to mixin-based extension of classes."
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 
