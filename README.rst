@@ -1213,8 +1213,8 @@ Credits
 Changes
 ^^^^^^^
 
-1.3.1 (unreleased)
-------------------
+1.3.1
+-----
 
 - Avoid use of deprecated ``dict.has_key``.
   [rnix, 2015-10-05]
