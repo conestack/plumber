@@ -1,6 +1,7 @@
+sudo: false
 language: python
 python: "2.7"
 install:
-  - python2.7 bootstrap.py 
-  - ./bin/buildout -q
+  - pip install -U pip setuptools zc.buildout
+  - buildout 
 script: ./bin/test
