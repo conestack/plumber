@@ -1297,7 +1297,7 @@ Changes
 License / Disclaimer
 ^^^^^^^^^^^^^^^^^^^^
 
-Copyright (c) 2011-2015, BlueDynamics Alliance, Austria, Germany, Switzerland
+Copyright (c) 2011-2017, BlueDynamics Alliance, Austria, Germany, Switzerland
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
