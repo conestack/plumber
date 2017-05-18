@@ -28,7 +28,9 @@ Control of precedence only through order of mixins
 
 Mixins are commonly used to extend classes with pre-defined behaviours: an
 attribute on the first mixin overwrites attributes with the same name on all
-following mixins and the base class being extended::
+following mixins and the base class being extended.
+
+.. code-block:: pycon
 
     >>> class Mixin1(object):
     ...     a = 1
@@ -73,7 +75,9 @@ defaults.
 
 It is possible to build a chain of methods using ``super``: ``Mixin1`` turns
 the key lowercase before passing it on, ``Mixin2`` multiplies the result by 2
-before returning it and both are chatty about start/stop::
+before returning it and both are chatty about start/stop.
+
+.. code-block:: pycon
 
     >>> class Mixin1(object):
     ...     def __getitem__(self, key):
@@ -107,7 +111,9 @@ before returning it and both are chatty about start/stop::
 ``dict.__getitem__`` forms the endpoint of the chain as it returns a value
 without delegating to a method later in the chain (using ``super``). If there
 is no endpoint an ``AttributeError`` is raised during runtime, not during class
-creation::
+creation.
+
+.. code-block:: pycon
 
     >>> class Mixin1(object):
     ...     def foo(self):
@@ -167,7 +173,9 @@ Plumbing behaviors provide instructions
 Plumbing behaviors correspond to mixins, but are more powerful and flexible. A
 plumbing behavior needs to inherit from ``plumber.Behavior`` and declares 
 attributes with instructions on how to use them, here by example of the 
-``default`` instruction (more later)::
+``default`` instruction (more later).
+
+.. code-block:: pycon
 
     >>> from plumber import Behavior
     >>> from plumber import default
@@ -191,7 +199,9 @@ or as decorators (``@default``).
 A plumbing declaration defines the ``plumber`` as metaclass and one or more
 plumbing behaviors to be processed from left to right. Further it may declare
 attributes like every normal class, they will be treated as implicit
-``finalize`` instructions (see Stage 1: Extension)::
+``finalize`` instructions (see Stage 1: Extension).
+
+.. code-block:: pycon
 
     >>> from plumber import plumbing
 
@@ -203,7 +213,9 @@ attributes like every normal class, they will be treated as implicit
     ...     def foobar(self):
     ...         return 5
 
-The result is a plumbing class created according to the plumbing declaration::
+The result is a plumbing class created according to the plumbing declaration.
+
+.. code-block:: pycon
 
     >>> plb = Plumbing()
     >>> plb.a
@@ -218,7 +230,9 @@ The result is a plumbing class created according to the plumbing declaration::
     >>> plb['a']
     1
 
-A plumbing class can be subclassed like normal classes::
+A plumbing class can be subclassed like normal classes.
+
+.. code-block:: pycon
 
     >>> class Sub(Plumbing):
     ...     a = 'Sub'
@@ -250,7 +264,9 @@ stage2
 
 The plumber walks the Behavior list from left to right (behavior order). On its
 way it gathers instructions onto stacks, sorted by stage and attribute name. A 
-history of all instructions is kept::
+history of all instructions is kept.
+
+.. code-block:: pycon
 
     >>> pprint(Plumbing.__plumbing_stacks__)
     {'history': 
@@ -322,7 +338,9 @@ The extension decorators:
 Interaction: ``finalize``, plumbing declaration and base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In code::
+In code.
+
+.. code-block:: pycon
 
     >>> from plumber import finalize
 
@@ -374,7 +392,9 @@ summary:
 | Q    | f         | f         |          | ?     | collision |
 +------+-----------+-----------+----------+-------+-----------+
 
-collisions::
+collisions.
+
+.. code-block:: pycon
 
     >>> from plumber.exceptions import PlumbingCollision
 
@@ -427,7 +447,9 @@ collisions::
 Interaction: ``override``, plumbing declaration and base classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-in code::
+in code.
+
+.. code-block:: pycon
 
     >>> from plumber import override
 
@@ -477,7 +499,9 @@ summary:
 Interaction: ``default``, plumbing declaration and base class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-in code::
+in code.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     N = default('Behavior1')
@@ -527,7 +551,9 @@ summary:
 Interaction: ``finalize`` wins over ``override``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-in code::
+in code.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     K = override('Behavior1')
@@ -570,7 +596,9 @@ summary:
 Interaction: ``finalize`` wins over ``default``:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-in code::
+in code.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     K = default('Behavior1')
@@ -613,7 +641,9 @@ summary:
 Interaction: ``override`` wins over ``default``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-in code::
+in code.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     K = default('Behavior1')
@@ -656,7 +686,9 @@ summary:
 Subclassing Behaviors
 ~~~~~~~~~~~~~~~~~~~~~
 
-in code::
+in code.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     J = default('Behavior1')
@@ -746,7 +778,9 @@ Method pipelines
 
 Two plumbing behaviors and a ``dict`` as base class. ``Behavior1`` lowercases
 keys before passing them on, ``Behavior2`` multiplies results before returning
-them::
+them.
+
+.. code-block:: pycon
 
     >>> from plumber import plumb
 
@@ -783,7 +817,9 @@ them::
     12
 
 Plumbing pipelines need endpoints. If no endpoint is available an
-``AttributeError`` is raised::
+``AttributeError`` is raised.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     @plumb
@@ -798,7 +834,9 @@ Plumbing pipelines need endpoints. If no endpoint is available an
     AttributeError: type object 'Plumbing' has no attribute 'foo'
 
 If no endpoint is available and a behavior does not care about that,
-``plumbifexists`` can be used to only plumb if an endpoint is available::
+``plumbifexists`` can be used to only plumb if an endpoint is available.
+
+.. code-block:: pycon
 
     >>> from plumber import plumbifexists
 
@@ -831,7 +869,9 @@ implement ``__getitem__`` but no ``__setitem__``.
 Property pipelines
 ~~~~~~~~~~~~~~~~~~
 
-Plumbing of read only properties::
+Plumbing of read only properties.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     @plumb
@@ -850,7 +890,9 @@ Plumbing of read only properties::
     >>> plb.foo
     6
 
-It is possible to extend a property with so far unset getter/setter/deleter::
+It is possible to extend a property with so far unset getter/setter/deleter.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     @plumb
@@ -884,7 +926,9 @@ Subclassing Behaviors
 
 Other than stage 1 instructions, which extend a class with properties
 and functions and thus override each other by the rules of ordinary
-subclassing, pipeline instructions are aggregated::
+subclassing, pipeline instructions are aggregated.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ... 
@@ -923,7 +967,9 @@ Mixing methods and properties within the same pipeline is not possible
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Within a pipeline all elements need to be of the same type, it is not possible
-to mix properties with methods::
+to mix properties with methods.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     @plumb
@@ -950,7 +996,9 @@ docstrings of classes, methods and properties
 
 Normal docstrings of the plumbing declaration and the behavior classes, plumbed
 methods and plumbed properties are joined by newlines starting with the
-plumbing declaration and followed by the behaviors in reverse order::
+plumbing declaration and followed by the behaviors in reverse order.
+
+.. code-block:: pycon
 
     >>> class P1(Behavior):
     ...     """P1
@@ -1015,7 +1063,9 @@ From python docs:
   defined by __slots__; otherwise, the class attribute would overwrite the
   descriptor assignment.
 
-Here we have a class with a regular class member::
+Here we have a class with a regular class member.
+
+.. code-block:: pycon
 
     >>> class A(object):
     ...     foo = 'foo'
@@ -1031,7 +1081,9 @@ Here we have a class with a regular class member::
     ('foo', 'foo')]
 
 Now we define ``foo`` as slot variable. ``foo`` from superclass gets
-overwritten by slot descriptor::
+overwritten by slot descriptor.
+
+.. code-block:: pycon
 
     >>> class B(A):
     ...     __slots__ = 'foo'
@@ -1046,7 +1098,9 @@ overwritten by slot descriptor::
     ('foo', <member 'foo' of 'B' objects>)]
 
 Slots are not effected by inheritance. Thus, overriding ``foo`` on subclass
-of ``B`` results in an ordinary class attribute::
+of ``B`` results in an ordinary class attribute.
+
+.. code-block:: pycon
 
     >>> class C(B):
     ...     foo = 'foo'
@@ -1061,7 +1115,9 @@ of ``B`` results in an ordinary class attribute::
 
 Defining class members which are defined as slot variables does not work.
 In Python 2 the slot descriptor simply gets overwritten with the class member,
-in Python 3 this behavior changed and we an error::
+in Python 3 this behavior changed and we an error.
+
+.. code-block:: pycon
 
     >>> import sys
     >>> if sys.version_info[0] < 3:
@@ -1086,7 +1142,9 @@ in Python 3 this behavior changed and we an error::
     ...     else:
     ...         raise Exception('Expected ValueError, but not thrown')
 
-Slots cannot be defined on plumbing behaviors::
+Slots cannot be defined on plumbing behaviors.
+
+.. code-block:: pycon
 
     >>> try:
     ...     class P1(Behavior):
@@ -1097,7 +1155,9 @@ Slots cannot be defined on plumbing behaviors::
     ...     raise Exception('Expected TypeError, but not thrown')
 
 Slots can be defined on plumbings as usual, just make sure you do not mix in
-class members with plumbings::
+class members with plumbings.
+
+.. code-block:: pycon
 
     >>> class P1(Behavior):
     ...     foo = default('foo')
@@ -1120,7 +1180,9 @@ class members with plumbings::
     ...     else:
     ...         raise Exception('Expected ValueError, but not thrown')
 
-A plumbing class can have __slots__ like normal classes. ::
+A plumbing class can have __slots__ like normal classes.
+
+.. code-block:: pycon
 
     >>> class P1(Behavior):
     ...     @default
@@ -1144,12 +1206,16 @@ A plumbing class can have __slots__ like normal classes. ::
 
 The plumber does not depend on ``zope.interface`` but is aware of it. That
 means it will try to import it and if available will check plumbing behaviors
-for implemented interfaces and will make the plumbing implement them, too::
+for implemented interfaces and will make the plumbing implement them, too.
+
+.. code-block:: pycon
 
     >>> from zope.interface import Interface
     >>> from zope.interface import implementer
 
-A class with an interface that will serve as base class of a plumbing::
+A class with an interface that will serve as base class of a plumbing.
+
+.. code-block:: pycon
 
     >>> class IBase(Interface):
     ...     pass
@@ -1162,7 +1228,9 @@ A class with an interface that will serve as base class of a plumbing::
     True
 
 Two behaviors with corresponding interfaces, one with a base class that also
-implements an interface::
+implements an interface.
+
+.. code-block:: pycon
 
     >>> class IBehavior1(Interface):
     ...     pass
@@ -1198,7 +1266,9 @@ implements an interface::
     True
 
 A plumbing based on ``Base`` using ``Behavior1`` and ``Behavior2`` and
-implementing ``IPlumbingClass``::
+implementing ``IPlumbingClass``.
+
+.. code-block:: pycon
 
     >>> class IPlumbingClass(Interface):
     ...     pass
@@ -1208,7 +1278,9 @@ implementing ``IPlumbingClass``::
     ... class PlumbingClass(Base):
     ...     pass
 
-The directly declared and inherited interfaces are implemented::
+The directly declared and inherited interfaces are implemented.
+
+.. code-block:: pycon
 
     >>> IPlumbingClass.implementedBy(PlumbingClass)
     True
@@ -1216,7 +1288,9 @@ The directly declared and inherited interfaces are implemented::
     >>> IBase.implementedBy(PlumbingClass)
     True
 
-The interfaces implemented by the Behaviors are also implemented::
+The interfaces implemented by the Behaviors are also implemented.
+
+.. code-block:: pycon
 
     >>> IBehavior1.implementedBy(PlumbingClass)
     True
@@ -1227,7 +1301,9 @@ The interfaces implemented by the Behaviors are also implemented::
     >>> IBehavior2Base.implementedBy(PlumbingClass)
     True
 
-An instance of the class provides the interfaces::
+An instance of the class provides the interfaces.
+
+.. code-block:: pycon
 
     >>> plumbing = PlumbingClass()
 
@@ -1316,11 +1392,11 @@ Summary of the test coverage report::
 Contributors
 ^^^^^^^^^^^^
 
-- Florian Friesdorf <flo [at] chaoflow [dot] net>
+- Florian Friesdorf
 
-- Robert Niederreiter <rnix [at] squarewave [dot] at>
+- Robert Niederreiter
 
-- Jens W. Klein <jens [at] bluedynamics [dot] com>
+- Jens W. Klein
 
 - Marco Lempen
 
@@ -1342,7 +1418,8 @@ Changes
 1.4 (unreleased)
 ----------------
 
-- No changes yet.
+- Python 3 support.
+  [rnix, 2017-05-18]
 
 
 1.3.1
