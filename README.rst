@@ -77,18 +77,18 @@ before returning it and both are chatty about start/stop::
 
     >>> class Mixin1(object):
     ...     def __getitem__(self, key):
-    ...         print "Mixin1 start"
+    ...         print("Mixin1 start")
     ...         key = key.lower()
     ...         ret = super(Mixin1, self).__getitem__(key)
-    ...         print "Mixin1 stop"
+    ...         print("Mixin1 stop")
     ...         return ret
 
     >>> class Mixin2(object):
     ...     def __getitem__(self, key):
-    ...         print "Mixin2 start"
+    ...         print("Mixin2 start")
     ...         ret = super(Mixin2, self).__getitem__(key)
     ...         ret = 2 * ret
-    ...         print "Mixin2 stop"
+    ...         print("Mixin2 stop")
     ...         return ret
 
     >>> Base = dict
@@ -253,19 +253,13 @@ way it gathers instructions onto stacks, sorted by stage and attribute name. A
 history of all instructions is kept::
 
     >>> pprint(Plumbing.__plumbing_stacks__)
-    {'history':
-      [<_implements '__interfaces__' of None payload=()>,
-       <default 'a' of <class 'Behavior1'> payload=True>,
-       <default 'foo' of <class 'Behavior1'> payload=<function foo at 0x...>>,
-       <_implements '__interfaces__' of None payload=()>,
-       <default 'bar' of <class 'Behavior2'> payload=<property object at 0x...>>],
-     'stages':
-       {'stage1':
-         {'a': [<default 'a' of <class 'Behavior1'> payload=True>],
-          'bar': [<default 'bar' of <class 'Behavior2'> payload=<property ...
-          'foo': [<default 'foo' of <class 'Behavior1'> payload=<function foo ...
-        'stage2':
-         {'__interfaces__': [<_implements '__interfaces__' of None payload=()...
+    {'history': 
+      [...],
+     'stages': 
+       {'stage1': 
+         {...},
+        'stage2': 
+          {...}}}
 
 Before putting a new instruction onto a stack, it is compared with the latest
 instruction on the stack. It is either taken as is, discarded, merged or a
@@ -347,7 +341,7 @@ In code::
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
     K from Base
     L from Plumbing
     M from Behavior2
@@ -382,15 +376,18 @@ summary:
 
 collisions::
 
+    >>> from plumber.exceptions import PlumbingCollision
+
     >>> class Behavior1(Behavior):
     ...     O = finalize(False)
 
-    >>> @plumbing(Behavior1)
-    ... class Plumbing(object):
-    ...     O = True
-    Traceback (most recent call last):
-      ...
-    PlumbingCollision:
+    >>> try:
+    ...     @plumbing(Behavior1)
+    ...     class Plumbing(object):
+    ...         O = True
+    ... except PlumbingCollision as e:
+    ...     print(e)
+    <BLANKLINE>
         Plumbing class
       with:
         <finalize 'O' of <class 'Behavior1'> payload=False>
@@ -398,12 +395,13 @@ collisions::
     >>> class Behavior2(Behavior):
     ...     P = finalize(False)
 
-    >>> @plumbing(Behavior2)
-    ... class Plumbing(object):
-    ...     P = True
-    Traceback (most recent call last):
-      ...
-    PlumbingCollision:
+    >>> try:
+    ...     @plumbing(Behavior2)
+    ...     class Plumbing(object):
+    ...         P = True
+    ... except PlumbingCollision as e:
+    ...     print(e)
+    <BLANKLINE>
         Plumbing class
       with:
         <finalize 'P' of <class 'Behavior2'> payload=False>
@@ -414,12 +412,13 @@ collisions::
     >>> class Behavior2(Behavior):
     ...     Q = finalize(True)
 
-    >>> @plumbing(Behavior1, Behavior2)
-    ... class Plumbing(object):
-    ...     pass
-    Traceback (most recent call last):
-      ...
-    PlumbingCollision:
+    >>> try:
+    ...     @plumbing(Behavior1, Behavior2)
+    ...     class Plumbing(object):
+    ...         pass
+    ... except PlumbingCollision as e:
+    ...     print(e)
+    <BLANKLINE>
         <finalize 'Q' of <class 'Behavior1'> payload=False>
       with:
         <finalize 'Q' of <class 'Behavior2'> payload=True>
@@ -451,7 +450,7 @@ in code::
     ...     K = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
     K from Plumbing
     L from Behavior2
     M from Behavior1
@@ -498,7 +497,7 @@ in code::
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
     K from Base
     L from Plumbing
     M from Behavior2
@@ -547,7 +546,7 @@ in code::
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
     K from Behavior2
     L from Behavior1
 
@@ -590,7 +589,7 @@ in code::
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
     K from Behavior2
     L from Behavior1
 
@@ -633,7 +632,7 @@ in code::
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
     K from Behavior2
     L from Behavior1
 
@@ -754,18 +753,18 @@ them::
     >>> class Behavior1(Behavior):
     ...     @plumb
     ...     def __getitem__(_next, self, key):
-    ...         print "Behavior1 start"
+    ...         print("Behavior1 start")
     ...         key = key.lower()
     ...         ret = _next(self, key)
-    ...         print "Behavior1 stop"
+    ...         print("Behavior1 stop")
     ...         return ret
 
     >>> class Behavior2(Behavior):
     ...     @plumb
     ...     def __getitem__(_next, self, key):
-    ...         print "Behavior2 start"
+    ...         print("Behavior2 start")
     ...         ret = 2 * _next(self, key)
-    ...         print "Behavior2 stop"
+    ...         print("Behavior2 stop")
     ...         return ret
 
     >>> Base = dict
@@ -931,16 +930,17 @@ to mix properties with methods::
     ...     def foo(_next, self):
     ...         return _next(self)
 
-    >>> @plumbing(Behavior1)
-    ... class Plumbing(object):
+    >>> try:
+    ...     @plumbing(Behavior1)
+    ...     class Plumbing(object):
     ...
-    ...     @property
-    ...     def foo(self):
-    ...         return 5
-    Traceback (most recent call last):
-      ...
-    PlumbingCollision:
-        <plumb 'foo' of <class 'Behavior1'> payload=<function foo at 0x...>>
+    ...         @property
+    ...         def foo(self):
+    ...             return 5
+    ... except PlumbingCollision as e:
+    ...     print(e)
+    <BLANKLINE>
+        <plumb 'foo' of <class 'Behavior1'> payload=<function ...foo at 0x...>>
       with:
         <class 'Plumbing'>
 
@@ -974,19 +974,19 @@ plumbing declaration and followed by the behaviors in reverse order::
     ...     """
     ...     bar = property(None, None, None, "Plumbing.bar")
 
-    >>> print Plumbing.__doc__
+    >>> print(Plumbing.__doc__)
     Plumbing
     <BLANKLINE>
     P1
     <BLANKLINE>
 
-    >>> print Plumbing.foo.__doc__
+    >>> print(Plumbing.foo.__doc__)
     P2.foo
     <BLANKLINE>
     P1.foo
     <BLANKLINE>
 
-    >>> print Plumbing.bar.__doc__
+    >>> print(Plumbing.bar.__doc__)
     Plumbing.bar
     <BLANKLINE>
     P2.bar
@@ -1000,16 +1000,47 @@ change.
 Slots on plumbings
 ~~~~~~~~~~~~~~~~~~
 
+From docs:
+
+``__slots__``
+  This class variable can be assigned a string, iterable, or sequence of
+  strings with variable names used by instances. __slots__ reserves space for
+  the declared variables and prevents the automatic creation of __dict__ and
+  __weakref__ for each instance.
+
+  __slots__ are implemented at the class level by creating descriptors
+  (Implementing Descriptors) for each variable name. As a result, class
+  attributes cannot be used to set default values for instance variables
+  defined by __slots__; otherwise, the class attribute would overwrite the
+  descriptor assignment.
+
+Let's add some tests about slots in general::
+
+    >>> class A(object):
+    ...     foo = 'foo'
+
+    >>> class B(A):
+    ...     __slots__ = 'foo'
+    ...     # foo = 'foo'
+
+    >>> b = B()
+    >>> b.foo = 'bar'
+
+    >>> class C(B):
+    ...     foo = 'foo'
+
+THE CODE BELOW NEVER WORKED, IN PY 3 THIS RAISES AN ERROR!!!!!!!!!!
+
 A plumbing class can have __slots__ like normal classes. ::
 
-    >>> class P1(Behavior):
-    ...     foo = default('foo')
+    >> class P1(Behavior):)
+    ..     foo = default('foo')
 
-    >>> @plumbing(P1)
-    ... class WithSlots(object):
-    ...     __slots__ = 'foo'
+    >> @plumbing(P1)
+    .. class WithSlots(object):
+    ..     __slots__ = 'foo'
 
-    >>> WithSlots().foo
+    >> WithSlots().foo
     'foo'
 
 

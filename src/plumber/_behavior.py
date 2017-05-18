@@ -1,12 +1,15 @@
 from plumber._instructions import Instruction
 from plumber._instructions import plumb
 from plumber.compat import add_metaclass
+import sys
 
 try:
     from plumber._instructions import _implements
     ZOPE_INTERFACE_AVAILABLE = True
 except ImportError:                                         #pragma NO COVER
     ZOPE_INTERFACE_AVAILABLE = False                        #pragma NO COVER
+
+ITER_FUNC = 'iteritems' if sys.version_info[0] < 3 else 'items'
 
 
 class _Behavior(object):
@@ -80,7 +83,7 @@ class behaviormetaclass(type):
         if ZOPE_INTERFACE_AVAILABLE:
             instructions.append(_implements(cls))
 
-        for name, item in cls.__dict__.iteritems():
+        for name, item in getattr(cls.__dict__, ITER_FUNC)():
             # adopt instructions and enlist them
             if isinstance(item, Instruction):
                 item.__name__ = name

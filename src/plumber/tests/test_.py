@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 import doctest
 from pprint import pprint
@@ -30,7 +31,8 @@ def test_suite():
             file,
             optionflags=optionflags,
             globs={'interact': interact,
-                   'pprint': pprint},
+                   'pprint': pprint,
+                   'print': print},
             ) for file in TESTFILES
         ])
 

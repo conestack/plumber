@@ -1,4 +1,6 @@
+from __future__ import print_function
 import re
+import sys
 
 try:
     from zope.interface import classImplements
@@ -8,6 +10,12 @@ except ImportError:                                         #pragma NO COVER
     ZOPE_INTERFACE_AVAILABLE = False                        #pragma NO COVER
 
 from plumber.exceptions import PlumbingCollision
+
+
+if sys.version_info[0] < 3:
+    STR_TYPE = basestring
+else:
+    STR_TYPE = str
 
 
 ####
@@ -46,7 +54,7 @@ def plumb_str(leftdoc, rightdoc):
         ... Right tail
         ... '''
 
-        >>> print plumb_str(leftdoc, rightdoc)
+        >>> print(plumb_str(leftdoc, rightdoc))
         Left head
         <BLANKLINE>
         Right head
@@ -65,7 +73,7 @@ def plumb_str(leftdoc, rightdoc):
         ... '''
         >>> rightdoc = '''Right tail
         ... '''
-        >>> print plumb_str(leftdoc, rightdoc)
+        >>> print(plumb_str(leftdoc, rightdoc))
         Right tail
         <BLANKLINE>
         Left tail
@@ -222,10 +230,11 @@ class default(Stage1Instruction):
         Adding with something else than default/override, raises
         ``PlumbingCollision``::
 
-            >>> def1 + Instruction('foo')
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
+            >>> try:
+            ...     def1 + Instruction('foo')
+            ... except PlumbingCollision as e:
+            ...     print(e)
+            <BLANKLINE>
                 <default 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload='foo'>
@@ -277,10 +286,11 @@ class override(Stage1Instruction):
 
         Everything except default/override collides::
 
-            >>> ext1 + Instruction(1)
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
+            >>> try:
+            ...     ext1 + Instruction(1)
+            ... except PlumbingCollision as e:
+            ...     print(e)
+            <BLANKLINE>
                 <override 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
@@ -328,20 +338,22 @@ class finalize(Stage1Instruction):
 
         Two unequal finalize collide::
 
-            >>> fin1 + finalize(2)
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
+            >>> try:
+            ...     fin1 + finalize(2)
+            ... except PlumbingCollision as e:
+            ...     print(e)
+            <BLANKLINE>
                 <finalize 'None' of None payload=1>
               with:
                 <finalize 'None' of None payload=2>
 
         Everything except default/override collides::
 
-            >>> fin1 + Instruction(1)
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
+            >>> try:
+            ...     fin1 + Instruction(1)
+            ... except PlumbingCollision as e:
+            ...     print(e)
+            <BLANKLINE>
                 <finalize 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
@@ -419,18 +431,20 @@ class plumb(Stage2Instruction):
             >>> plb1 + plumb(1) is plb1
             True
 
-            >>> plb1 + Instruction(1)
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
+            >>> try:
+            ...     plb1 + Instruction(1)
+            ... except PlumbingCollision as e:
+            ...     print(e)
+            <BLANKLINE>
                 <plumb 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
 
-            >>> plumb(lambda x: None) + plumb(property(lambda x: None))
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
+            >>> try:
+            ...     plumb(lambda x: None) + plumb(property(lambda x: None))
+            ... except PlumbingCollision as e:
+            ...     print(e)
+            <BLANKLINE>
                 <plumb 'None' of None payload=<function <lambda> at 0x...>>
               with:
                 <plumb 'None' of None payload=<property object at 0x...>>
@@ -447,17 +461,18 @@ class plumb(Stage2Instruction):
     def ok(self, p1, p2):
         """Check whether we can merge two payloads
 
-            >>> plumb(1) + plumb(2)
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
+            >>> try:
+            ...     plumb(1) + plumb(2)
+            ... except PlumbingCollision as e:
+            ...     print(e)
+            <BLANKLINE>
                 <plumb 'None' of None payload=1>
               with:
                 <plumb 'None' of None payload=2>
 
         """
-        if isinstance(p1, basestring):
-            return isinstance(p2, basestring) or p2 is None
+        if isinstance(p1, STR_TYPE):
+            return isinstance(p2, STR_TYPE) or p2 is None
         if isinstance(p1, property):
             return isinstance(p2, property)
         if callable(p1):
@@ -465,7 +480,7 @@ class plumb(Stage2Instruction):
         return False
 
     def plumb(self, plbfunc, p1, p2):
-        if isinstance(p1, basestring):
+        if isinstance(p1, STR_TYPE):
             return plumb_str(p1, p2)
         if isinstance(p1, property):
             # XXX: This should be split up into instructions during part
@@ -533,10 +548,11 @@ if ZOPE_INTERFACE_AVAILABLE:
             >>> foo + bar == bar + foo
             True
 
-            >>> foo + Instruction("bar")
-            Traceback (most recent call last):
-              ...
-            PlumbingCollision:
+            >>> try:
+            ...     foo + Instruction("bar")
+            ... except PlumbingCollision as e:
+            ...     print(e)
+            <BLANKLINE>
                 <_implements '__interfaces__' of None payload=('foo',)>
               with:
                 <Instruction 'None' of None payload='bar'>
