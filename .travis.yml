@@ -1,6 +1,12 @@
 sudo: false
 language: python
-python: "2.7"
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "pypy"  # PyPy2 2.5.0
+  - "pypy-5.3.1"
 install:
   - pip install -U pip setuptools zc.buildout
   - buildout 
