@@ -997,12 +997,13 @@ The accumulation of docstrings is an experimental feature and will probably
 change.
 
 
-Slots on plumbings
-~~~~~~~~~~~~~~~~~~
+Slots and plumbings
+~~~~~~~~~~~~~~~~~~~
 
-From docs:
+From python docs:
 
-``__slots__``
+**__slots__**
+
   This class variable can be assigned a string, iterable, or sequence of
   strings with variable names used by instances. __slots__ reserves space for
   the declared variables and prevents the automatic creation of __dict__ and
@@ -1014,34 +1015,128 @@ From docs:
   defined by __slots__; otherwise, the class attribute would overwrite the
   descriptor assignment.
 
-Let's add some tests about slots in general::
+Here we have a class with a regular class member::
 
     >>> class A(object):
     ...     foo = 'foo'
 
+    >>> A.foo
+    'foo'
+
+    >>> sorted(A.__dict__.items())
+    [('__dict__', <attribute '__dict__' of 'A' objects>), 
+    ('__doc__', None), 
+    ('__module__', '...builtin...'), 
+    ('__weakref__', <attribute '__weakref__' of 'A' objects>), 
+    ('foo', 'foo')]
+
+Now we define ``foo`` as slot variable. ``foo`` from superclass gets
+overwritten by slot descriptor::
+
     >>> class B(A):
     ...     __slots__ = 'foo'
-    ...     # foo = 'foo'
 
-    >>> b = B()
-    >>> b.foo = 'bar'
+    >>> B.foo
+    <member 'foo' of 'B' objects>
+
+    >>> sorted(B.__dict__.items())
+    [('__doc__', None), 
+    ('__module__', '...builtin...'), 
+    ('__slots__', 'foo'), 
+    ('foo', <member 'foo' of 'B' objects>)]
+
+Slots are not effected by inheritance. Thus, overriding ``foo`` on subclass
+of ``B`` results in an ordinary class attribute::
 
     >>> class C(B):
     ...     foo = 'foo'
 
-THE CODE BELOW NEVER WORKED, IN PY 3 THIS RAISES AN ERROR!!!!!!!!!!
+    >>> C.foo
+    'foo'
+
+    >>> sorted(C.__dict__.items())
+    [('__doc__', None), 
+    ('__module__', '...builtin...'), 
+    ('foo', 'foo')]
+
+Defining class members which are defined as slot variables does not work.
+In Python 2 the slot descriptor simply gets overwritten with the class member,
+in Python 3 this behavior changed and we an error::
+
+    >>> import sys
+    >>> if sys.version_info[0] < 3:
+    ...     class D(object):
+    ...         __slots__ = 'foo'
+    ...         foo = 'foo'
+    ...     # in Python 2 ``foo`` gets overwritten with class member
+    ...     assert(sorted(D.__dict__.items()) == [
+    ...         ('__doc__', None),
+    ...         ('__module__', '__builtin__'),
+    ...         ('__slots__', 'foo'),
+    ...         ('foo', 'foo')])
+    ... else:
+    ...     # in Python 3 we get a ``ValueError``
+    ...     try:
+    ...         class D(object):
+    ...             __slots__ = 'foo'
+    ...             foo = 'foo'
+    ...     except ValueError as e:
+    ...         err = "'foo' in __slots__ conflicts with class variable"
+    ...         assert(str(e) == err)
+    ...     else:
+    ...         raise Exception('Expected ValueError, but not thrown')
+
+Slots cannot be defined on plumbing behaviors::
+
+    >>> try:
+    ...     class P1(Behavior):
+    ...         __slots__ = default('foo')
+    ... except TypeError as e:
+    ...     assert(str(e).find("'default' object is not iterable") > -1)
+    ... else:
+    ...     raise Exception('Expected TypeError, but not thrown')
+
+Slots can be defined on plumbings as usual, just make sure you do not mix in
+class members with plumbings::
+
+    >>> class P1(Behavior):
+    ...     foo = default('foo')
+
+    >>> if sys.version_info[0] < 3:
+    ...     @plumbing(P1)
+    ...     class WithSlots(object):
+    ...         __slots__ = 'foo'
+    ...     # in Python 2 ``foo`` gets overwritten with class member
+    ...     assert(D.__dict__['foo'] == 'foo')
+    ... else:
+    ...     # in Python 3 we get a ``ValueError``
+    ...     try:
+    ...         @plumbing(P1)
+    ...         class WithSlots(object):
+    ...             __slots__ = 'foo'
+    ...     except ValueError as e:
+    ...         err = "'foo' in __slots__ conflicts with class variable"
+    ...         assert(str(e) == err)
+    ...     else:
+    ...         raise Exception('Expected ValueError, but not thrown')
 
 A plumbing class can have __slots__ like normal classes. ::
 
-    >> class P1(Behavior):)
-    ..     foo = default('foo')
+    >>> class P1(Behavior):
+    ...     @default
+    ...     def somewhing_which_writes_to_foo(self, foo_val):
+    ...         self.foo = foo_val
 
-    >> @plumbing(P1)
-    .. class WithSlots(object):
-    ..     __slots__ = 'foo'
+    >>> @plumbing(P1)
+    ... class WithSlots(object):
+    ...     __slots__ = 'foo'
 
-    >> WithSlots().foo
-    'foo'
+    >>> WithSlots.__dict__['foo']
+    <member 'foo' of 'WithSlots' objects>
+
+    >>> ob = WithSlots()
+    >>> ob.somewhing_which_writes_to_foo('foo')
+    >>> assert(ob.foo == 'foo')
 
 
 ``zope.interface`` (if available)
