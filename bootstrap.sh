@@ -11,7 +11,7 @@ if [ -x "$(which python3)" ]; then
     ./py3/bin/python setup.py develop
     ./py3/bin/pip install coverage zope.interface
 fi
-if [ -x "$(which python3)" ]; then
+if [ -x "$(which pypy)" ]; then
     rm -r pypy
     virtualenv --clear --no-site-packages -p pypy pypy
     ./pypy/bin/python setup.py develop
