@@ -3,6 +3,7 @@
 /.project
 /.pydevproject
 /.mrsd
+/.coverage
 /py2/
 /py3/
 /pypy/

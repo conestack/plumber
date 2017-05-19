@@ -15,13 +15,13 @@ from plumber._plumber import plumber
 from plumber._plumber import searchnameinbases
 from plumber.compat import add_metaclass
 from plumber.exceptions import PlumbingCollision
-from plumber.tests import _globalmetaclasstest as gmt
 from pprint import pprint
 from zope.interface import Interface
 from zope.interface import implementer
 from zope.interface.interface import InterfaceClass
 import doctest
 import inspect
+import sys
 
 try:
     import unittest2 as unittest
@@ -275,7 +275,11 @@ class TestPlumber(unittest.TestCase):
 
 class TestGlobalMetaclass(unittest.TestCase):
 
+    @unittest.skipIf(
+        sys.version_info[0] >= 3,
+        '__metaclass__ attribute on module leven only works in python 2')
     def test_global_metaclass(self):
+        from plumber.tests import _globalmetaclasstest as gmt
         # A zope.interface.Interface is not affected by the global
         # ``__metaclass__``.
         self.assertEqual(gmt.IBehavior1.__class__, InterfaceClass)
@@ -349,6 +353,20 @@ class TestPlumberBasics(unittest.TestCase):
         self.assertEqual(sorted(list(stage_1.keys())), ['a', 'bar', 'foo'])
         stage_2 = stages['stage2']
         self.assertEqual(sorted(list(stage_2.keys())), ['__interfaces__'])
+
+    @unittest.skipIf(
+        sys.version_info[0] >= 3,
+        '__metaclass__ property only works in python 2')
+    def test_bc_plumbing_py2(self):
+        class Behavior1(Behavior):
+            a = default(True)
+
+        class BCPlumbing(object):
+            __metaclass__ = plumber
+            __plumbing__ = Behavior1
+
+        plb = BCPlumbing()
+        self.assertTrue(plb.a)
 
 
 class TestPlumberStage1(unittest.TestCase):
