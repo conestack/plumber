@@ -1,13 +1,20 @@
-sudo: false
 language: python
+sudo: false
+
 python:
+  - "2.6"
   - "2.7"
+  - "3.2"
+  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
   - "pypy"  # PyPy2 2.5.0
+  - "pypy3"
   - "pypy-5.3.1"
+
 install:
-  - pip install -U pip setuptools zc.buildout
-  - buildout 
-script: ./bin/test
+    pip install zope.interface
+    python setup.py install
+
+script: python -m unittest plumber.tests
