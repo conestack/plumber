@@ -1,15 +1,16 @@
-# /
 *.pyc
-/coverage
-/dist
-/bin
-/develop-eggs
-/parts
-/.*.cfg
-/devsrc
-/eggs
-
-# /src/
+/.installed.cfg
+/.project
+/.pydevproject
+/.mrsd
+/py2/
+/py3/
+/pypy/
+/coverage/
+/dist/
+/bin/
+/develop-eggs/
+/parts/
+/devsrc/
+/eggs/
 /src/plumber.egg-info
-
-.mrsd

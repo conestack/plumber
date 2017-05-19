@@ -4,7 +4,7 @@ import os
 
 
 version = '1.4.dev0'
-shortdesc = "An alternative to mixin-based extension of classes."
+shortdesc = 'An alternative to mixin-based extension of classes.'
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 
 
@@ -41,6 +41,7 @@ setup(
             'zope.deprecation',
         ],
     },
+    test_suite='plumber.tests',
     entry_points="""
     """
 )

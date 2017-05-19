@@ -269,13 +269,19 @@ history of all instructions is kept.
 .. code-block:: pycon
 
     >>> pprint(Plumbing.__plumbing_stacks__)
-    {'history': 
-      [...],
-     'stages': 
-       {'stage1': 
-         {...},
-        'stage2': 
-          {...}}}
+    {'history':
+      [<_implements '__interfaces__' of None payload=()>,
+       <default 'a' of <class 'Behavior1'> payload=True>,
+       <default 'foo' of <class 'Behavior1'> payload=<function foo at 0x...>>,
+       <_implements '__interfaces__' of None payload=()>,
+       <default 'bar' of <class 'Behavior2'> payload=<property object at 0x...>>],
+     'stages':
+       {'stage1':
+         {'a': [<default 'a' of <class 'Behavior1'> payload=True>],
+          'bar': [<default 'bar' of <class 'Behavior2'> payload=<property ...
+          'foo': [<default 'foo' of <class 'Behavior1'> payload=<function foo ...
+        'stage2':
+         {'__interfaces__': [<_implements '__interfaces__' of None payload=()...
 
 Before putting a new instruction onto a stack, it is compared with the latest
 instruction on the stack. It is either taken as is, discarded, merged or a
@@ -396,18 +402,15 @@ collisions.
 
 .. code-block:: pycon
 
-    >>> from plumber.exceptions import PlumbingCollision
-
     >>> class Behavior1(Behavior):
     ...     O = finalize(False)
 
-    >>> try:
-    ...     @plumbing(Behavior1)
-    ...     class Plumbing(object):
-    ...         O = True
-    ... except PlumbingCollision as e:
-    ...     print(e)
-    <BLANKLINE>
+    >>> @plumbing(Behavior1)
+    ... class Plumbing(object):
+    ...     O = True
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision:
         Plumbing class
       with:
         <finalize 'O' of <class 'Behavior1'> payload=False>
@@ -415,13 +418,12 @@ collisions.
     >>> class Behavior2(Behavior):
     ...     P = finalize(False)
 
-    >>> try:
-    ...     @plumbing(Behavior2)
-    ...     class Plumbing(object):
-    ...         P = True
-    ... except PlumbingCollision as e:
-    ...     print(e)
-    <BLANKLINE>
+    >>> @plumbing(Behavior2)
+    ... class Plumbing(object):
+    ...     P = True
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision:
         Plumbing class
       with:
         <finalize 'P' of <class 'Behavior2'> payload=False>
@@ -432,13 +434,12 @@ collisions.
     >>> class Behavior2(Behavior):
     ...     Q = finalize(True)
 
-    >>> try:
-    ...     @plumbing(Behavior1, Behavior2)
-    ...     class Plumbing(object):
-    ...         pass
-    ... except PlumbingCollision as e:
-    ...     print(e)
-    <BLANKLINE>
+    >>> @plumbing(Behavior1, Behavior2)
+    ... class Plumbing(object):
+    ...     pass
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision:
         <finalize 'Q' of <class 'Behavior1'> payload=False>
       with:
         <finalize 'Q' of <class 'Behavior2'> payload=True>
@@ -705,17 +706,17 @@ in code.
     >>> @plumbing(Behavior2)
     ... class Plumbing(object):
     ...     pass
-    
+
     >>> plb = Plumbing()
     >>> plb.J
     'Behavior2'
-    
+
     >>> plb.K
     'Behavior1'
-    
+
     >>> plb.L
     'Behavior2'
-    
+
     >>> plb.M
     'Behavior2'
 
@@ -976,17 +977,16 @@ to mix properties with methods.
     ...     def foo(_next, self):
     ...         return _next(self)
 
-    >>> try:
-    ...     @plumbing(Behavior1)
-    ...     class Plumbing(object):
+    >>> @plumbing(Behavior1)
+    ... class Plumbing(object):
     ...
-    ...         @property
-    ...         def foo(self):
-    ...             return 5
-    ... except PlumbingCollision as e:
-    ...     print(e)
-    <BLANKLINE>
-        <plumb 'foo' of <class 'Behavior1'> payload=<function ...foo at 0x...>>
+    ...     @property
+    ...     def foo(self):
+    ...         return 5
+    Traceback (most recent call last):
+      ...
+    PlumbingCollision:
+        <plumb 'foo' of <class 'Behavior1'> payload=<function foo at 0x...>>
       with:
         <class 'Plumbing'>
 
@@ -1255,13 +1255,13 @@ implements an interface.
 
     >>> IBehavior1.implementedBy(Behavior1)
     True
-    
+
     >>> IBehavior2Base.implementedBy(Behavior2Base)
     True
-    
+
     >>> IBehavior2Base.implementedBy(Behavior2)
     True
-    
+
     >>> IBehavior2.implementedBy(Behavior2)
     True
 
@@ -1284,7 +1284,7 @@ The directly declared and inherited interfaces are implemented.
 
     >>> IPlumbingClass.implementedBy(PlumbingClass)
     True
-    
+
     >>> IBase.implementedBy(PlumbingClass)
     True
 
@@ -1294,10 +1294,10 @@ The interfaces implemented by the Behaviors are also implemented.
 
     >>> IBehavior1.implementedBy(PlumbingClass)
     True
-    
+
     >>> IBehavior2.implementedBy(PlumbingClass)
     True
-    
+
     >>> IBehavior2Base.implementedBy(PlumbingClass)
     True
 
@@ -1309,16 +1309,16 @@ An instance of the class provides the interfaces.
 
     >>> IPlumbingClass.providedBy(plumbing)
     True
-    
+
     >>> IBase.providedBy(plumbing)
     True
-    
+
     >>> IBehavior1.providedBy(plumbing)
     True
-    
+
     >>> IBehavior2.providedBy(plumbing)
     True
-    
+
     >>> IBehavior2Base.providedBy(plumbing)
     True
 
@@ -1386,7 +1386,6 @@ Summary of the test coverage report::
         9   100%   plumber.exceptions
         1   100%   plumber.tests.__init__
        19   100%   plumber.tests._globalmetaclasstest
-       18   100%   plumber.tests.test_
 
 
 Contributors
