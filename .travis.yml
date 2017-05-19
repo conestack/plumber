@@ -14,7 +14,6 @@ python:
   - "pypy-5.3.1"
 
 install:
-    pip install zope.interface
-    python setup.py install
+    python setup.py install && pip install zope.interface
 
 script: python -m unittest plumber.tests

@@ -35,10 +35,7 @@ setup(
     ],
     extras_require={
         'test': [
-            'interlude',
-            'plone.testing',
-            'zope.interface',
-            'zope.deprecation',
+            'zope.interface'
         ],
     },
     test_suite='plumber.tests',
