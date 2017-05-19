@@ -6,10 +6,12 @@ from plumber import override
 from plumber import plumb
 from plumber import plumbifexists
 from plumber import plumbing
+from plumber._behavior import behaviormetaclass
 from plumber._instructions import Instruction
 from plumber._instructions import _implements
 from plumber._instructions import payload
 from plumber._instructions import plumb_str
+from plumber.compat import add_metaclass
 from plumber.exceptions import PlumbingCollision
 from pprint import pprint
 from zope.interface import Interface
@@ -238,8 +240,26 @@ class TestInstructions(unittest.TestCase):
             self.assertEqual(err.right.payload, 'bar')
 
 
-class TestBehaviors(unittest.TestCase):
-    pass
+class TestBehavior(unittest.TestCase):
+
+    def test_behaviormetaclass(self):
+        @add_metaclass(behaviormetaclass)
+        class A(object):
+            pass
+
+        self.assertEqual(
+            getattr(A, '__plumbing_instructions__', 'No behavior'),
+            'No behavior'
+        )
+
+        @add_metaclass(behaviormetaclass)
+        class B(Behavior):
+            pass
+
+        self.assertEqual(
+            getattr(B, '__plumbing_instructions__', None) and 'Behavior',
+            'Behavior'
+        )
 
 
 class TestPlumber(unittest.TestCase):
