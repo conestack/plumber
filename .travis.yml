@@ -9,7 +9,6 @@ python:
   - "3.5"
   - "3.6"
   - "pypy"  # PyPy2 2.5.0
-  - "pypy3"
   - "pypy-5.3.1"
 
 install:
