@@ -1,21 +1,19 @@
-from __future__ import print_function
 import re
 import sys
+
 
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
     ZOPE_INTERFACE_AVAILABLE = True
-except ImportError:                                         #pragma NO COVER
-    ZOPE_INTERFACE_AVAILABLE = False                        #pragma NO COVER
+except ImportError:                                          # pragma: no cover
+    ZOPE_INTERFACE_AVAILABLE = False
+
 
 from plumber.exceptions import PlumbingCollision
 
 
-if sys.version_info[0] < 3:
-    STR_TYPE = basestring
-else:
-    STR_TYPE = str
+STR_TYPE = basestring if sys.version_info[0] < 3 else str
 
 
 ###############################################################################
@@ -54,7 +52,7 @@ def plumb_str(leftdoc, rightdoc):
         ... Right tail
         ... '''
 
-        >>> print(plumb_str(leftdoc, rightdoc))
+        >>> print plumb_str(leftdoc, rightdoc)
         Left head
         <BLANKLINE>
         Right head
@@ -73,7 +71,7 @@ def plumb_str(leftdoc, rightdoc):
         ... '''
         >>> rightdoc = '''Right tail
         ... '''
-        >>> print(plumb_str(leftdoc, rightdoc))
+        >>> print plumb_str(leftdoc, rightdoc)
         Right tail
         <BLANKLINE>
         Left tail
@@ -380,7 +378,7 @@ class Stage2Instruction(Instruction):
     def __call__(self, cls):
         """cls is the plumbing class, type finished its work already
         """
-        raise NotImplementedError                           #pragma NO COVER
+        raise NotImplementedError                            # pragma: no cover
 
 
 def entrancefor(plumbing_method, _next):
@@ -491,7 +489,7 @@ class plumb(Stage2Instruction):
             return p1.__class__(*propfuncs)
         if callable(p1):
             return plbfunc(p1, p2)
-        raise RuntimeError("We should not reach this code!")  #pragma NO COVER
+        raise RuntimeError("We should not reach this code!")  # pragma: no cover
 
     def __call__(self, cls):
         # Check for a method on the plumbing class itself.

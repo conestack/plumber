@@ -3,11 +3,13 @@ from plumber._instructions import plumb
 from plumber.compat import add_metaclass
 import sys
 
+
 try:
     from plumber._instructions import _implements
     ZOPE_INTERFACE_AVAILABLE = True
-except ImportError:                                         #pragma NO COVER
-    ZOPE_INTERFACE_AVAILABLE = False                        #pragma NO COVER
+except ImportError:                                          # pragma: no cover
+    ZOPE_INTERFACE_AVAILABLE = False
+
 
 ITER_FUNC = 'iteritems' if sys.version_info[0] < 3 else 'items'
 

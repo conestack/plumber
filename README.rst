@@ -81,18 +81,18 @@ before returning it and both are chatty about start/stop.
 
     >>> class Mixin1(object):
     ...     def __getitem__(self, key):
-    ...         print("Mixin1 start")
+    ...         print "Mixin1 start"
     ...         key = key.lower()
     ...         ret = super(Mixin1, self).__getitem__(key)
-    ...         print("Mixin1 stop")
+    ...         print "Mixin1 stop"
     ...         return ret
 
     >>> class Mixin2(object):
     ...     def __getitem__(self, key):
-    ...         print("Mixin2 start")
+    ...         print "Mixin2 start"
     ...         ret = super(Mixin2, self).__getitem__(key)
     ...         ret = 2 * ret
-    ...         print("Mixin2 stop")
+    ...         print "Mixin2 stop"
     ...         return ret
 
     >>> Base = dict
@@ -365,7 +365,7 @@ In code.
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
-    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Base
     L from Plumbing
     M from Behavior2
@@ -473,7 +473,7 @@ in code.
     ...     K = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M']:
-    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Plumbing
     L from Behavior2
     M from Behavior1
@@ -522,7 +522,7 @@ in code.
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
-    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Base
     L from Plumbing
     M from Behavior2
@@ -573,7 +573,7 @@ in code.
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Behavior2
     L from Behavior1
 
@@ -618,7 +618,7 @@ in code.
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Behavior2
     L from Behavior1
 
@@ -663,7 +663,7 @@ in code.
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print("%s from %s" % (x, getattr(Plumbing, x)))
+    ...     print "%s from %s" % (x, getattr(Plumbing, x))
     K from Behavior2
     L from Behavior1
 
@@ -788,18 +788,18 @@ them.
     >>> class Behavior1(Behavior):
     ...     @plumb
     ...     def __getitem__(_next, self, key):
-    ...         print("Behavior1 start")
+    ...         print "Behavior1 start"
     ...         key = key.lower()
     ...         ret = _next(self, key)
-    ...         print("Behavior1 stop")
+    ...         print "Behavior1 stop"
     ...         return ret
 
     >>> class Behavior2(Behavior):
     ...     @plumb
     ...     def __getitem__(_next, self, key):
-    ...         print("Behavior2 start")
+    ...         print "Behavior2 start"
     ...         ret = 2 * _next(self, key)
-    ...         print("Behavior2 stop")
+    ...         print "Behavior2 stop"
     ...         return ret
 
     >>> Base = dict
@@ -1022,19 +1022,19 @@ plumbing declaration and followed by the behaviors in reverse order.
     ...     """
     ...     bar = property(None, None, None, "Plumbing.bar")
 
-    >>> print(Plumbing.__doc__)
+    >>> print Plumbing.__doc__
     Plumbing
     <BLANKLINE>
     P1
     <BLANKLINE>
 
-    >>> print(Plumbing.foo.__doc__)
+    >>> print Plumbing.foo.__doc__
     P2.foo
     <BLANKLINE>
     P1.foo
     <BLANKLINE>
 
-    >>> print(Plumbing.bar.__doc__)
+    >>> print Plumbing.bar.__doc__
     Plumbing.bar
     <BLANKLINE>
     P2.bar
@@ -1376,16 +1376,28 @@ corresponding text.
 Test Coverage
 ^^^^^^^^^^^^^
 
-Summary of the test coverage report::
+Coverage report::
 
-    lines   cov%   module
-        8   100%   plumber.__init__
-       50   100%   plumber._behavior
-      185   100%   plumber._instructions
-       74   100%   plumber._plumber
-        9   100%   plumber.exceptions
-        1   100%   plumber.tests.__init__
-       19   100%   plumber.tests._globalmetaclasstest
+    Name                                      Stmts   Miss  Cover
+    -------------------------------------------------------------
+    src/plumber/__init__.py                       8      0   100%
+    src/plumber/_behavior.py                     48      0   100%
+    src/plumber/_instructions.py                171      0   100%
+    src/plumber/_plumber.py                      70      0   100%
+    src/plumber/compat.py                         9      0   100%
+    src/plumber/exceptions.py                     6      0   100%
+    src/plumber/tests/__init__.py               577      0   100%
+    src/plumber/tests/_globalmetaclasstest.py    15      0   100%
+    -------------------------------------------------------------
+    TOTAL                                       904      0   100%
+
+
+Python Versions
+^^^^^^^^^^^^^^^
+
+- Python 2.6+, 3.3+, pypy
+
+- May work with other versions (untested)
 
 
 Contributors

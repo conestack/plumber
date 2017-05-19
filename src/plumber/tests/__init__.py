@@ -23,9 +23,10 @@ import doctest
 import inspect
 import sys
 
-try:
+
+if sys.version_info < (2, 7):                                # pragma: no cover
     import unittest2 as unittest
-except ImportError:
+else:                                                        # pragma: no cover
     import unittest
 
 
@@ -652,7 +653,7 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumb
             def foo(_next, self):
-                pass
+                pass                                         # pragma: no cover
 
         try:
             @plumbing(Behavior1)
@@ -670,7 +671,7 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumbifexists
             def foo(_next, self):
-                pass
+                pass                                         # pragma: no cover
 
             @plumbifexists
             def bar(_next, self):
@@ -763,7 +764,7 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumb
             def foo(_next, self):
-                return _next(self)
+                return _next(self)                           # pragma: no cover
 
         try:
             @plumbing(Behavior1)
@@ -771,7 +772,7 @@ class TestPlumberStage2(unittest.TestCase):
 
                 @property
                 def foo(self):
-                    return 5
+                    return 5                                 # pragma: no cover
         except PlumbingCollision as e:
             err = e
         finally:
@@ -890,4 +891,4 @@ class TestPlumberStage2(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()                                            #pragma NO COVER
+    unittest.main()                                          # pragma: no cover
