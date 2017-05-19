@@ -6,6 +6,10 @@ from plumber import override
 from plumber import plumb
 from plumber import plumbifexists
 from plumber import plumbing
+from plumber._instructions import Instruction
+from plumber._instructions import _implements
+from plumber._instructions import payload
+from plumber._instructions import plumb_str
 from plumber.exceptions import PlumbingCollision
 from pprint import pprint
 from zope.interface import Interface
@@ -21,11 +25,217 @@ except ImportError:
 
 class TestInstructions(unittest.TestCase):
 
-    def assertRaisesWithMessage(self, msg, func, exc, *args, **kwargs):
+#     def assertRaisesWithMessage(self, msg, func, exc, *args, **kwargs):
+#         try:
+#             func(*args, **kwargs)
+#         except exc as inst:
+#             self.assertEqual(str(inst), msg)
+
+    def test_payload(self):
+        class Foo:
+            pass
+
+        self.assertTrue(payload(Instruction(Instruction(Foo))) is Foo)
+
+    def test_plumb_str(self):
+        leftdoc = """Left head
+
+        __plbnext__
+
+        Left tail
+        """
+        rightdoc = """Right head
+
+        __plbnext__
+
+        Right tail
+        """
+        self.assertEqual(plumb_str(leftdoc, rightdoc).split('\n'), [
+            'Left head',
+            '',
+            '        Right head',
+            '',
+            '        __plbnext__',
+            '',
+            '        Right tail',
+            '',
+            '        Left tail',
+            '        '
+        ])
+        leftdoc = """Left tail
+        """
+        rightdoc = """Right tail
+        """
+        self.assertEqual(plumb_str(leftdoc, rightdoc).split('\n'), [
+            'Right tail',
+            '',
+            'Left tail',
+            '        '
+        ])
+
+        class A:
+            pass
+
+        self.assertTrue(plumb_str(A, None) is A)
+        self.assertTrue(plumb_str(None, A) is A)
+        self.assertTrue(plumb_str(None, None) is None)
+
+    def test_instruction(self):
+        class Foo:
+            pass
+
+        self.assertTrue(Instruction(Foo).item is Foo)
+        self.assertTrue(Instruction(Foo).__name__ is None)
+        self.assertTrue(Instruction(Foo, name='foo').__name__ == 'foo')
+        self.assertRaises(
+            NotImplementedError,
+            lambda: Instruction(None) + 1
+        )
+        self.assertRaises(
+            NotImplementedError,
+            lambda: Instruction(None)(None)
+        )
+
+    def test_default(self):
+        # First default wins from left to right
+        def1 = default(1)
+        self.assertTrue(def1 + def1 is def1)
+        def2 = default(2)
+        self.assertTrue(def1 + def2 is def1)
+        self.assertTrue(def2 + def1 is def2)
+        # Override wins over default
+        ext3 = override(3)
+        self.assertTrue(def1 + ext3 is ext3)
+        # Finalize wins over default
+        fin4 = finalize(4)
+        self.assertTrue(def1 + fin4 is fin4)
+        # Adding with something else than default/override, raises
+        # ``PlumbingCollision``
+        err = None
         try:
-            func(*args, **kwargs)
-        except exc as inst:
-            self.assertEqual(str(inst), msg)
+            def1 + Instruction('foo')
+        except PlumbingCollision as e:
+            err = e
+        finally:
+            self.assertEqual(err.left.__class__.__name__, 'default')
+            self.assertEqual(err.left.payload, 1)
+            self.assertEqual(err.right.__class__.__name__, 'Instruction')
+            self.assertEqual(err.right.payload, 'foo')
+
+    def test_override(self):
+        # First override wins against following equal overrides and arbitrary
+        # defaults
+        ext1 = override(1)
+        self.assertTrue(ext1 + ext1 is ext1)
+        self.assertTrue(ext1 + override(1) is ext1)
+        self.assertTrue(ext1 + override(2) is ext1)
+        self.assertTrue(ext1 + default(2) is ext1)
+        fin3 = finalize(3)
+        self.assertTrue(ext1 + fin3 is fin3)
+        # Everything except default/override collides
+        err = None
+        try:
+            ext1 + Instruction(1)
+        except PlumbingCollision as e:
+            err = e
+        finally:
+            self.assertEqual(err.left.__class__.__name__, 'override')
+            self.assertEqual(err.left.payload, 1)
+            self.assertEqual(err.right.__class__.__name__, 'Instruction')
+            self.assertEqual(err.right.payload, 1)
+
+    def test_finalize(self):
+        # First override wins against following equal overrides and arbitrary
+        # defaults
+        fin1 = finalize(1)
+        self.assertTrue(fin1 + fin1 is fin1)
+        self.assertTrue(fin1 + finalize(1) is fin1)
+        self.assertTrue(fin1 + default(2) is fin1)
+        self.assertTrue(fin1 + override(2) is fin1)
+        # Two unequal finalize collide
+        err = None
+        try:
+            fin1 + finalize(2)
+        except PlumbingCollision as e:
+            err = e
+        finally:
+            self.assertEqual(err.left.__class__.__name__, 'finalize')
+            self.assertEqual(err.left.payload, 1)
+            self.assertEqual(err.right.__class__.__name__, 'finalize')
+            self.assertEqual(err.right.payload, 2)
+        # Everything except default/override collides
+        try:
+            fin1 + Instruction(1)
+        except PlumbingCollision as e:
+            err = e
+        finally:
+            self.assertEqual(err.left.__class__.__name__, 'finalize')
+            self.assertEqual(err.left.payload, 1)
+            self.assertEqual(err.right.__class__.__name__, 'Instruction')
+            self.assertEqual(err.right.payload, 1)
+
+    def test_plumb(self):
+        plb1 = plumb(1)
+        self.assertTrue(plb1 + plumb(1) is plb1)
+        err = None
+        try:
+            plb1 + Instruction(1)
+        except PlumbingCollision as e:
+            err = e
+        finally:
+            self.assertEqual(err.left.__class__.__name__, 'plumb')
+            self.assertEqual(err.left.payload, 1)
+            self.assertEqual(err.right.__class__.__name__, 'Instruction')
+            self.assertEqual(err.right.payload, 1)
+        try:
+            func_a = lambda x: None
+            prop_b = property(lambda x: None)
+            plumb(func_a) + plumb(prop_b)
+        except PlumbingCollision as e:
+            err = e
+        finally:
+            self.assertEqual(err.left.__class__.__name__, 'plumb')
+            self.assertEqual(err.left.payload, func_a)
+            self.assertEqual(err.right.__class__.__name__, 'plumb')
+            self.assertEqual(err.right.payload, prop_b)
+        try:
+            plumb(1) + plumb(2)
+        except PlumbingCollision as e:
+            err = e
+        finally:
+            self.assertEqual(err.left.__class__.__name__, 'plumb')
+            self.assertEqual(err.left.payload, 1)
+            self.assertEqual(err.right.__class__.__name__, 'plumb')
+            self.assertEqual(err.right.payload, 2)
+
+    def test_implements(self):
+        # classImplements interfaces
+        foo = _implements(('foo',))
+        self.assertTrue(foo == foo)
+        self.assertTrue(foo + foo is foo)
+        self.assertTrue(foo == _implements(('foo',)))
+        self.assertTrue(foo != _implements(('bar',)))
+        self.assertTrue(
+            _implements(('foo', 'bar')) == _implements(('bar', 'foo'))
+        )
+        self.assertTrue(foo + _implements(('foo',)) is foo)
+        bar = _implements(('bar',))
+        foobar = foo + bar
+        self.assertEqual(foobar.__class__.__name__, '_implements')
+        self.assertEqual(foobar.__name__, '__interfaces__')
+        self.assertEqual(foobar.payload, ('bar', 'foo'))
+        self.assertTrue(foo + bar == bar + foo)
+        err = None
+        try:
+            foo + Instruction("bar")
+        except PlumbingCollision as e:
+            err = e
+        finally:
+            self.assertEqual(err.left.__class__.__name__, '_implements')
+            self.assertEqual(err.left.__name__, '__interfaces__')
+            self.assertEqual(err.left.payload, ('foo',))
+            self.assertEqual(err.right.__class__.__name__, 'Instruction')
+            self.assertEqual(err.right.payload, 'bar')
 
 
 class TestBehaviors(unittest.TestCase):
