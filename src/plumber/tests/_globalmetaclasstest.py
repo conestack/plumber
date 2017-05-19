@@ -15,22 +15,20 @@ __metaclass__ = plumber
 
 
 class IBehavior1(Interface):
-    """
-    A zope.interface.Interface is not affected by the global ``__metaclass__``.
-    ::
+    """A zope.interface.Interface is not affected by the global
+    ``__metaclass__``::
+
         >>> IBehavior1.__class__
         <class 'zope.interface.interface.InterfaceClass'>
     """
-    pass
 
 
 class Foo:
-    """
-    A global meta-class declaration makes all classes at least new-style
-    classes, even when not subclassing subclasses.
-    ::
+    """A global meta-class declaration makes all classes at least new-style
+    classes, even when not subclassing subclasses::
+
         >>> Foo.__class__
-        <class '...'>
+        <class 'plumber._plumber.plumber'>
 
         >>> issubclass(Foo, object)
         True
@@ -43,11 +41,10 @@ class Behavior1(Behavior):
 
 
 class ClassMaybeUsingAPlumbing(object):
-    """
-    If subclassing object, the global metaclass declaration is ignored.
-    ::
+    """If subclassing object, the global metaclass declaration is ignored::
+
         >>> ClassMaybeUsingAPlumbing.__class__
-        <... 'type'>
+        <type 'type'>
     """
 
 
@@ -55,7 +52,7 @@ class ClassMaybeUsingAPlumbing(object):
 class ClassReallyUsingAPlumbing:
     """
         >>> ClassReallyUsingAPlumbing.__class__
-        <class '...'>
+        <class 'plumber._plumber.plumber'>
 
         >>> issubclass(ClassReallyUsingAPlumbing, object)
         True
@@ -64,3 +61,16 @@ class ClassReallyUsingAPlumbing:
         True
     """
 
+
+class BCClassReallyUsingAPlumbing:
+    """
+        >>> BCClassReallyUsingAPlumbing.__class__
+        <class 'plumber._plumber.plumber'>
+
+        >>> issubclass(BCClassReallyUsingAPlumbing, object)
+        True
+
+        >>> IBehavior1.implementedBy(BCClassReallyUsingAPlumbing)
+        True
+    """
+    __plumbing__ = Behavior1

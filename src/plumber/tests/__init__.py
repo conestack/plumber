@@ -11,11 +11,15 @@ from plumber._instructions import Instruction
 from plumber._instructions import _implements
 from plumber._instructions import payload
 from plumber._instructions import plumb_str
+from plumber._plumber import plumber
+from plumber._plumber import searchnameinbases
 from plumber.compat import add_metaclass
 from plumber.exceptions import PlumbingCollision
+from plumber.tests import _globalmetaclasstest as gmt
 from pprint import pprint
 from zope.interface import Interface
 from zope.interface import implementer
+from zope.interface.interface import InterfaceClass
 import doctest
 import inspect
 
@@ -26,12 +30,6 @@ except ImportError:
 
 
 class TestInstructions(unittest.TestCase):
-
-#     def assertRaisesWithMessage(self, msg, func, exc, *args, **kwargs):
-#         try:
-#             func(*args, **kwargs)
-#         except exc as inst:
-#             self.assertEqual(str(inst), msg)
 
     def test_payload(self):
         class Foo:
@@ -263,11 +261,44 @@ class TestBehavior(unittest.TestCase):
 
 
 class TestPlumber(unittest.TestCase):
-    pass
+
+    def test_searchnameinbases(self):
+        class A(object):
+            foo = 1
+
+        class B(A):
+            pass
+
+        self.assertTrue(searchnameinbases('foo', (B,)))
+        self.assertFalse(searchnameinbases('bar', (B,)))
 
 
 class TestGlobalMetaclass(unittest.TestCase):
-    pass
+
+    def test_global_metaclass(self):
+        # A zope.interface.Interface is not affected by the global
+        # ``__metaclass__``.
+        self.assertEqual(gmt.IBehavior1.__class__, InterfaceClass)
+
+        # A global meta-class declaration makes all classes at least new-style
+        # classes, even when not subclassing subclasses
+        self.assertEqual(gmt.Foo.__class__, plumber)
+        self.assertTrue(issubclass(gmt.Foo, object))
+
+        # If subclassing object, the global metaclass declaration is ignored::
+        self.assertEqual(gmt.ClassMaybeUsingAPlumbing.__class__, type)
+
+        self.assertEqual(gmt.ClassReallyUsingAPlumbing.__class__, plumber)
+        self.assertTrue(issubclass(gmt.ClassReallyUsingAPlumbing, object))
+        self.assertTrue(
+            gmt.IBehavior1.implementedBy(gmt.ClassReallyUsingAPlumbing)
+        )
+
+        self.assertEqual(gmt.BCClassReallyUsingAPlumbing.__class__, plumber)
+        self.assertTrue(issubclass(gmt.BCClassReallyUsingAPlumbing, object))
+        self.assertTrue(
+            gmt.IBehavior1.implementedBy(gmt.BCClassReallyUsingAPlumbing)
+        )
 
 
 class TestPlumberBasics(unittest.TestCase):
@@ -840,42 +871,5 @@ class TestPlumberStage2(unittest.TestCase):
         self.assertTrue(IBehavior2Base.providedBy(plb))
 
 
-###############################################################################
-# OLD stuff
-###############################################################################
-
-optionflags = doctest.NORMALIZE_WHITESPACE | \
-              doctest.ELLIPSIS | \
-              doctest.REPORT_ONLY_FIRST_FAILURE
-
-
-TESTFILES = [
-    '../plumber.rst',
-]
-TESTMODULES = [
-    'plumber._instructions',
-    'plumber._behavior',
-    'plumber._plumber',
-    'plumber.tests._globalmetaclasstest',
-]
-
-
-def test_suite():
-    return unittest.TestSuite([
-        doctest.DocTestSuite(
-            module,
-            optionflags=optionflags,
-            ) for module in TESTMODULES
-        ]+[
-        doctest.DocFileSuite(
-            file,
-            optionflags=optionflags,
-            globs={#'interact': interact,
-                   'pprint': pprint,
-                   'print': print},
-            ) for file in TESTFILES
-        ])
-
-
 if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite')                 #pragma NO COVER
+    unittest.main()                                            #pragma NO COVER
