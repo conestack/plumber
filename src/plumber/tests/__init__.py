@@ -1,25 +1,22 @@
-from __future__ import print_function
 from plumber import Behavior
+from plumber import PlumbingCollision
 from plumber import default
 from plumber import finalize
 from plumber import override
 from plumber import plumb
+from plumber import plumber
 from plumber import plumbifexists
 from plumber import plumbing
-from plumber._behavior import behaviormetaclass
-from plumber._instructions import Instruction
-from plumber._instructions import _implements
-from plumber._instructions import payload
-from plumber._instructions import plumb_str
-from plumber._plumber import plumber
-from plumber._plumber import searchnameinbases
+from plumber.behavior import behaviormetaclass
 from plumber.compat import add_metaclass
-from plumber.exceptions import PlumbingCollision
-from pprint import pprint
+from plumber.instructions import Instruction
+from plumber.instructions import _implements
+from plumber.instructions import payload
+from plumber.instructions import plumb_str
+from plumber.plumber import searchnameinbases
 from zope.interface import Interface
 from zope.interface import implementer
 from zope.interface.interface import InterfaceClass
-import doctest
 import inspect
 import sys
 
@@ -280,29 +277,29 @@ class TestGlobalMetaclass(unittest.TestCase):
         sys.version_info[0] >= 3,
         '__metaclass__ attribute on module leven only works in python 2')
     def test_global_metaclass(self):
-        from plumber.tests import _globalmetaclasstest as gmt
+        from plumber.tests import globalmetaclass as gm
         # A zope.interface.Interface is not affected by the global
         # ``__metaclass__``.
-        self.assertEqual(gmt.IBehavior1.__class__, InterfaceClass)
+        self.assertEqual(gm.IBehavior1.__class__, InterfaceClass)
 
         # A global meta-class declaration makes all classes at least new-style
         # classes, even when not subclassing subclasses
-        self.assertEqual(gmt.Foo.__class__, plumber)
-        self.assertTrue(issubclass(gmt.Foo, object))
+        self.assertEqual(gm.Foo.__class__, plumber)
+        self.assertTrue(issubclass(gm.Foo, object))
 
         # If subclassing object, the global metaclass declaration is ignored::
-        self.assertEqual(gmt.ClassMaybeUsingAPlumbing.__class__, type)
+        self.assertEqual(gm.ClassMaybeUsingAPlumbing.__class__, type)
 
-        self.assertEqual(gmt.ClassReallyUsingAPlumbing.__class__, plumber)
-        self.assertTrue(issubclass(gmt.ClassReallyUsingAPlumbing, object))
+        self.assertEqual(gm.ClassReallyUsingAPlumbing.__class__, plumber)
+        self.assertTrue(issubclass(gm.ClassReallyUsingAPlumbing, object))
         self.assertTrue(
-            gmt.IBehavior1.implementedBy(gmt.ClassReallyUsingAPlumbing)
+            gm.IBehavior1.implementedBy(gm.ClassReallyUsingAPlumbing)
         )
 
-        self.assertEqual(gmt.BCClassReallyUsingAPlumbing.__class__, plumber)
-        self.assertTrue(issubclass(gmt.BCClassReallyUsingAPlumbing, object))
+        self.assertEqual(gm.BCClassReallyUsingAPlumbing.__class__, plumber)
+        self.assertTrue(issubclass(gm.BCClassReallyUsingAPlumbing, object))
         self.assertTrue(
-            gmt.IBehavior1.implementedBy(gmt.BCClassReallyUsingAPlumbing)
+            gm.IBehavior1.implementedBy(gm.BCClassReallyUsingAPlumbing)
         )
 
 

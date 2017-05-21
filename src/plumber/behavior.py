@@ -1,11 +1,12 @@
-from plumber._instructions import Instruction
-from plumber._instructions import plumb
+from __future__ import absolute_import
 from plumber.compat import add_metaclass
+from plumber.instructions import Instruction
+from plumber.instructions import plumb
 import sys
 
 
 try:
-    from plumber._instructions import _implements
+    from plumber.instructions import _implements
     ZOPE_INTERFACE_AVAILABLE = True
 except ImportError:                                          # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False

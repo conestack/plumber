@@ -28,7 +28,7 @@ class Foo:
     classes, even when not subclassing subclasses::
 
         >>> Foo.__class__
-        <class 'plumber._plumber.plumber'>
+        <class 'plumber.plumber.plumber'>
 
         >>> issubclass(Foo, object)
         True
@@ -52,7 +52,7 @@ class ClassMaybeUsingAPlumbing(object):
 class ClassReallyUsingAPlumbing:
     """
         >>> ClassReallyUsingAPlumbing.__class__
-        <class 'plumber._plumber.plumber'>
+        <class 'plumber.plumber.plumber'>
 
         >>> issubclass(ClassReallyUsingAPlumbing, object)
         True
@@ -65,7 +65,7 @@ class ClassReallyUsingAPlumbing:
 class BCClassReallyUsingAPlumbing:
     """
         >>> BCClassReallyUsingAPlumbing.__class__
-        <class 'plumber._plumber.plumber'>
+        <class 'plumber.plumber.plumber'>
 
         >>> issubclass(BCClassReallyUsingAPlumbing, object)
         True

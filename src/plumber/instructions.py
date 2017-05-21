@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from plumber.exceptions import PlumbingCollision
 import re
 import sys
 
@@ -8,9 +10,6 @@ try:
     ZOPE_INTERFACE_AVAILABLE = True
 except ImportError:                                          # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False
-
-
-from plumber.exceptions import PlumbingCollision
 
 
 STR_TYPE = basestring if sys.version_info[0] < 3 else str
