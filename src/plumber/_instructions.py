@@ -1,18 +1,24 @@
 import re
+import sys
+
 
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
     ZOPE_INTERFACE_AVAILABLE = True
-except ImportError:                                         #pragma NO COVER
-    ZOPE_INTERFACE_AVAILABLE = False                        #pragma NO COVER
+except ImportError:                                          # pragma: no cover
+    ZOPE_INTERFACE_AVAILABLE = False
+
 
 from plumber.exceptions import PlumbingCollision
 
 
-####
+STR_TYPE = basestring if sys.version_info[0] < 3 else str
+
+
+###############################################################################
 # Instruction base class and helper function
-#
+###############################################################################
 
 def payload(item):
     """Get to the payload through a chain of instructions
@@ -171,9 +177,9 @@ class Instruction(object):
     __str__ = __repr__
 
 
-####
+###############################################################################
 # Stage 1 instructions
-#
+###############################################################################
 
 class Stage1Instruction(Instruction):
     """Instructions installed in stage1
@@ -360,9 +366,9 @@ class finalize(Stage1Instruction):
         dct[self.name] = self.payload
 
 
-####
+###############################################################################
 # Stage2 instructions
-#
+###############################################################################
 
 class Stage2Instruction(Instruction):
     """Instructions installed in stage2: so far only plumb
@@ -372,7 +378,7 @@ class Stage2Instruction(Instruction):
     def __call__(self, cls):
         """cls is the plumbing class, type finished its work already
         """
-        raise NotImplementedError                           #pragma NO COVER
+        raise NotImplementedError                            # pragma: no cover
 
 
 def entrancefor(plumbing_method, _next):
@@ -406,12 +412,12 @@ class plumb(Stage2Instruction):
 
     XXX: support getter, setter, deleter to enable:
 
-    @plumb
-    @property
-    def foo
+        @plumb
+        @property
+        def foo
 
-    @foo.setter
-    def foo
+        @foo.setter
+        def foo
     """
     def __add__(self, right):
         """
@@ -454,10 +460,9 @@ class plumb(Stage2Instruction):
                 <plumb 'None' of None payload=1>
               with:
                 <plumb 'None' of None payload=2>
-
         """
-        if isinstance(p1, basestring):
-            return isinstance(p2, basestring) or p2 is None
+        if isinstance(p1, STR_TYPE):
+            return isinstance(p2, STR_TYPE) or p2 is None
         if isinstance(p1, property):
             return isinstance(p2, property)
         if callable(p1):
@@ -465,7 +470,7 @@ class plumb(Stage2Instruction):
         return False
 
     def plumb(self, plbfunc, p1, p2):
-        if isinstance(p1, basestring):
+        if isinstance(p1, STR_TYPE):
             return plumb_str(p1, p2)
         if isinstance(p1, property):
             # XXX: This should be split up into instructions during part
@@ -484,7 +489,7 @@ class plumb(Stage2Instruction):
             return p1.__class__(*propfuncs)
         if callable(p1):
             return plbfunc(p1, p2)
-        raise RuntimeError("We should not reach this code!")  #pragma NO COVER
+        raise RuntimeError("We should not reach this code!")  # pragma: no cover
 
     def __call__(self, cls):
         # Check for a method on the plumbing class itself.

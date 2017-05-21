@@ -1,11 +1,13 @@
 Design choices and ongoing discussions
---------------------------------------
+======================================
 
 Stage1 left of stage2
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 Currently instructions of stage1 may be left of stage2 instructions. We
-consider to forbid this::
+consider to forbid this.
+
+.. code-block:: pycon
 
     >>> class Behavior1(Behavior):
     ...     @override
@@ -29,7 +31,7 @@ consider to forbid this::
 
 
 Instance based plumbing system
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 At various points it felt tempting to be able to instantiate plumbing elements
 to configure them. For that we need ``__init__``, which would mean that plumbing
@@ -52,10 +54,12 @@ implemented to exist alongside the current system.
 
 
 Different zope.interface.Interfaces for plumbing and created class
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------------------------------------
 
 A different approach to the currently implemented system is having different
-interfaces for the behaviors and the class that is created::
+interfaces for the behaviors and the class that is created.
+
+.. code-block:: pycon
 
     >>> class IBehavior1Behaviour(Interface):
     ...     pass
