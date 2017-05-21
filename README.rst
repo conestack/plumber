@@ -1248,16 +1248,16 @@ Coverage report::
 
     Name                                      Stmts   Miss  Cover
     -------------------------------------------------------------
-    src/plumber/__init__.py                       8      0   100%
-    src/plumber/_behavior.py                     48      0   100%
-    src/plumber/_instructions.py                171      0   100%
-    src/plumber/_plumber.py                      70      0   100%
+    src/plumber/__init__.py                      10      0   100%
+    src/plumber/behavior.py                      49      0   100%
     src/plumber/compat.py                         9      0   100%
     src/plumber/exceptions.py                     6      0   100%
-    src/plumber/tests/__init__.py               577      0   100%
-    src/plumber/tests/_globalmetaclasstest.py    15      0   100%
+    src/plumber/instructions.py                 172      0   100%
+    src/plumber/plumber.py                       71      0   100%
+    src/plumber/tests/__init__.py               574      0   100%
+    src/plumber/tests/globalmetaclass.py         15      0   100%
     -------------------------------------------------------------
-    TOTAL                                       904      0   100%
+    TOTAL                                      1882      0   100%
 
 
 Python Versions
@@ -1282,20 +1282,14 @@ Contributors
 - Attila Oláh
 
 
-Credits
-^^^^^^^
-
-- thanks to WSGI for the initial concept
-
-- thanks to #python (for trying) to block stupid ideas, if there are any left,
-  please let us know
-
-
 Changes
 ^^^^^^^
 
 1.4 (unreleased)
 ----------------
+
+- No more "private" module names.
+  [rnix, 2017-05-21]
 
 - Python 3 support.
   [rnix, 2017-05-18]
