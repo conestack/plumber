@@ -1279,7 +1279,7 @@ Contributors
 
 - Marco Lempen
 
-- Attila Oláh
+- Attila Olah
 
 
 Credits
