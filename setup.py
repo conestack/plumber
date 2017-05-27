@@ -1,11 +1,15 @@
 from setuptools import find_packages
 from setuptools import setup
+import codecs
 import os
 
 
 version = '1.4.dev0'
 shortdesc = 'An alternative to mixin-based extension of classes.'
-longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
+longdesc = codecs.open(
+    os.path.join(os.path.dirname(__file__), 'README.rst'),
+    encoding='utf-8'
+).read()
 
 
 setup(
