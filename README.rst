@@ -1244,6 +1244,9 @@ corresponding text.
 Test Coverage
 ^^^^^^^^^^^^^
 
+.. image:: https://travis-ci.org/bluedynamics/plumber.svg?branch=master
+    :target: https://travis-ci.org/bluedynamics/plumber
+
 Coverage report::
 
     Name                                      Stmts   Miss  Cover
