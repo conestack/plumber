@@ -1288,8 +1288,8 @@ Contributors
 Changes
 ^^^^^^^
 
-1.4 (unreleased)
-----------------
+1.4
+---
 
 - No more "private" module names.
   [rnix, 2017-05-21]
