@@ -303,6 +303,42 @@ class TestGlobalMetaclass(unittest.TestCase):
         )
 
 
+class TestMetaclassHooks(unittest.TestCase):
+
+    def test_metaclasshook(self):
+        class IBehaviorInterface(Interface):
+            pass
+
+        @plumber.metaclasshook
+        def test_metclass_hook(cls, name, bases, dct):
+            if not IBehaviorInterface.implementedBy(cls):
+                return
+            cls.hooked = True
+
+        self.assertTrue(test_metclass_hook in plumber.__metaclass_hooks__)
+
+        @implementer(IBehaviorInterface)
+        class MetaclassConsideredBehavior(Behavior):
+            pass
+
+        @plumbing(MetaclassConsideredBehavior)
+        class Plumbing(object):
+            pass
+
+        self.assertTrue(Plumbing.hooked)
+
+        class BehaviorIgnoredByMetaclassHook(Behavior):
+            pass
+
+        @plumbing(BehaviorIgnoredByMetaclassHook)
+        class Plumbing2(object):
+            pass
+
+        self.assertRaises(AttributeError, lambda: Plumbing2.hooked)
+
+        plumber.__metaclass_hooks__.remove(test_metclass_hook)
+
+
 class TestPlumberBasics(unittest.TestCase):
 
     def test_basics(self):

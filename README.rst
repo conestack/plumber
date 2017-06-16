@@ -1191,6 +1191,38 @@ An instance of the class provides the interfaces.
     True
 
 
+plumber metaclass hooks
+~~~~~~~~~~~~~~~~~~~~~~~
+
+In case one writes a plumbing behavior requiring class manipulation at plumber
+metaclass execution time a decorator is provided for registering callbacks
+which are executed at the end of the plumber metaclass ``__init__`` function.
+Executing at last task ensures stage 1 and stage 2 instructions already have
+been executed and we're working on a complete plumbing class.
+
+.. code-block:: pycon
+
+    >>> class IBehaviorInterface(Interface):
+    ...     pass
+
+    >>> @plumber.metaclasshook
+    ... def test_metclass_hook(cls, name, bases, dct):
+    ...     if not IBehaviorInterface.implementedBy(cls):
+    ...         return
+    ...     cls.hooked = True
+
+    >>> @implementer(IBehaviorInterface)
+    ... class MetaclassConsideredBehavior(Behavior):
+    ...     pass
+
+    >>> @plumbing(MetaclassConsideredBehavior)
+    ... class Plumbing(object):
+    ...     pass
+
+    >>> Plumbing.hooked
+    True
+
+
 Miscellanea
 -----------
 
@@ -1286,16 +1318,17 @@ Contributors
 
 
 Changes
-^^^^^^^
+-------
 
 1.5 (unreleased)
-----------------
+~~~~~~~~~~~~~~~~
 
-- No changes yet.
+- Introduce ``plumber.metaclasshook`` decorator.
+  [rnix, 2017-06-16]
 
 
 1.4
----
+~~~
 
 - No more "private" module names.
   [rnix, 2017-05-21]
@@ -1305,14 +1338,14 @@ Changes
 
 
 1.3.1
------
+~~~~~
 
 - Avoid use of deprecated ``dict.has_key``.
   [rnix, 2015-10-05]
 
 
 1.3
----
+~~~
 
 - Introduce ``plumbing`` decorator.
   [rnix, 2014-07-31]
@@ -1322,7 +1355,7 @@ Changes
 
 
 1.2
----
+~~~
 
 - Deprecate ``plumber.extend``. Use ``plumber.override`` instead.
   [rnix, 2012-07-28]
@@ -1332,14 +1365,14 @@ Changes
 
 
 1.1
----
+~~~
 
 - Use ``zope.interface.implementer`` instead of ``zope.interface.implements``.
   [rnix, 2012-05-18]
 
 
 1.0
----
+~~~
 
 - ``.. plbnext::`` instead of ``.. plb_next::``
   [chaoflow 2011-02-02]
@@ -1380,7 +1413,7 @@ Changes
 
 
 License / Disclaimer
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 Copyright (c) 2011-2017, BlueDynamics Alliance, Austria, Germany, Switzerland
 All rights reserved.

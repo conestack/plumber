@@ -59,6 +59,13 @@ class plumber(type):
     Create and call a real plumber, for classes declaring a ``__plumbing__``
     attribute (inheritance is not enough):
     """
+    __metaclass_hooks__ = list()
+
+    @classmethod
+    def metaclasshook(cls, func):
+        cls.__metaclass_hooks__.append(func)
+        return func
+
     def __new__(cls, name, bases, dct):
         if '__plumbing__' not in dct:
             return type.__new__(cls, name, bases, dct)
@@ -102,12 +109,16 @@ class plumber(type):
     def __init__(cls, name, bases, dct):
         type.__init__(cls, name, bases, dct)
 
+        # install stage2
         if '__plumbing__' in dct:
-            # install stage2
             stacks = Stacks(dct)
             for stack in stacks.stage2.values():
                 instruction = stack[-1]
                 instruction(cls)
+
+        # run metaclass hooks
+        for hook in plumber.__metaclass_hooks__:
+            hook(cls, name, bases, dct)
 
 
 class plumbing(object):
