@@ -12,7 +12,7 @@ def read_file(name):
         return f.read()
 
 
-version = '1.5'
+version = '1.6.dev0'
 shortdesc = 'An alternative to mixin-based extension of classes.'
 longdesc = read_file('README.rst')
 
