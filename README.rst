@@ -1320,8 +1320,14 @@ Contributors
 Changes
 -------
 
-1.5 (unreleased)
+1.6 (unreleased)
 ~~~~~~~~~~~~~~~~
+
+- No changes yet.
+
+
+1.5
+~~~
 
 - Introduce ``plumber.metaclasshook`` decorator.
   [rnix, 2017-06-16]
