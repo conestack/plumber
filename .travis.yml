@@ -12,8 +12,16 @@ python:
   - "pypy-5.3.1"
 
 install:
-    - python setup.py install
-    - pip install -U pip zope.interface
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U unittest2; fi
+  - pip install coverage
+  - pip install coveralls
+  - pip install zope.interface
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U unittest2; fi
+  - pip install -e .
 
-script: python -m unittest plumber.tests.test_plumber
+script:
+  - python -m unittest plumber.tests.test_plumber
+  - coverage run --source src/plumber -m plumber.tests.test_plumber
+  - coverage report
+
+after_success:
+  - coveralls

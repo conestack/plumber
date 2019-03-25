@@ -9,6 +9,20 @@ discussions are explained. Finally, in miscellanea you find nomenclature,
 coverage report, list of contributors, changes and some todos.  All
 non-experimental features are fully test covered.
 
+.. image:: https://img.shields.io/pypi/v/plumber.svg
+    :target: https://pypi.python.org/pypi/plumber
+    :alt: Latest PyPI version
+
+.. image:: https://img.shields.io/pypi/dm/plumber.svg
+    :target: https://pypi.python.org/pypi/plumber
+    :alt: Number of PyPI downloads
+
+.. image:: https://travis-ci.org/bluedynamics/plumber.svg?branch=master
+    :target: https://travis-ci.org/bluedynamics/plumber
+
+.. image:: https://coveralls.io/repos/github/bluedynamics/plumber/badge.svg?branch=master
+    :target: https://coveralls.io/github/bluedynamics/plumber?branch=master
+
 .. contents::
     :depth: 2
 
@@ -1271,28 +1285,6 @@ Nomenclature
 
 If you feel something is missing, please let us now or write a short
 corresponding text.
-
-
-Test Coverage
-^^^^^^^^^^^^^
-
-.. image:: https://travis-ci.org/bluedynamics/plumber.svg?branch=master
-    :target: https://travis-ci.org/bluedynamics/plumber
-
-Coverage report::
-
-    Name                                      Stmts   Miss  Cover
-    -------------------------------------------------------------
-    src/plumber/__init__.py                      10      0   100%
-    src/plumber/behavior.py                      49      0   100%
-    src/plumber/compat.py                         9      0   100%
-    src/plumber/exceptions.py                     6      0   100%
-    src/plumber/instructions.py                 172      0   100%
-    src/plumber/plumber.py                       71      0   100%
-    src/plumber/tests/__init__.py               574      0   100%
-    src/plumber/tests/globalmetaclass.py         15      0   100%
-    -------------------------------------------------------------
-    TOTAL                                      1882      0   100%
 
 
 Python Versions
