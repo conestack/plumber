@@ -1,6 +1,12 @@
 Changes
 =======
 
+1.7 (unreleased)
+----------------
+
+- No changes yet.
+
+
 1.6
 ---
 
