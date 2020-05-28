@@ -4,6 +4,9 @@ Changes
 1.6 (unreleased)
 ----------------
 
+- Use raw string for regular expression.
+  [rnix, 2020-05-28]
+
 - Drop python 2.6 support.
   [rnix, 2019-03-25]
 

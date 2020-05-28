@@ -88,9 +88,9 @@ def plumb_str(leftdoc, rightdoc):
         return rightdoc
     if rightdoc is None:
         return leftdoc
-    _next = re.search("\n\s*\n\s*__plbnext__\s*\n\s*\n", leftdoc)
+    _next = re.search(r'\n\s*\n\s*__plbnext__\s*\n\s*\n', leftdoc)
     if not _next:
-        return "\n\n".join((rightdoc.rstrip(), leftdoc))
+        return '\n\n'.join((rightdoc.rstrip(), leftdoc))
     return leftdoc.replace('__plbnext__', rightdoc.rstrip())
 
 
