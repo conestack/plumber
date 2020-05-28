@@ -8,7 +8,7 @@ def read_file(name):
         return f.read()
 
 
-version = '1.6.dev0'
+version = '1.6'
 shortdesc = 'An alternative to mixin-based extension of classes.'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',

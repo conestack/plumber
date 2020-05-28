@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.6 (unreleased)
-----------------
+1.6
+---
 
 - Use raw string for regular expression.
   [rnix, 2020-05-28]
