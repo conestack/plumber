@@ -13,5 +13,3 @@ TODO
 - [X] subclassing for plumbing behaviors.
 
 - [ ] mature plumbing of properties.
-
-- [ ] py26 @foo.setter support in all decorators.
