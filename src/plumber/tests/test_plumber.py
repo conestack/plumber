@@ -17,6 +17,7 @@ from plumber.plumber import searchnameinbases
 from zope.interface import Interface
 from zope.interface import implementer
 from zope.interface.interface import InterfaceClass
+import abc
 import inspect
 import sys
 
@@ -401,6 +402,75 @@ class TestPlumberBasics(unittest.TestCase):
 
         plb = BCPlumbing()
         self.assertTrue(plb.a)
+
+
+class TestABCPlumber(unittest.TestCase):
+
+    def test_abc(self):
+        class ABCBehavior(Behavior):
+            prop = default('default prop')
+
+            @plumbifexists
+            @property
+            def absprop(next_, self):
+                return 'plumb {}'.format(next_(self))
+
+            @plumbifexists
+            def absfunc(next_, self):
+                return 'plumb {}'.format(next_(self))
+
+            @plumbifexists
+            def func(next_, self):
+                return 'plumb {}'.format(next_(self))
+
+        with self.assertRaises(TypeError):
+            @plumbing(ABCBehavior)
+            @add_metaclass(abc.ABCMeta)
+            class ProhibitedPlumbing(object):
+                @abc.abstractproperty
+                def absprop(self):
+                    """"""
+
+        with self.assertRaises(TypeError):
+            @plumbing(ABCBehavior)
+            @add_metaclass(abc.ABCMeta)
+            class ProhibitedPlumbing(object):
+                @abc.abstractmethod
+                def absfunc(self):
+                    """"""
+
+        @add_metaclass(abc.ABCMeta)
+        class ABCBase(object):
+
+            @abc.abstractproperty
+            def absprop(self):
+                """"""
+
+            @abc.abstractmethod
+            def absfunc(self):
+                """"""
+
+            def func(self):
+                return 'func'
+
+        with self.assertRaises(TypeError):
+            ABCBase()
+
+        @plumbing(ABCBehavior)
+        class ABCPlumbing(ABCBase):
+
+            @property
+            def absprop(self):
+                return 'absprop'
+
+            def absfunc(self):
+                return 'absfunc'
+
+        plb = ABCPlumbing()
+        self.assertEqual(plb.prop, 'default prop')
+        self.assertEqual(plb.absprop, 'plumb absprop')
+        self.assertEqual(plb.absfunc(), 'plumb absfunc')
+        self.assertEqual(plb.func(), 'plumb func')
 
 
 class TestPlumberStage1(unittest.TestCase):

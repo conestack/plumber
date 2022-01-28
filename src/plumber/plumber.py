@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from plumber.behavior import Instructions
+import abc
 
 
 class Stacks(object):
@@ -54,7 +55,7 @@ class Bases(object):
 
 
 class plumber(type):
-    """Metaclass for plumbing creation
+    """Metaclass for plumbing creation.
 
     Create and call a real plumber, for classes declaring a ``__plumbing__``
     attribute (inheritance is not enough):
@@ -104,21 +105,51 @@ class plumber(type):
             instruction(dct, Bases(bases))
 
         # build the class and return it
-        return type.__new__(cls, name, bases, dct)
+        return super(plumber, cls).__new__(cls, name, bases, dct)
 
     def __init__(cls, name, bases, dct):
-        type.__init__(cls, name, bases, dct)
+        super(plumber, cls).__init__(name, bases, dct)
 
         # install stage2
+        type(cls)._install_stage2(cls, dct)
+
+        # run metaclass hooks
+        for hook in plumber.__metaclass_hooks__:
+            hook(cls, name, bases, dct)
+
+    @staticmethod
+    def _install_stage2(cls, dct):
         if '__plumbing__' in dct:
             stacks = Stacks(dct)
             for stack in stacks.stage2.values():
                 instruction = stack[-1]
                 instruction(cls)
 
-        # run metaclass hooks
-        for hook in plumber.__metaclass_hooks__:
-            hook(cls, name, bases, dct)
+
+class abcplumber(abc.ABCMeta, plumber):
+    """Metaclass for plumbing creation on abstract base class deriving objects.
+    """
+
+    def __new__(cls, name, bases, dct):
+        return super(abcplumber, cls).__new__(cls, name, bases, dct)
+
+    def __init__(cls, name, bases, dct):
+        super(abcplumber, cls).__init__(name, bases, dct)
+
+    @staticmethod
+    def _install_stage2(cls, dct):
+        if '__plumbing__' in dct:
+            stacks = Stacks(dct)
+            for name, stack in stacks.stage2.items():
+                if name in (dct.get('__abstractmethods__', tuple())):
+                    raise TypeError(
+                        'Cannot plumb abstract method {}.{}'.format(
+                            cls.__name__,
+                            name
+                        )
+                    )
+                instruction = stack[-1]
+                instruction(cls)
 
 
 class plumbing(object):
@@ -141,4 +172,8 @@ class plumbing(object):
             for slots_var in slots:
                 orig_vars.pop(slots_var)
         orig_vars['__plumbing__'] = self.behaviors
-        return plumber(cls.__name__, cls.__bases__, orig_vars)
+        if type(cls) is abc.ABCMeta:
+            type_ = abcplumber
+        else:
+            type_ = plumber
+        return type_(cls.__name__, cls.__bases__, orig_vars)
