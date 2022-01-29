@@ -1,15 +1,15 @@
 TODO
 ----
 
-- [ ] traceback should show in which plumbing class we are, not something inside
-  the plumber. yafowil is doing it. jensens: would you be so kind.
+- [ ] Traceback should show in which plumbing class we are, not something
+  inside the plumber.
 
-- [X] verify behaviour with pickling in tests within plumber.
-  (see ``node.ext.zodb`` -> no issues occurred)
+- [ ] Check if ``PendingDeprecationWarning`` ever gets dropped in
+  ``plumber.__new__`` if stage 1 instruction left of stage 2 instruction.
+  If not, remove.
 
-- [X] verify behaviour with ZODB persistence in tests within plumber.
-  (see ``node.ext.zodb`` -> no issues occurred)
+- [ ] Mature plumbing of properties (getter and deleter).
 
-- [X] subclassing for plumbing behaviors.
+- [ ] Plumbing of classmethod.
 
-- [ ] mature plumbing of properties.
+- [ ] Plumbing of staticmethod.

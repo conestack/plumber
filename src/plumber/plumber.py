@@ -4,9 +4,9 @@ import abc
 
 
 class Stacks(object):
-    """organize stacks for parsing behaviors, stored in the class' dict
+    """organize stacks for parsing behaviors, stored in the class' dict.
     """
-    attrname = "__plumbing_stacks__"
+    attrname = '__plumbing_stacks__'
 
     def __init__(self, dct):
         self.dct = dct
@@ -45,7 +45,7 @@ def searchnameinbases(name, bases):
 
 
 class Bases(object):
-    """Used to search in base classes for attributes
+    """Used to search in base classes for attributes.
     """
     def __init__(self, bases):
         self.bases = bases
@@ -72,32 +72,34 @@ class plumber(type):
             return super(plumber, cls).__new__(cls, name, bases, dct)
 
         # turn single behavior into a tuple of one behavior
-        if type(dct['__plumbing__']) is not tuple:
-            dct['__plumbing__'] = (dct['__plumbing__'],)
+        plb = dct['__plumbing__']
+        if type(plb) is not tuple:
+            plb = dct['__plumbing__'] = (plb,)
 
         # stacks for parsing instructions
         stacks = Stacks(dct)
 
         # parse the behaviors
-        for behavior in dct['__plumbing__']:
+        for behavior in plb:
             for instruction in Instructions(behavior):
                 stage = stacks.stages[instruction.__stage__]
                 stack = stage.setdefault(instruction.__name__, [])
                 stacks.history.append(instruction)
                 if instruction not in stacks.history[:-1]:
                     if stack:
-                        # XXX: replace by a non exception log warning
+                        # XXX: check if case ever happens, otherwise remove
                         # if instruction.__stage__ > stack[-1].__stage__:
-                        #     msg = 'Stage1 instruction %s left of stage2 '
-                        #     'instruction %s. We consider deprecation of this.' \
-                        #             % (stack[-1], instruction)
-                        #     raise PendingDeprecationWarning(msg)
+                        #     import warnings
+                        #     msg = (
+                        #         'Stage 1 instruction {} left of stage 2 '
+                        #         'instruction {}. We consider deprecation of '
+                        #         'this.'
+                        #     ).format(stack[-1], instruction)
+                        #     warnings.warn(msg, PendingDeprecationWarning)
                         instruction = stack[-1] + instruction
                     stack.append(instruction)
-                # else:
-                    # XXX: replace by a non exception log warning
-                    # raise Warning("Dropped already seen instruction %s." % \
-                    #         (instruction,))
+                    continue
+                # already seen instruction is dropped
 
         # install stage1 instructions
         cls._install_stage1_instructions(bases, dct, stacks)
