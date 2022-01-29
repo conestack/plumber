@@ -16,7 +16,9 @@ __metaclass__ = plumber
 
 class IBehavior1(Interface):
     """A zope.interface.Interface is not affected by the global
-    ``__metaclass__``::
+    ``__metaclass__``.
+
+    .. code-block:: pycon
 
         >>> IBehavior1.__class__
         <class 'zope.interface.interface.InterfaceClass'>
@@ -25,7 +27,9 @@ class IBehavior1(Interface):
 
 class Foo:
     """A global meta-class declaration makes all classes at least new-style
-    classes, even when not subclassing subclasses::
+    classes, even when not subclassing subclasses.
+
+    .. code-block:: pycon
 
         >>> Foo.__class__
         <class 'plumber.plumber.plumber'>
@@ -41,7 +45,9 @@ class Behavior1(Behavior):
 
 
 class ClassMaybeUsingAPlumbing(object):
-    """If subclassing object, the global metaclass declaration is ignored::
+    """If subclassing object, the global metaclass declaration is ignored.
+
+    .. code-block:: pycon
 
         >>> ClassMaybeUsingAPlumbing.__class__
         <type 'type'>
@@ -50,7 +56,10 @@ class ClassMaybeUsingAPlumbing(object):
 
 @plumbing(Behavior1)
 class ClassReallyUsingAPlumbing:
-    """
+    """A plumbing class.
+
+    .. code-block:: pycon
+
         >>> ClassReallyUsingAPlumbing.__class__
         <class 'plumber.plumber.plumber'>
 
@@ -63,7 +72,10 @@ class ClassReallyUsingAPlumbing:
 
 
 class BCClassReallyUsingAPlumbing:
-    """
+    """A plumbing class setting behaviors the B/C method.
+
+    .. code-block:: pycon
+
         >>> BCClassReallyUsingAPlumbing.__class__
         <class 'plumber.plumber.plumber'>
 

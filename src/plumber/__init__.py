@@ -1,4 +1,5 @@
 from __future__ import absolute_import  # noqa
+from .behavior import ABCBehavior  # noqa
 from .behavior import Behavior  # noqa
 from .exceptions import PlumbingCollision  # noqa
 from .instructions import default  # noqa

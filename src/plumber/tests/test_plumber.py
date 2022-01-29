@@ -20,12 +20,7 @@ from zope.interface.interface import InterfaceClass
 import abc
 import inspect
 import sys
-
-
-if sys.version_info < (2, 7):                                # pragma: no cover
-    import unittest2 as unittest
-else:                                                        # pragma: no cover
-    import unittest
+import unittest
 
 
 class TestInstructions(unittest.TestCase):
@@ -466,7 +461,7 @@ class TestABCPlumber(unittest.TestCase):
 
         @plumbing(ABCBehavior)
         @add_metaclass(abc.ABCMeta)
-        class ABCPlumbing(object):
+        class ABCPlumbing:
             @abc.abstractproperty
             def absprop(self):
                 """Abstract property"""
@@ -494,6 +489,76 @@ class TestABCPlumber(unittest.TestCase):
         self.assertEqual(plb.absprop, 'plumb absprop')
         self.assertEqual(plb.absmethod(), 'plumb absmethod')
         self.assertEqual(plb.method(), 'plumb method')
+
+    def test_behavior(self):
+        from plumber import ABCBehavior
+
+        # case implement abstract method from base class on behavior
+        @add_metaclass(abc.ABCMeta)
+        class ABCBase:
+            @abc.abstractmethod
+            def method(self):
+                """Abstract method"""
+
+        class BehaviorImpl(ABCBehavior, ABCBase):
+            @default
+            def method(self):
+                return 'method on behavior'
+
+        @plumbing(BehaviorImpl)
+        class Plumbing:
+            pass
+
+        self.assertEqual(Plumbing().method(), 'method on behavior')
+
+        # case implement abstract method on behavior
+        @add_metaclass(abc.ABCMeta)
+        class AbstractBehavior(ABCBehavior):
+            @default
+            @abc.abstractmethod
+            def method(self):
+                """Abstract method"""
+
+        # XXX: right now we need abc.ABCMeta metaclass on plumbing class
+        # to take abs check into effect.
+        # If abc support should be kept in a separate metaclass, raise an error
+        # if an abc behavior gets plumbed on a non abc object.
+        @plumbing(AbstractBehavior)
+        @add_metaclass(abc.ABCMeta)
+        class AbstractPlumbing:
+            pass
+
+        with self.assertRaises(TypeError):
+            AbstractPlumbing()
+
+        # implement abstract method on class directly
+        @plumbing(AbstractBehavior)
+        @add_metaclass(abc.ABCMeta)
+        class Plumbing:
+            def method(self):
+                return 'method on class directly'
+
+        self.assertEqual(Plumbing().method(), 'method on class directly')
+
+        # implement abstract method on subclass
+        class Plumbing(AbstractPlumbing):
+            def method(self):
+                return 'method on subclass'
+
+        self.assertEqual(Plumbing().method(), 'method on subclass')
+
+        # implement abstract method on subclass of behavior
+        class BehaviorImpl(AbstractBehavior):
+            @default
+            def method(self):
+                return 'method on behavior subclass'
+
+        @plumbing(BehaviorImpl)
+        @add_metaclass(abc.ABCMeta)
+        class Plumbing:
+            pass
+
+        self.assertEqual(Plumbing().method(), 'method on behavior subclass')
 
 
 class TestPlumberStage1(unittest.TestCase):
@@ -779,7 +844,7 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumb
             def foo(_next, self):
-                pass                                         # pragma: no cover
+                pass  # pragma: no cover
 
         try:
             @plumbing(Behavior1)
@@ -797,7 +862,7 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumbifexists
             def foo(_next, self):
-                pass                                         # pragma: no cover
+                pass  # pragma: no cover
 
             @plumbifexists
             def bar(_next, self):
@@ -890,15 +955,14 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumb
             def foo(_next, self):
-                return _next(self)                           # pragma: no cover
+                return _next(self)  # pragma: no cover
 
         try:
             @plumbing(Behavior1)
             class Plumbing(object):
-
                 @property
                 def foo(self):
-                    return 5                                 # pragma: no cover
+                    return 5  # pragma: no cover
         except PlumbingCollision as e:
             err = e
         finally:
@@ -1017,4 +1081,4 @@ class TestPlumberStage2(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()                                          # pragma: no cover
+    unittest.main()  # pragma: no cover

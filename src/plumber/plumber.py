@@ -4,8 +4,8 @@ import abc
 
 
 class Stacks(object):
-    """organize stacks for parsing behaviors, stored in the class' dict.
-    """
+    """organize stacks for parsing behaviors, stored in the class' dict."""
+
     attrname = '__plumbing_stacks__'
 
     def __init__(self, dct):
@@ -24,7 +24,10 @@ class Stacks(object):
 
 
 def searchnameinbases(name, bases):
-    """
+    """Search name in base classes.
+
+    .. code-block:: pycon
+
         >>> class A(object):
         ...     foo = 1
 
@@ -45,8 +48,8 @@ def searchnameinbases(name, bases):
 
 
 class Bases(object):
-    """Used to search in base classes for attributes.
-    """
+    """Used to search in base classes for attributes."""
+
     def __init__(self, bases):
         self.bases = bases
 
@@ -168,8 +171,7 @@ class abcplumber(abc.ABCMeta, plumber):
 
 
 class plumbing(object):
-    """Plumbeing decorator.
-    """
+    """Plumbing decorator."""
 
     def __init__(self, *behaviors):
         assert len(behaviors) > 0
