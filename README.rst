@@ -1237,6 +1237,102 @@ been executed and we're working on a complete plumbing class.
     True
 
 
+Working with abstract base classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Plumber can be used with abstract base classes.
+
+Extension instructions (stage 1) can be used to plumb concrete implementations
+directly on classes where they are declared abstract:
+
+.. code-block:: pycon
+
+    >>> class ABCBehavior(Behavior):
+    ...     @default
+    ...     @property
+    ...     def prop(self):
+    ...         return 'prop'
+    ...
+    ...     @default
+    ...     def method(self):
+    ...         return 'method'
+
+    >>> @plumbing(ABCBehavior)
+    ... @add_metaclass(abc.ABCMeta)
+    ... class ABCPlumbing(object):
+    ...     @abc.abstractproperty
+    ...     def prop(self):
+    ...         pass
+    ...
+    ...     @abc.abstractmethod
+    ...     def method(self):
+    ...         pass
+
+    >>> plumbing = ABCPlumbing()
+    >>> plumbing.prop
+    'prop'
+
+    >>> plumbing.method()
+    'method'
+
+Pipelining (stage 2) not works on on abstract properties and methods directly
+and a ``TypeError`` is raised if one attempts to do so:
+
+.. code-block:: pycon
+
+    >>> class ABCBehavior(Behavior):
+    ...     @plumb
+    ...     def absmethod(next_, self):
+    ...         pass
+
+    >>> @plumbing(ABCBehavior)
+    ... @add_metaclass(abc.ABCMeta)
+    ... class ABCPlumbing(object):
+    ...     @abc.abstractmethod
+    ...     def absmethod(self):
+    ...         pass
+    Traceback (most recent call last):
+      ...
+    TypeError: Cannot plumb abstract method ABCPlumbing.absmethod
+
+Though piplining non abstract methods and properties on an abstract base
+classes is valid:
+
+.. code-block:: pycon
+
+    >>> class ABCBehavior(Behavior):
+    ...     @plumb
+    ...     def method(next_, self):
+    ...         return 'plumb {}'.format(next_(self))
+
+    >>> @plumbing(ABCBehavior)
+    ... @add_metaclass(abc.ABCMeta)
+    ... class ABCPlumbing(object):
+    ...     @abc.abstractmethod
+    ...     def absmethod(self):
+    ...         pass
+    ...
+    ...     def method(self):
+    ...         return 'method'
+
+    >>> ABCPlumbing()
+    Traceback (most recent call last):
+      ...
+    TypeError: Can't instantiate abstract class ABCPlumbing with abstract
+    methods absmethod
+
+    >>> class ABCImplementation(ABCPlumbing):
+    ...     def absmethod(self):
+    ...         return 'absmethod'
+
+    >>> plumbing = ABCImplementation()
+    >>> plumbing.absmethod()
+    'absmethod'
+
+    >>> plumbing.method()
+    'plumb method'
+
+
 Miscellanea
 -----------
 

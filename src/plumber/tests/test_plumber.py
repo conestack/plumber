@@ -406,71 +406,94 @@ class TestPlumberBasics(unittest.TestCase):
 
 class TestABCPlumber(unittest.TestCase):
 
-    def test_abc(self):
+    def test_stage1(self):
         class ABCBehavior(Behavior):
-            prop = default('default prop')
+            @default
+            @property
+            def prop(self):
+                return 'prop'
 
+            @default
+            def method(self):
+                return 'method'
+
+        @plumbing(ABCBehavior)
+        @add_metaclass(abc.ABCMeta)
+        class ABCClass(object):
+            @abc.abstractproperty
+            def prop(self):
+                """Abstract property"""
+
+            @abc.abstractmethod
+            def method(self):
+                """Abstract method"""
+
+        plb = ABCClass()
+        self.assertEqual(plb.prop, 'prop')
+        self.assertEqual(plb.method(), 'method')
+
+    def test_stage2(self):
+        class ABCBehavior(Behavior):
+            @plumb
+            def method(next_, self):
+                return 'plumb {}'.format(next_(self))
+
+        class ConcreteBehavior(Behavior):
             @plumbifexists
             @property
             def absprop(next_, self):
                 return 'plumb {}'.format(next_(self))
 
             @plumbifexists
-            def absfunc(next_, self):
-                return 'plumb {}'.format(next_(self))
-
-            @plumbifexists
-            def func(next_, self):
+            def absmethod(next_, self):
                 return 'plumb {}'.format(next_(self))
 
         with self.assertRaises(TypeError):
-            @plumbing(ABCBehavior)
+            @plumbing(ConcreteBehavior)
             @add_metaclass(abc.ABCMeta)
-            class ProhibitedPlumbing(object):
+            class ABCPlumbing(object):
                 @abc.abstractproperty
                 def absprop(self):
-                    """"""
+                    """Abstract property"""
 
         with self.assertRaises(TypeError):
-            @plumbing(ABCBehavior)
+            @plumbing(ConcreteBehavior)
             @add_metaclass(abc.ABCMeta)
-            class ProhibitedPlumbing(object):
+            class ABCPlumbing(object):
                 @abc.abstractmethod
-                def absfunc(self):
-                    """"""
-
-        @add_metaclass(abc.ABCMeta)
-        class ABCBase(object):
-
-            @abc.abstractproperty
-            def absprop(self):
-                """"""
-
-            @abc.abstractmethod
-            def absfunc(self):
-                """"""
-
-            def func(self):
-                return 'func'
-
-        with self.assertRaises(TypeError):
-            ABCBase()
+                def absmethod(self):
+                    """Abstract method"""
 
         @plumbing(ABCBehavior)
-        class ABCPlumbing(ABCBase):
+        @add_metaclass(abc.ABCMeta)
+        class ABCPlumbing(object):
+            @abc.abstractproperty
+            def absprop(self):
+                """Abstract property"""
 
+            @abc.abstractmethod
+            def absmethod(self):
+                """Abstract method"""
+
+            def method(self):
+                return 'method'
+
+        with self.assertRaises(TypeError):
+            ABCPlumbing()
+
+        @plumbing(ConcreteBehavior)
+        class ConcretePlumbing(ABCPlumbing):
             @property
             def absprop(self):
                 return 'absprop'
 
-            def absfunc(self):
-                return 'absfunc'
+            def absmethod(self):
+                return 'absmethod'
 
-        plb = ABCPlumbing()
-        self.assertEqual(plb.prop, 'default prop')
+        plb = ConcretePlumbing()
         self.assertEqual(plb.absprop, 'plumb absprop')
-        self.assertEqual(plb.absfunc(), 'plumb absfunc')
-        self.assertEqual(plb.func(), 'plumb func')
+        self.assertEqual(plb.absmethod(), 'plumb absmethod')
+        self.assertEqual(plb.method(), 'plumb method')
 
 
 class TestPlumberStage1(unittest.TestCase):

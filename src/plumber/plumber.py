@@ -69,7 +69,7 @@ class plumber(type):
 
     def __new__(cls, name, bases, dct):
         if '__plumbing__' not in dct:
-            return type.__new__(cls, name, bases, dct)
+            return super(plumber, cls).__new__(cls, name, bases, dct)
 
         # turn single behavior into a tuple of one behavior
         if type(dct['__plumbing__']) is not tuple:
@@ -99,31 +99,35 @@ class plumber(type):
                     # raise Warning("Dropped already seen instruction %s." % \
                     #         (instruction,))
 
-        # install stage1
-        for stack in stacks.stage1.values():
-            instruction = stack[-1]
-            instruction(dct, Bases(bases))
+        # install stage1 instructions
+        cls._install_stage1_instructions(bases, dct, stacks)
 
         # build the class and return it
         return super(plumber, cls).__new__(cls, name, bases, dct)
 
     def __init__(cls, name, bases, dct):
         super(plumber, cls).__init__(name, bases, dct)
+        if '__plumbing__' not in dct:
+            return
 
-        # install stage2
-        type(cls)._install_stage2(cls, dct)
+        # install stage2 instructions
+        type(cls)._install_stage2_instructions(cls, dct, Stacks(dct))
 
         # run metaclass hooks
         for hook in plumber.__metaclass_hooks__:
             hook(cls, name, bases, dct)
 
     @staticmethod
-    def _install_stage2(cls, dct):
-        if '__plumbing__' in dct:
-            stacks = Stacks(dct)
-            for stack in stacks.stage2.values():
-                instruction = stack[-1]
-                instruction(cls)
+    def _install_stage1_instructions(bases, dct, stacks):
+        for stack in stacks.stage1.values():
+            instruction = stack[-1]
+            instruction(dct, Bases(bases))
+
+    @staticmethod
+    def _install_stage2_instructions(cls, dct, stacks):
+        for stack in stacks.stage2.values():
+            instruction = stack[-1]
+            instruction(cls)
 
 
 class abcplumber(abc.ABCMeta, plumber):
@@ -137,19 +141,29 @@ class abcplumber(abc.ABCMeta, plumber):
         super(abcplumber, cls).__init__(name, bases, dct)
 
     @staticmethod
-    def _install_stage2(cls, dct):
-        if '__plumbing__' in dct:
-            stacks = Stacks(dct)
-            for name, stack in stacks.stage2.items():
-                if name in (dct.get('__abstractmethods__', tuple())):
-                    raise TypeError(
-                        'Cannot plumb abstract method {}.{}'.format(
-                            cls.__name__,
-                            name
-                        )
+    def _install_stage1_instructions(bases, dct, stacks):
+        for name, stack in stacks.stage1.items():
+            abm = dct.get('__abstractmethods__', set())
+            if name in abm:
+                abm = set(abm)
+                abm.remove(name)
+                dct['__abstractmethods__'] = frozenset(abm)
+                del dct[name]
+            instruction = stack[-1]
+            instruction(dct, Bases(bases))
+
+    @staticmethod
+    def _install_stage2_instructions(cls, dct, stacks):
+        for name, stack in stacks.stage2.items():
+            if name in dct.get('__abstractmethods__', set()):
+                raise TypeError(
+                    'Cannot plumb abstract method {}.{}'.format(
+                        cls.__name__,
+                        name
                     )
-                instruction = stack[-1]
-                instruction(cls)
+                )
+            instruction = stack[-1]
+            instruction(cls)
 
 
 class plumbing(object):
