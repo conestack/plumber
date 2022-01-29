@@ -1,6 +1,76 @@
 Design choices and ongoing discussions
 ======================================
 
+Inherit plumber and behavior metaclasses from abc.ABCMeta
+---------------------------------------------------------
+
+Currently specific plumber and behavior metaclasses are provided for abc
+support. It is the most widely used "build-in" metaclass in the standard lib.
+
+
+Pros
+~~~~
+
+- Metaclasses cannot be mixed by default, so we won't break anything but simply
+  gain support for ABC.
+
+- Straight forward implementation.
+
+- No dedicated ``ABCBehavior`` base implementation required.
+
+- No validation hook for plumbing classes using ``ABCBehavior`` required.
+
+
+Cons
+~~~~
+
+- Creating other custom plumber metaclasses gets more difficult and error prone
+  because of ABC behavior is present in base metaclasses.
+
+
+Usage of metaclasses in the standard lib
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Below a grep over python 3.7's lib directory.
+
+.. code-block:: sh
+
+  /usr/lib/python3.7$ grep -rnI 'metaclass='
+  _pyio.py:281:class IOBase(metaclass=abc.ABCMeta):
+  multiprocessing/reduction.py:247:class AbstractReducer(metaclass=ABCMeta):
+  ctypes/_endian.py:46:    class BigEndianStructure(Structure, metaclass=_swapped_meta):
+  ctypes/_endian.py:55:    class LittleEndianStructure(Structure, metaclass=_swapped_meta):
+  _collections_abc.py:84:class Hashable(metaclass=ABCMeta):
+  _collections_abc.py:99:class Awaitable(metaclass=ABCMeta):
+  _collections_abc.py:158:class AsyncIterable(metaclass=ABCMeta):
+  _collections_abc.py:243:class Iterable(metaclass=ABCMeta):
+  _collections_abc.py:359:class Sized(metaclass=ABCMeta):
+  _collections_abc.py:374:class Container(metaclass=ABCMeta):
+  _collections_abc.py:398:class Callable(metaclass=ABCMeta):
+  typing.py:1156:class _Protocol(Generic, metaclass=_ProtocolMeta):
+  typing.py:1377:class NamedTuple(metaclass=NamedTupleMeta):
+  lib2to3/fixes/fix_metaclass.py:1:"""Fixer for __metaclass__ = X -> (metaclass=X) methods.
+  lib2to3/fixes/fix_metaclass.py:203:        # compact the expression "metaclass = Meta" -> "metaclass=Meta"
+  pydoc_data/topics.py:8757:                 '   class MyClass(metaclass=Meta):\n'
+  pydoc_data/topics.py:9615:                 '   >>> class C(object, metaclass=Meta):\n'
+  string.py:78:class Template(metaclass=_TemplateMetaclass):
+  selectors.py:80:class BaseSelector(metaclass=ABCMeta):
+  abc.py:18:        class C(metaclass=ABCMeta):
+  abc.py:34:        class C(metaclass=ABCMeta):
+  abc.py:57:        class C(metaclass=ABCMeta):
+  abc.py:84:        class C(metaclass=ABCMeta):
+  abc.py:92:        class C(metaclass=ABCMeta):
+  abc.py:166:class ABC(metaclass=ABCMeta):
+  enum.py:520:class Enum(metaclass=EnumMeta):
+  importlib/abc.py:30:class Finder(metaclass=abc.ABCMeta):
+  importlib/abc.py:136:class Loader(metaclass=abc.ABCMeta):
+  importlib/abc.py:345:class ResourceReader(metaclass=abc.ABCMeta):
+  io.py:72:class IOBase(_io._IOBase, metaclass=abc.ABCMeta):
+  numbers.py:12:class Number(metaclass=ABCMeta):
+  dataclasses.py:206:class InitVar(metaclass=_InitVarMeta):
+  email/_policybase.py:112:class Policy(_PolicyBase, metaclass=abc.ABCMeta):
+
+
 Stage1 left of stage2
 ---------------------
 
