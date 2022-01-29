@@ -135,7 +135,7 @@ class Instruction(object):
         raise NotImplementedError
 
     def __call__(self, dct, bases=None):
-        """Apply instruction to a plumbing, subclasses need to implement it
+        """Apply instruction to a plumbing, subclasses need to implement it.
 
         .. code-block:: pycon
 
@@ -150,7 +150,7 @@ class Instruction(object):
         raise NotImplementedError
 
     def __eq__(self, right):
-        """Instructions are equal if
+        """Instructions are equal if:
 
         - they are the very same
         - their class is the very same and their payloads are equal
@@ -190,7 +190,7 @@ class Instruction(object):
 ###############################################################################
 
 class Stage1Instruction(Instruction):
-    """Instructions installed in stage1
+    """Instructions installed in stage1.
 
     - default
     - override

@@ -12,7 +12,7 @@ import abc
 
 
 class _Behavior(object):
-    """Just here to solve a dependency loop."""
+    """Marker for behavior implementation."""
 
 
 class Instructions(object):
