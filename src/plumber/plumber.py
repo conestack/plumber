@@ -109,11 +109,10 @@ class plumber(type):
 
     def __init__(cls, name, bases, dct):
         super(plumber, cls).__init__(name, bases, dct)
-        if '__plumbing__' not in dct:
-            return
 
         # install stage2 instructions
-        type(cls)._install_stage2_instructions(cls, dct, Stacks(dct))
+        if '__plumbing__' in dct:
+            type(cls)._install_stage2_instructions(cls, dct, Stacks(dct))
 
         # run metaclass hooks
         for hook in plumber.__metaclass_hooks__:

@@ -4,9 +4,6 @@ Changes
 1.7 (unreleased)
 ----------------
 
-- Do not call metaclass hooks on non plumber types.
-  [rnix, 2022-01-29]
-
 - Add abstract base class support.
   [rnix, 2022-01-28]
 
