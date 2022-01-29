@@ -520,7 +520,7 @@ class TestABCPlumber(unittest.TestCase):
                 """Abstract method"""
 
         # XXX: right now we need abc.ABCMeta metaclass on plumbing class
-        # to take abs check into effect.
+        # to take abc check into effect.
         # If abc support should be kept in a separate metaclass, raise an error
         # if an abc behavior gets plumbed on a non abc object.
         @plumbing(AbstractBehavior)

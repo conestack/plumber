@@ -63,6 +63,7 @@ class behaviormetaclass(type):
         >>> getattr(A, '__plumbing_instructions__', None) and 'Behavior'
         'Behavior'
     """
+
     def __init__(cls, name, bases, dct):
         super(behaviormetaclass, cls).__init__(name, bases, dct)
         if not issubclass(cls, _Behavior):

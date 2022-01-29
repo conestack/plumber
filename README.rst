@@ -1332,6 +1332,100 @@ classes is valid:
     >>> plumbing.method()
     'plumb method'
 
+Plumbing behaviors themself can be implemented with abstract base classes.
+Therefor, ``plumber.behavior.ABCBehavior`` must be used.
+
+Case implement abstract method from base class on behavior:
+
+.. code-block:: pycon
+
+    >>> @add_metaclass(abc.ABCMeta)
+    ... class ABCBase:
+    ...
+    ...     @abc.abstractmethod
+    ...     def method(self):
+    ...         pass
+
+    >>> class BehaviorImpl(ABCBehavior, ABCBase):
+    ...
+    ...     @default
+    ...     def method(self):
+    ...         return 'method on behavior'
+
+    >>> @plumbing(BehaviorImpl)
+    ... class Plumbing:
+    ...    pass
+
+    >>> Plumbing().method()
+    'method on behavior'
+
+Case implement abstract method on behavior:
+
+.. code-block:: pycon
+
+    >>> @add_metaclass(abc.ABCMeta)
+    ... class AbstractBehavior(ABCBehavior):
+    ...
+    ...     @default
+    ...     @abc.abstractmethod
+    ...     def method(self):
+    ...         pass
+
+    >>> @plumbing(AbstractBehavior)
+    ... @add_metaclass(abc.ABCMeta)
+    ... class AbstractPlumbing:
+    ...     pass
+
+    >>> AbstractPlumbing()
+    Traceback (most recent call last):
+      ...
+    TypeError: Can't instantiate abstract class AbstractPlumbing with abstract
+    methods method
+
+Case implement abstract method on class directly:
+
+.. code-block:: pycon
+
+    >>> @plumbing(AbstractBehavior)
+    ... @add_metaclass(abc.ABCMeta)
+    ... class Plumbing:
+    ...
+    ...     def method(self):
+    ...         return 'method on class directly'
+
+    >>> Plumbing().method()
+    'method on class directly'
+
+Case implement abstract method on subclass:
+
+.. code-block:: pycon
+
+    >>> class Plumbing(AbstractPlumbing):
+    ...
+    ...     def method(self):
+    ...         return 'method on subclass'
+
+    >>> Plumbing().method()
+    'method on subclass'
+
+Case implement abstract method on subclass of behavior:
+
+.. code-block:: pycon
+
+    >>> class BehaviorImpl(AbstractBehavior):
+    ...
+    ...     @default
+    ...     def method(self):
+    ...         return 'method on behavior subclass'
+
+    >>> @plumbing(BehaviorImpl)
+    ... @add_metaclass(abc.ABCMeta)
+    ... class Plumbing:
+    ...     pass
+
+    >>> Plumbing().method()
+    'method on behavior subclass'
+
 
 Miscellanea
 -----------

@@ -7,8 +7,8 @@ TODO
 - [ ] Traceback should show in which plumbing class we are, not something
   inside the plumber.
 
-- [ ] Mature plumbing of properties (getter and deleter).
+- [ ] Implement piplining (stage 2) for property getters and deleters.
 
-- [ ] Plumbing of classmethod.
+- [ ] Test plumbing of classmethod.
 
-- [ ] Plumbing of staticmethod.
+- [ ] Test plumbing of staticmethod.
