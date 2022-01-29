@@ -71,35 +71,6 @@ Below a grep over python 3.7's lib directory.
   email/_policybase.py:112:class Policy(_PolicyBase, metaclass=abc.ABCMeta):
 
 
-Stage1 left of stage2
----------------------
-
-Currently instructions of stage1 may be left of stage2 instructions. We
-consider to forbid this.
-
-.. code-block:: pycon
-
-    >>> class Behavior1(Behavior):
-    ...     @override
-    ...     def foo(self):
-    ...         return 5
-
-    >>> class Behavior2(Behavior):
-    ...     @plumb
-    ...     def foo(_next, self):
-    ...         return 2 * _next(self)
-
-    >>> class Plumbing(object):
-    ...     __metaclass__ = plumber
-    ...     __plumbing__ = Behavior1, Behavior2
-
-    >>> Plumbing().foo()
-    10
-
-- [rnix, 2012-07-29]: I still see no advantage in forbidding to define an
-  endpoint on the left of a plumbing to the same. It's different semantics.
-
-
 Instance based plumbing system
 ------------------------------
 

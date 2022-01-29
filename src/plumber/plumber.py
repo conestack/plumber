@@ -90,15 +90,6 @@ class plumber(type):
                 stacks.history.append(instruction)
                 if instruction not in stacks.history[:-1]:
                     if stack:
-                        # XXX: check if case ever happens, otherwise remove
-                        # if instruction.__stage__ > stack[-1].__stage__:
-                        #     import warnings
-                        #     msg = (
-                        #         'Stage 1 instruction {} left of stage 2 '
-                        #         'instruction {}. We consider deprecation of '
-                        #         'this.'
-                        #     ).format(stack[-1], instruction)
-                        #     warnings.warn(msg, PendingDeprecationWarning)
                         instruction = stack[-1] + instruction
                     stack.append(instruction)
                     continue
