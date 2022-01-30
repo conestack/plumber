@@ -1,29 +1,6 @@
 Design choices and ongoing discussions
 ======================================
 
-Instance based plumbing system
-------------------------------
-
-At various points it felt tempting to be able to instantiate plumbing elements
-to configure them. For that we need ``__init__``, which would mean that plumbing
-``__init__`` would need a different name, eg. ``prt_``-prefix. Consequently
-this would then be done for all plumbing methods.
-
-Reasoning why currently the methods are not prefixed:
-Plumbing elements are simply not meant to be normal classes. Their methods have
-the single purpose to be called as behavior of some other class' method calls,
-never directly. Configuration of plumbing elements can either be achieved by
-subclassing them or by putting the configuration on the objects/class they are
-used for.
-
-- [rnix, 2012-07-29]: It turned out that providing necessary plumbing behavior
-  configuration via plumbed classes is quite handy and readable. I would
-  suggest to stick to this strategy.
-
-An instance based plumbing system would be far more complex. It could be
-implemented to exist alongside the current system.
-
-
 Different zope.interface.Interfaces for plumbing and created class
 ------------------------------------------------------------------
 
