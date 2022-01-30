@@ -1,29 +1,22 @@
 from __future__ import absolute_import
+from plumber.compat import ITER_FUNC
 from plumber.compat import add_metaclass
 from plumber.instructions import Instruction
 from plumber.instructions import plumb
-import sys
-
-
 try:
     from plumber.instructions import _implements
     ZOPE_INTERFACE_AVAILABLE = True
-except ImportError:                                          # pragma: no cover
+except ImportError:  # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False
 
 
-ITER_FUNC = 'iteritems' if sys.version_info[0] < 3 else 'items'
-
-
 class _Behavior(object):
-    """Just here to solve a dependency loop
-    """
+    """Marker for behavior implementation."""
 
 
 class Instructions(object):
-    """Adapter to set instructions on a behavior
-    """
-    attrname = "__plumbing_instructions__"
+    """Adapter to set instructions on a behavior."""
+    attrname = '__plumbing_instructions__'
 
     def __init__(self, behavior):
         self.behavior = behavior
@@ -45,11 +38,13 @@ class Instructions(object):
 
 
 class behaviormetaclass(type):
-    """Metaclass for behavior creation
+    """Metaclass for behavior creation.
 
     Turn __doc__ and implemented zope interfaces into instructions and tell
     existing instructions their name and parent, for subclasses of
     ``Behavior``.
+
+    .. code-block:: pycon
 
         >>> from plumber.compat import add_metaclass
 
@@ -66,8 +61,8 @@ class behaviormetaclass(type):
 
         >>> getattr(A, '__plumbing_instructions__', None) and 'Behavior'
         'Behavior'
-
     """
+
     def __init__(cls, name, bases, dct):
         super(behaviormetaclass, cls).__init__(name, bases, dct)
         if not issubclass(cls, _Behavior):
@@ -103,8 +98,10 @@ class behaviormetaclass(type):
                 if instr in instructions:
                     continue
                 # stage1 instructions with the same name are ignored
-                if instr.__name__ in [x.__name__ for x in instructions if
-                                      x.__stage__ == 'stage1']:
+                if instr.__name__ in [
+                    x.__name__ for x in instructions
+                    if x.__stage__ == 'stage1'
+                ]:
                     continue
                 instructions.append(instr)
 

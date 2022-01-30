@@ -3,9 +3,9 @@ from plumber.behavior import Instructions
 
 
 class Stacks(object):
-    """organize stacks for parsing behaviors, stored in the class' dict
-    """
-    attrname = "__plumbing_stacks__"
+    """organize stacks for parsing behaviors, stored in the class' dict."""
+
+    attrname = '__plumbing_stacks__'
 
     def __init__(self, dct):
         self.dct = dct
@@ -23,7 +23,10 @@ class Stacks(object):
 
 
 def searchnameinbases(name, bases):
-    """
+    """Search name in base classes.
+
+    .. code-block:: pycon
+
         >>> class A(object):
         ...     foo = 1
 
@@ -44,8 +47,7 @@ def searchnameinbases(name, bases):
 
 
 class Bases(object):
-    """Used to search in base classes for attributes
-    """
+    """Used to search in base classes for attributes."""
     def __init__(self, bases):
         self.bases = bases
 
@@ -54,7 +56,7 @@ class Bases(object):
 
 
 class plumber(type):
-    """Metaclass for plumbing creation
+    """Metaclass for plumbing creation.
 
     Create and call a real plumber, for classes declaring a ``__plumbing__``
     attribute (inheritance is not enough):
@@ -68,17 +70,18 @@ class plumber(type):
 
     def __new__(cls, name, bases, dct):
         if '__plumbing__' not in dct:
-            return type.__new__(cls, name, bases, dct)
+            return super(plumber, cls).__new__(cls, name, bases, dct)
 
         # turn single behavior into a tuple of one behavior
-        if type(dct['__plumbing__']) is not tuple:
-            dct['__plumbing__'] = (dct['__plumbing__'],)
+        plb = dct['__plumbing__']
+        if type(plb) is not tuple:
+            plb = dct['__plumbing__'] = (plb,)
 
         # stacks for parsing instructions
         stacks = Stacks(dct)
 
         # parse the behaviors
-        for behavior in dct['__plumbing__']:
+        for behavior in plb:
             for instruction in Instructions(behavior):
                 stage = stacks.stages[instruction.__stage__]
                 stack = stage.setdefault(instruction.__name__, [])
@@ -107,7 +110,7 @@ class plumber(type):
         return type.__new__(cls, name, bases, dct)
 
     def __init__(cls, name, bases, dct):
-        type.__init__(cls, name, bases, dct)
+        super(plumber, cls).__init__(name, bases, dct)
 
         # install stage2
         if '__plumbing__' in dct:
@@ -122,8 +125,7 @@ class plumber(type):
 
 
 class plumbing(object):
-    """Plumbeing decorator.
-    """
+    """Plumbeing decorator."""
 
     def __init__(self, *behaviors):
         assert len(behaviors) > 0

@@ -1,18 +1,13 @@
 from __future__ import absolute_import
+from plumber.compat import STR_TYPE
 from plumber.exceptions import PlumbingCollision
-import re
-import sys
-
-
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
     ZOPE_INTERFACE_AVAILABLE = True
-except ImportError:                                          # pragma: no cover
+except ImportError:  # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False
-
-
-STR_TYPE = basestring if sys.version_info[0] < 3 else str
+import re
 
 
 ###############################################################################
@@ -20,7 +15,9 @@ STR_TYPE = basestring if sys.version_info[0] < 3 else str
 ###############################################################################
 
 def payload(item):
-    """Get to the payload through a chain of instructions
+    """Get to the payload through a chain of instructions.
+
+    .. code-block:: pycon
 
         >>> class Foo: pass
         >>> payload(Instruction(Instruction(Foo))) is Foo
@@ -32,10 +29,12 @@ def payload(item):
 
 
 def plumb_str(leftdoc, rightdoc):
-    """helper function to plumb two doc strings together
+    """helper function to plumb two doc strings together.
 
     A ``__plbnext__`` tag is replaced with rightdoc, it needs to be preceeded
-    and followed by an empty line::
+    and followed by an empty line.
+
+    .. code-block:: pycon
 
         >>> leftdoc = '''Left head
         ...
@@ -64,7 +63,9 @@ def plumb_str(leftdoc, rightdoc):
         <BLANKLINE>
 
     Otherwise leftdoc is appended to rightdoc, separated by a newline, it is
-    assumed there is a ``__plbnext__`` tag at the beginning of leftdoc::
+    assumed there is a ``__plbnext__`` tag at the beginning of leftdoc.
+
+    .. code-block:: pycon
 
         >>> leftdoc = '''Left tail
         ... '''
@@ -95,7 +96,7 @@ def plumb_str(leftdoc, rightdoc):
 
 
 class Instruction(object):
-    """Base class for all plumbing instructions
+    """Base class for all plumbing instructions.
 
     An instruction works on the attribute sharing its name, parent is the part
     declaring it. An instruction declares the stage to be applied in.
@@ -105,7 +106,10 @@ class Instruction(object):
     __stage__ = None
 
     def __init__(self, item, name=None):
-        """
+        """Create instruction.
+
+        .. code-block:: pycon
+
             >>> class Foo: pass
             >>> Instruction(Foo).item is Foo
             True
@@ -119,7 +123,9 @@ class Instruction(object):
             self.__name__ = name
 
     def __add__(self, right):
-        """Used to merge instructions, subclasses need to implement it::
+        """Used to merge instructions, subclasses need to implement it.
+
+        .. code-block:: pycon
 
             >>> Instruction(None) + 1
             Traceback (most recent call last):
@@ -129,7 +135,9 @@ class Instruction(object):
         raise NotImplementedError
 
     def __call__(self, dct, bases=None):
-        """Apply instruction to a plumbing, subclasses need to implement it::
+        """Apply instruction to a plumbing, subclasses need to implement it.
+
+        .. code-block:: pycon
 
             >>> Instruction(None)(None)
             Traceback (most recent call last):
@@ -142,7 +150,7 @@ class Instruction(object):
         raise NotImplementedError
 
     def __eq__(self, right):
-        """Instructions are equal if ...
+        """Instructions are equal if:
 
         - they are the very same
         - their class is the very same and their payloads are equal
@@ -168,10 +176,11 @@ class Instruction(object):
 
     def __repr__(self):
         return "<%(cls)s '%(name)s' of %(parent)s payload=%(payload)s>" % dict(
-                cls=self.__class__.__name__,
-                name=self.name or 'None',
-                parent=self.__parent__ or 'None',
-                payload=repr(self.payload))
+            cls=self.__class__.__name__,
+            name=self.name or 'None',
+            parent=self.__parent__ or 'None',
+            payload=repr(self.payload)
+        )
 
     __str__ = __repr__
 
@@ -181,7 +190,7 @@ class Instruction(object):
 ###############################################################################
 
 class Stage1Instruction(Instruction):
-    """Instructions installed in stage1
+    """Instructions installed in stage1.
 
     - default
     - override
@@ -191,7 +200,7 @@ class Stage1Instruction(Instruction):
 
 
 class default(Stage1Instruction):
-    """Provide a default attribute
+    """Provide a default attribute.
 
     A default attribute is used, if neither the class nor one of its bases
     declare the attribute.
@@ -199,9 +208,11 @@ class default(Stage1Instruction):
     For default/override/finalize merging see ``__add__`` here,
     ``override.__add__`` and ``finalize.__add__``.
     """
+
     def __add__(self, right):
-        """
-        First default wins from left to right::
+        """First default wins from left to right.
+
+        .. code-block:: pycon
 
             >>> def1 = default(1)
             >>> def1 + def1 is def1
@@ -212,20 +223,26 @@ class default(Stage1Instruction):
             >>> def2 + def1 is def2
             True
 
-        Override wins over default::
+        Override wins over default.
+
+        .. code-block:: pycon
 
             >>> ext3 = override(3)
             >>> def1 + ext3 is ext3
             True
 
-        Finalize wins over default::
+        Finalize wins over default.
+
+        .. code-block:: pycon
 
             >>> fin4 = finalize(4)
             >>> def1 + fin4 is fin4
             True
 
         Adding with something else than default/override, raises
-        ``PlumbingCollision``::
+        ``PlumbingCollision``.
+
+        .. code-block:: pycon
 
             >>> def1 + Instruction('foo')
             Traceback (most recent call last):
@@ -251,7 +268,7 @@ class default(Stage1Instruction):
 
 
 class override(Stage1Instruction):
-    """Override a class attribute
+    """Override a class attribute.
 
     An ``override`` attribute overrides an attribute defined on a base class or
     provided by ``default``, but is overridden by ``finalize`` and attributes
@@ -262,10 +279,12 @@ class override(Stage1Instruction):
     For default/override/finalize merging see ``__add__`` here,
     ``default.__add__`` and ``finalize.__add__``.
     """
+
     def __add__(self, right):
-        """
-        First override wins against following equal overrides and arbitrary
-        defaults::
+        """First override wins against following equal overrides and arbitrary
+        defaults.
+
+        .. code-block:: pycon
 
             >>> ext1 = override(1)
             >>> ext1 + ext1 is ext1
@@ -280,7 +299,9 @@ class override(Stage1Instruction):
             >>> ext1 + fin3 is fin3
             True
 
-        Everything except default/override collides::
+        Everything except default/override collides.
+
+        .. code-block:: pycon
 
             >>> ext1 + Instruction(1)
             Traceback (most recent call last):
@@ -307,7 +328,7 @@ class override(Stage1Instruction):
 
 
 class finalize(Stage1Instruction):
-    """Insist on the final value / finalize the endpoint
+    """Insist on the final value / finalize the endpoint.
 
     A ``finalize`` attribute is chosen over all others, two ``finalize``
     collide, declarations on the plumbing class are implicit ``finalize``
@@ -316,10 +337,12 @@ class finalize(Stage1Instruction):
     For default/override/finalize merging see ``__add__`` here,
     ``default.__add__`` and ``override.__add__``.
     """
+
     def __add__(self, right):
-        """
-        First override wins against following equal overrides and arbitrary
-        defaults::
+        """First override wins against following equal overrides and arbitrary
+        defaults.
+
+        .. code-block:: pycon
 
             >>> fin1 = finalize(1)
             >>> fin1 + fin1 is fin1
@@ -331,7 +354,9 @@ class finalize(Stage1Instruction):
             >>> fin1 + override(2) is fin1
             True
 
-        Two unequal finalize collide::
+        Two unequal finalize collide.
+
+        .. code-block:: pycon
 
             >>> fin1 + finalize(2)
             Traceback (most recent call last):
@@ -341,7 +366,9 @@ class finalize(Stage1Instruction):
               with:
                 <finalize 'None' of None payload=2>
 
-        Everything except default/override collides::
+        Everything except default/override collides.
+
+        .. code-block:: pycon
 
             >>> fin1 + Instruction(1)
             Traceback (most recent call last):
@@ -370,18 +397,16 @@ class finalize(Stage1Instruction):
 ###############################################################################
 
 class Stage2Instruction(Instruction):
-    """Instructions installed in stage2: so far only plumb
-    """
+    """Instructions installed in stage2: so far only plumb."""
     __stage__ = 'stage2'
 
     def __call__(self, cls):
-        """cls is the plumbing class, type finished its work already
-        """
-        raise NotImplementedError                            # pragma: no cover
+        """cls is the plumbing class, type finished its work already."""
+        raise NotImplementedError  # pragma: no cover
 
 
 def entrancefor(plumbing_method, _next):
-    """An entrance for a plumbing method, given _next
+    """An entrance for a plumbing method, given _next.
 
     The entrance returned is a closure with signature: (self, *args, **kw), it
     wraps a call of plumbing_method curried with _next.
@@ -394,20 +419,16 @@ def entrancefor(plumbing_method, _next):
 
 
 def plumbingfor(plumbing_method, _next):
-    """A plumbing method combining two plumbing methods
-    """
+    """A plumbing method combining two plumbing methods."""
     def plumbing(__next, self, *args, **kw):
-        return plumbing_method(
-                    entrancefor(_next, __next),
-                    self, *args, **kw
-                    )
+        return plumbing_method(entrancefor(_next, __next), self, *args, **kw)
     plumbing.__doc__ = plumb_str(plumbing_method.__doc__, _next.__doc__)
     plumbing.__name__ = plumbing_method.__name__
     return plumbing
 
 
 class plumb(Stage2Instruction):
-    """Plumbing of strings, methods and properties
+    """Plumbing of strings, methods and properties.
 
     XXX: support getter, setter, deleter to enable:
 
@@ -418,8 +439,12 @@ class plumb(Stage2Instruction):
         @foo.setter
         def foo
     """
+
     def __add__(self, right):
-        """
+        """Add function to pipeline.
+
+        .. code-block:: pycon
+
             >>> plb1 = plumb(1)
             >>> plb1 + plumb(1) is plb1
             True
@@ -450,7 +475,9 @@ class plumb(Stage2Instruction):
                      name=self.name)
 
     def ok(self, p1, p2):
-        """Check whether we can merge two payloads
+        """Check whether we can merge two payloads.
+
+        .. code-block:: pycon
 
             >>> plumb(1) + plumb(2)
             Traceback (most recent call last):
@@ -500,8 +527,8 @@ class plumb(Stage2Instruction):
 
 
 class plumbifexists(plumb):
-    """Only plumb, if an end point exists
-    """
+    """Only plumb, if an end point exists."""
+
     def __call__(self, cls):
         try:
             super(plumbifexists, self).__call__(cls)
@@ -511,7 +538,9 @@ class plumbifexists(plumb):
 
 if ZOPE_INTERFACE_AVAILABLE:
     class _implements(Stage2Instruction):
-        """classImplements interfaces
+        """classImplements interfaces.
+
+        .. code-block:: pycon
 
             >>> foo = _implements(('foo',))
             >>> foo == foo
