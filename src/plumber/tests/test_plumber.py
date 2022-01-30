@@ -19,12 +19,7 @@ from zope.interface import implementer
 from zope.interface.interface import InterfaceClass
 import inspect
 import sys
-
-
-if sys.version_info < (2, 7):                                # pragma: no cover
-    import unittest2 as unittest
-else:                                                        # pragma: no cover
-    import unittest
+import unittest
 
 
 class TestInstructions(unittest.TestCase):
@@ -686,7 +681,7 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumb
             def foo(_next, self):
-                pass                                         # pragma: no cover
+                pass  # pragma: no cover
 
         try:
             @plumbing(Behavior1)
@@ -704,7 +699,7 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumbifexists
             def foo(_next, self):
-                pass                                         # pragma: no cover
+                pass  # pragma: no cover
 
             @plumbifexists
             def bar(_next, self):
@@ -797,7 +792,7 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumb
             def foo(_next, self):
-                return _next(self)                           # pragma: no cover
+                return _next(self)  # pragma: no cover
 
         try:
             @plumbing(Behavior1)
@@ -805,7 +800,7 @@ class TestPlumberStage2(unittest.TestCase):
 
                 @property
                 def foo(self):
-                    return 5                                 # pragma: no cover
+                    return 5  # pragma: no cover
         except PlumbingCollision as e:
             err = e
         finally:
@@ -924,4 +919,4 @@ class TestPlumberStage2(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()                                          # pragma: no cover
+    unittest.main()  # pragma: no cover
