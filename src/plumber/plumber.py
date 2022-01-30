@@ -88,18 +88,10 @@ class plumber(type):
                 stacks.history.append(instruction)
                 if instruction not in stacks.history[:-1]:
                     if stack:
-                        # XXX: replace by a non exception log warning
-                        # if instruction.__stage__ > stack[-1].__stage__:
-                        #     msg = 'Stage1 instruction %s left of stage2 '
-                        #     'instruction %s. We consider deprecation of this.' \
-                        #             % (stack[-1], instruction)
-                        #     raise PendingDeprecationWarning(msg)
                         instruction = stack[-1] + instruction
                     stack.append(instruction)
-                # else:
-                    # XXX: replace by a non exception log warning
-                    # raise Warning("Dropped already seen instruction %s." % \
-                    #         (instruction,))
+                    continue
+                # already seen instruction is dropped
 
         # install stage1
         for stack in stacks.stage1.values():
