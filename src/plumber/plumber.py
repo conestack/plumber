@@ -99,7 +99,7 @@ class plumber(type):
             instruction(dct, Bases(bases))
 
         # build the class and return it
-        return type.__new__(cls, name, bases, dct)
+        return super(plumber, cls).__new__(cls, name, bases, dct)
 
     def __init__(cls, name, bases, dct):
         super(plumber, cls).__init__(name, bases, dct)
