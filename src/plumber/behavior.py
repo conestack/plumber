@@ -38,7 +38,7 @@ class Instructions(object):
         return getattr(self.behavior, self.attrname)
 
 
-class behaviormetaclass(type):
+class behaviormetaclass(abc.ABCMeta):
     """Metaclass for behavior creation.
 
     Turn __doc__ and implemented zope interfaces into instructions and tell
@@ -111,19 +111,4 @@ class behaviormetaclass(type):
 # No doctest allowed here, it would be recognized as an instruction.
 @add_metaclass(behaviormetaclass)
 class Behavior(_Behavior):
-    pass
-
-
-class abcbehaviormetaclass(abc.ABCMeta, behaviormetaclass):
-    """Metaclass for behavior creation on abstract base class deriving objects.
-    """
-
-    def __init__(cls, name, bases, dct):
-        super(abcbehaviormetaclass, cls).__init__(name, bases, dct)
-
-
-# Base class for plumbing behaviors: identification and metaclass setting
-# No doctest allowed here, it would be recognized as an instruction.
-@add_metaclass(abcbehaviormetaclass)
-class ABCBehavior(_Behavior):
     pass

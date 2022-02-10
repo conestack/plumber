@@ -4,7 +4,7 @@ import abc
 
 
 class Stacks(object):
-    """organize stacks for parsing behaviors, stored in the class' dict."""
+    """Organize stacks for parsing behaviors, stored in the class' dict."""
 
     attrname = '__plumbing_stacks__'
 
@@ -57,7 +57,7 @@ class Bases(object):
         return searchnameinbases(name, self.bases)
 
 
-class plumber(type):
+class plumber(abc.ABCMeta):
     """Metaclass for plumbing creation.
 
     Create and call a real plumber, for classes declaring a ``__plumbing__``
@@ -95,48 +95,10 @@ class plumber(type):
                     continue
                 # already seen instruction is dropped
 
+        cls_ = super(plumber, cls).__new__(cls, name, bases, dct)
+        dct = cls_.__dict__
+
         # install stage1 instructions
-        cls._install_stage1_instructions(bases, dct, stacks)
-
-        # build the class and return it
-        return super(plumber, cls).__new__(cls, name, bases, dct)
-
-    def __init__(cls, name, bases, dct):
-        super(plumber, cls).__init__(name, bases, dct)
-
-        # install stage2 instructions
-        if '__plumbing__' in dct:
-            type(cls)._install_stage2_instructions(cls, dct, Stacks(dct))
-
-        # run metaclass hooks
-        for hook in plumber.__metaclass_hooks__:
-            hook(cls, name, bases, dct)
-
-    @staticmethod
-    def _install_stage1_instructions(bases, dct, stacks):
-        for stack in stacks.stage1.values():
-            instruction = stack[-1]
-            instruction(dct, Bases(bases))
-
-    @staticmethod
-    def _install_stage2_instructions(cls, dct, stacks):
-        for stack in stacks.stage2.values():
-            instruction = stack[-1]
-            instruction(cls)
-
-
-class abcplumber(abc.ABCMeta, plumber):
-    """Metaclass for plumbing creation on abstract base class deriving objects.
-    """
-
-    def __new__(cls, name, bases, dct):
-        return super(abcplumber, cls).__new__(cls, name, bases, dct)
-
-    def __init__(cls, name, bases, dct):
-        super(abcplumber, cls).__init__(name, bases, dct)
-
-    @staticmethod
-    def _install_stage1_instructions(bases, dct, stacks):
         for name, stack in stacks.stage1.items():
             abm = dct.get('__abstractmethods__', set())
             if name in abm:
@@ -147,18 +109,30 @@ class abcplumber(abc.ABCMeta, plumber):
             instruction = stack[-1]
             instruction(dct, Bases(bases))
 
-    @staticmethod
-    def _install_stage2_instructions(cls, dct, stacks):
-        for name, stack in stacks.stage2.items():
-            if name in dct.get('__abstractmethods__', set()):
-                raise TypeError(
-                    'Cannot plumb abstract method {}.{}'.format(
-                        cls.__name__,
-                        name
+        return cls_
+        # build the class and return it
+        return super(plumber, cls).__new__(cls, name, bases, dct)
+
+    def __init__(cls, name, bases, dct):
+        super(plumber, cls).__init__(name, bases, dct)
+
+        # install stage2 instructions
+        if '__plumbing__' in dct:
+            stacks = Stacks(dct)
+            for name, stack in stacks.stage2.items():
+                if name in dct.get('__abstractmethods__', set()):
+                    raise TypeError(
+                        'Cannot plumb abstract method {}.{}'.format(
+                            cls.__name__,
+                            name
+                        )
                     )
-                )
-            instruction = stack[-1]
-            instruction(cls)
+                instruction = stack[-1]
+                instruction(cls)
+
+        # run metaclass hooks
+        for hook in plumber.__metaclass_hooks__:
+            hook(cls, name, bases, dct)
 
 
 class plumbing(object):
@@ -180,8 +154,4 @@ class plumbing(object):
             for slots_var in slots:
                 orig_vars.pop(slots_var)
         orig_vars['__plumbing__'] = self.behaviors
-        if type(cls) is abc.ABCMeta:
-            type_ = abcplumber
-        else:
-            type_ = plumber
-        return type_(cls.__name__, cls.__bases__, orig_vars)
+        return plumber(cls.__name__, cls.__bases__, orig_vars)

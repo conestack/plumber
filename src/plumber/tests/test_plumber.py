@@ -402,7 +402,7 @@ class TestPlumberBasics(unittest.TestCase):
 class TestABCPlumber(unittest.TestCase):
 
     def test_stage1(self):
-        class ABCBehavior(Behavior):
+        class ExtendABCBehavior(Behavior):
             @default
             @property
             def prop(self):
@@ -412,7 +412,7 @@ class TestABCPlumber(unittest.TestCase):
             def method(self):
                 return 'method'
 
-        @plumbing(ABCBehavior)
+        @plumbing(ExtendABCBehavior)
         @add_metaclass(abc.ABCMeta)
         class ABCClass(object):
             @abc.abstractproperty
@@ -477,6 +477,7 @@ class TestABCPlumber(unittest.TestCase):
             ABCPlumbing()
 
         @plumbing(ConcreteBehavior)
+        @add_metaclass(abc.ABCMeta)
         class ConcretePlumbing(ABCPlumbing):
             @property
             def absprop(self):
@@ -491,8 +492,6 @@ class TestABCPlumber(unittest.TestCase):
         self.assertEqual(plb.method(), 'plumb method')
 
     def test_behavior(self):
-        from plumber import ABCBehavior
-
         # case implement abstract method from base class on behavior
         @add_metaclass(abc.ABCMeta)
         class ABCBase:
@@ -500,7 +499,7 @@ class TestABCPlumber(unittest.TestCase):
             def method(self):
                 """Abstract method"""
 
-        class BehaviorImpl(ABCBehavior, ABCBase):
+        class BehaviorImpl(Behavior, ABCBase):
             @default
             def method(self):
                 return 'method on behavior'
@@ -512,8 +511,7 @@ class TestABCPlumber(unittest.TestCase):
         self.assertEqual(Plumbing().method(), 'method on behavior')
 
         # case implement abstract method on behavior
-        @add_metaclass(abc.ABCMeta)
-        class AbstractBehavior(ABCBehavior):
+        class AbstractBehavior(Behavior):
             @default
             @abc.abstractmethod
             def method(self):
@@ -524,7 +522,6 @@ class TestABCPlumber(unittest.TestCase):
         # If abc support should be kept in a separate metaclass, raise an error
         # if an abc behavior gets plumbed on a non abc object.
         @plumbing(AbstractBehavior)
-        @add_metaclass(abc.ABCMeta)
         class AbstractPlumbing:
             pass
 
@@ -533,7 +530,6 @@ class TestABCPlumber(unittest.TestCase):
 
         # implement abstract method on class directly
         @plumbing(AbstractBehavior)
-        @add_metaclass(abc.ABCMeta)
         class Plumbing:
             def method(self):
                 return 'method on class directly'
@@ -554,7 +550,6 @@ class TestABCPlumber(unittest.TestCase):
                 return 'method on behavior subclass'
 
         @plumbing(BehaviorImpl)
-        @add_metaclass(abc.ABCMeta)
         class Plumbing:
             pass
 
