@@ -3,7 +3,7 @@ from plumber.behavior import Instructions
 
 
 class Stacks(object):
-    """organize stacks for parsing behaviors, stored in the class' dict."""
+    """Organize stacks for parsing behaviors, stored in the class' dict."""
 
     attrname = '__plumbing_stacks__'
 
@@ -109,10 +109,9 @@ class plumber(type):
         cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
 
         # install stage2
-        if '__plumbing__' in dct:
-            for stack in stacks.stage2.values():
-                instruction = stack[-1]
-                instruction(cls)
+        for stack in stacks.stage2.values():
+            instruction = stack[-1]
+            instruction(cls)
 
         return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
