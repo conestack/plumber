@@ -78,31 +78,30 @@ class plumber(type):
 
         # Stacks for parsing instructions.
         stacks = Stacks(dct)
+        history = stacks.history
 
         # Parse the behaviors.
         for behavior in plb:
             for instruction in Instructions(behavior):
-                stage = getattr(stacks, instruction.__stage__)
-                stack = stage.setdefault(instruction.__name__, [])
                 # already seen instruction are ignored
-                if instruction not in stacks.history:
-                    if stack:
-                        instruction = stack[-1] + instruction
-                    stack.append(instruction)
-                # XXX: do we really want ignored instructions in history?
-                stacks.history.append(instruction)
+                if instruction not in history:
+                    stage = getattr(stacks, instruction.__stage__)
+                    instruction_name = instruction.__name__
+                    prev_instruction = stage.get(instruction_name)
+                    if prev_instruction:
+                        instruction = prev_instruction + instruction
+                    stage[instruction_name] = instruction
+                history.append(instruction)
 
         # Install stage 1.
-        for stack in stacks.stage1.values():
-            instruction = stack[-1]
+        for instruction in stacks.stage1.values():
             instruction(dct, Bases(bases))
 
         # Build the class.
         cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
 
         # Install stage 2.
-        for stack in stacks.stage2.values():
-            instruction = stack[-1]
+        for instruction in stacks.stage2.values():
             instruction(cls)
 
         # Apply metaclasshooks and return class.
