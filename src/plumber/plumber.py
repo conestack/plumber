@@ -12,40 +12,6 @@ class Stacks(object):
         self.stage2 = dict()
 
 
-def searchnameinbases(name, bases):
-    """Search name in base classes.
-
-    .. code-block:: pycon
-
-        >>> class A(object):
-        ...     foo = 1
-
-        >>> class B(A):
-        ...     pass
-
-        >>> searchnameinbases('foo', (B,))
-        True
-        >>> searchnameinbases('bar', (B,))
-        False
-    """
-    for base in bases:
-        if name in base.__dict__:
-            return True
-        if searchnameinbases(name, base.__bases__):
-            return True
-    return False
-
-
-class Bases(object):
-    """Used to search in base classes for attributes."""
-
-    def __init__(self, bases):
-        self.bases = bases
-
-    def __contains__(self, name):
-        return searchnameinbases(name, self.bases)
-
-
 class plumber(type):
     """Metaclass for plumbing creation.
 
@@ -64,6 +30,15 @@ class plumber(type):
         for hook in plumber.__metaclass_hooks__:
             hook(cls, name, bases, dct)
         return cls
+
+    @staticmethod
+    def derived_members(bases, attrs=None):
+        if attrs is None:
+            attrs = set()
+        for base in bases:
+            attrs.update(base.__dict__)
+            plumber.derived_members(base.__bases__, attrs=attrs)
+        return attrs
 
     def __new__(mcls, name, bases, dct):
         # No plumbing behaviors. Apply metaclasshooks and return class.
@@ -94,8 +69,9 @@ class plumber(type):
                 history.append(instruction)
 
         # Install stage 1.
+        members = plumber.derived_members(bases)
         for instruction in stacks.stage1.values():
-            instruction(dct, Bases(bases))
+            instruction(dct, members)
 
         # Build the class.
         cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
@@ -109,7 +85,7 @@ class plumber(type):
 
 
 class plumbing(object):
-    """Plumbeing decorator."""
+    """Plumbing decorator."""
 
     def __init__(self, *behaviors):
         assert len(behaviors) > 0

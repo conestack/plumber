@@ -13,7 +13,6 @@ from plumber.instructions import Instruction
 from plumber.instructions import _implements
 from plumber.instructions import payload
 from plumber.instructions import plumb_str
-from plumber.plumber import searchnameinbases
 from zope.interface import Interface
 from zope.interface import implementer
 from zope.interface.interface import InterfaceClass
@@ -255,15 +254,15 @@ class TestBehavior(unittest.TestCase):
 
 class TestPlumber(unittest.TestCase):
 
-    def test_searchnameinbases(self):
+    def test_derived_members(self):
         class A(object):
             foo = 1
 
         class B(A):
             pass
 
-        self.assertTrue(searchnameinbases('foo', (B,)))
-        self.assertFalse(searchnameinbases('bar', (B,)))
+        self.assertTrue('foo' in plumber.derived_members((B,)))
+        self.assertFalse('bar' in plumber.derived_members((B,)))
 
 
 class TestGlobalMetaclass(unittest.TestCase):

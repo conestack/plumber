@@ -134,7 +134,7 @@ class Instruction(object):
         """
         raise NotImplementedError
 
-    def __call__(self, dct, bases=None):
+    def __call__(self, dct, derived_members=None):
         """Apply instruction to a plumbing, subclasses need to implement it.
 
         .. code-block:: pycon
@@ -144,8 +144,8 @@ class Instruction(object):
               ...
             NotImplementedError
 
-        ``bases`` is a wrapper for all base classes of the plumbing and
-        provides ``__contains__``, instructions may or may not need it.
+        ``derived_members`` is a set containing all base class members of the
+        plumbing, instructions may or may not need it.
         """
         raise NotImplementedError
 
@@ -262,9 +262,10 @@ class default(Stage1Instruction):
             return right
         raise PlumbingCollision(self, right)
 
-    def __call__(self, dct, bases):
-        if self.name not in dct and self.name not in bases:
-            dct[self.name] = self.payload
+    def __call__(self, dct, derived_members):
+        name = self.name
+        if name not in dct and name not in derived_members:
+            dct[name] = self.payload
 
 
 class override(Stage1Instruction):
@@ -321,7 +322,7 @@ class override(Stage1Instruction):
             return right
         raise PlumbingCollision(self, right)
 
-    def __call__(self, dct, bases):
+    def __call__(self, dct, derived_members):
         if self.name in dct:
             return
         dct[self.name] = self.payload
@@ -386,7 +387,7 @@ class finalize(Stage1Instruction):
             return self
         raise PlumbingCollision(self, right)
 
-    def __call__(self, dct, bases):
+    def __call__(self, dct, derived_members):
         if self.name in dct:
             raise PlumbingCollision('Plumbing class', self)
         dct[self.name] = self.payload
