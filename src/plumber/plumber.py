@@ -40,17 +40,8 @@ class plumber(type):
             plumber.derived_members(base.__bases__, attrs=attrs)
         return attrs
 
-    def __new__(mcls, name, bases, dct):
-        # No plumbing behaviors. Apply metaclasshooks and return class.
-        if '__plumbing__' not in dct:
-            cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
-            return plumber.apply_metaclasshooks(cls, name, bases, dct)
-
-        # Ensure plumbing behaviors are iterable.
-        plb = dct['__plumbing__']
-        if type(plb) is not tuple:
-            plb = dct['__plumbing__'] = (plb,)
-
+    @staticmethod
+    def parse_behaviors(plb, dct):
         # Stacks for parsing instructions.
         stacks = Stacks(dct)
         history = stacks.history
@@ -67,6 +58,21 @@ class plumber(type):
                         instruction = prev_instruction + instruction
                     stage[instruction_name] = instruction
                 history.append(instruction)
+        return stacks
+
+    def __new__(mcls, name, bases, dct):
+        # No plumbing behaviors. Apply metaclasshooks and return class.
+        if '__plumbing__' not in dct:
+            cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
+            return plumber.apply_metaclasshooks(cls, name, bases, dct)
+
+        # Ensure plumbing behaviors are iterable.
+        plb = dct['__plumbing__']
+        if type(plb) is not tuple:
+            plb = dct['__plumbing__'] = (plb,)
+
+        # Parse behaviors
+        stacks = plumber.parse_behaviors(plb, dct)
 
         # Install stage 1.
         members = plumber.derived_members(bases)
