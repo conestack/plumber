@@ -68,9 +68,16 @@ class plumber(type):
         cls.__metaclass_hooks__.append(func)
         return func
 
-    def __new__(cls, name, bases, dct):
+    @staticmethod
+    def apply_metaclasshooks(cls, name, bases, dct):
+        for hook in plumber.__metaclass_hooks__:
+            hook(cls, name, bases, dct)
+        return cls
+
+    def __new__(mcls, name, bases, dct):
         if '__plumbing__' not in dct:
-            return super(plumber, cls).__new__(cls, name, bases, dct)
+            cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
+            return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
         # turn single behavior into a tuple of one behavior
         plb = dct['__plumbing__']
@@ -99,21 +106,15 @@ class plumber(type):
             instruction(dct, Bases(bases))
 
         # build the class and return it
-        return super(plumber, cls).__new__(cls, name, bases, dct)
-
-    def __init__(cls, name, bases, dct):
-        super(plumber, cls).__init__(name, bases, dct)
+        cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
 
         # install stage2
         if '__plumbing__' in dct:
-            stacks = Stacks(dct)
             for stack in stacks.stage2.values():
                 instruction = stack[-1]
                 instruction(cls)
 
-        # run metaclass hooks
-        for hook in plumber.__metaclass_hooks__:
-            hook(cls, name, bases, dct)
+        return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
 
 class plumbing(object):
