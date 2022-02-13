@@ -375,13 +375,11 @@ class TestPlumberBasics(unittest.TestCase):
         self.assertEqual(Sub().foobar(), 5)
 
         stacks = Plumbing.__plumbing_stacks__
-        self.assertEqual(len(stacks['history']), 5)
-        stages = stacks['stages']
-        self.assertEqual(sorted(list(stages.keys())), ['stage1', 'stage2'])
-        stage_1 = stages['stage1']
-        self.assertEqual(sorted(list(stage_1.keys())), ['a', 'bar', 'foo'])
-        stage_2 = stages['stage2']
-        self.assertEqual(sorted(list(stage_2.keys())), ['__interfaces__'])
+        self.assertEqual(len(stacks.history), 5)
+        stage1 = stacks.stage1
+        self.assertEqual(sorted(list(stage1.keys())), ['a', 'bar', 'foo'])
+        stage2 = stacks.stage2
+        self.assertEqual(sorted(list(stage2.keys())), ['__interfaces__'])
 
     @unittest.skipIf(
         sys.version_info[0] >= 3,

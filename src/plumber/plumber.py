@@ -5,14 +5,11 @@ from plumber.behavior import Instructions
 class Stacks(object):
     """Organize stacks for parsing behaviors, stored in the class dict."""
 
-    attrname = '__plumbing_stacks__'
-
     def __init__(self, dct):
-        stacks = self.stacks = dct.setdefault(self.attrname, dict())
-        self.history = stacks.setdefault('history', [])
-        stages = self.stages = stacks.setdefault('stages', dict())
-        self.stage1 = stages.setdefault('stage1', dict())
-        self.stage2 = stages.setdefault('stage2', dict())
+        dct['__plumbing_stacks__'] = self
+        self.history = list()
+        self.stage1 = dict()
+        self.stage2 = dict()
 
 
 def searchnameinbases(name, bases):
@@ -69,43 +66,46 @@ class plumber(type):
         return cls
 
     def __new__(mcls, name, bases, dct):
+        # No plumbing behaviors. Apply metaclasshooks and return class.
         if '__plumbing__' not in dct:
             cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
             return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
-        # turn single behavior into a tuple of one behavior
+        # Ensure plumbing behaviors are iterable.
         plb = dct['__plumbing__']
         if type(plb) is not tuple:
             plb = dct['__plumbing__'] = (plb,)
 
-        # stacks for parsing instructions
+        # Stacks for parsing instructions.
         stacks = Stacks(dct)
 
-        # parse the behaviors
+        # Parse the behaviors.
         for behavior in plb:
             for instruction in Instructions(behavior):
-                stage = stacks.stages[instruction.__stage__]
+                stage = getattr(stacks, instruction.__stage__)
                 stack = stage.setdefault(instruction.__name__, [])
                 # already seen instruction are ignored
                 if instruction not in stacks.history:
                     if stack:
                         instruction = stack[-1] + instruction
                     stack.append(instruction)
+                # XXX: do we really want ignored instructions in history?
                 stacks.history.append(instruction)
 
-        # install stage1
+        # Install stage 1.
         for stack in stacks.stage1.values():
             instruction = stack[-1]
             instruction(dct, Bases(bases))
 
-        # build the class and return it
+        # Build the class.
         cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
 
-        # install stage2
+        # Install stage 2.
         for stack in stacks.stage2.values():
             instruction = stack[-1]
             instruction(cls)
 
+        # Apply metaclasshooks and return class.
         return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
 
