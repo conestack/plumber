@@ -19,9 +19,15 @@ def payload(item):
 
     .. code-block:: pycon
 
-        >>> class Foo: pass
+        >>> from plumber.instructions import Instruction
+        >>> from plumber.instructions import payload
+
+        >>> class Foo:
+        ...     pass
+
         >>> payload(Instruction(Instruction(Foo))) is Foo
         True
+
     """
     if not isinstance(item, Instruction):
         return item
@@ -35,6 +41,8 @@ def plumb_str(leftdoc, rightdoc):
     and followed by an empty line.
 
     .. code-block:: pycon
+
+        >>> from plumber.instructions import plumb_str
 
         >>> leftdoc = '''Left head
         ...
@@ -50,7 +58,7 @@ def plumb_str(leftdoc, rightdoc):
         ... Right tail
         ... '''
 
-        >>> print plumb_str(leftdoc, rightdoc)
+        >>> print(plumb_str(leftdoc, rightdoc))
         Left head
         <BLANKLINE>
         Right head
@@ -69,9 +77,11 @@ def plumb_str(leftdoc, rightdoc):
 
         >>> leftdoc = '''Left tail
         ... '''
+
         >>> rightdoc = '''Right tail
         ... '''
-        >>> print plumb_str(leftdoc, rightdoc)
+
+        >>> print(plumb_str(leftdoc, rightdoc))
         Right tail
         <BLANKLINE>
         Left tail
@@ -80,10 +90,13 @@ def plumb_str(leftdoc, rightdoc):
         >>> class A: pass
         >>> plumb_str(A, None) is A
         True
+
         >>> plumb_str(None, A) is A
         True
+
         >>> plumb_str(None, None) is None
         True
+
     """
     if leftdoc is None:
         return rightdoc
@@ -110,13 +123,18 @@ class Instruction(object):
 
         .. code-block:: pycon
 
-            >>> class Foo: pass
+            >>> class Foo:
+            ...     pass
+
             >>> Instruction(Foo).item is Foo
             True
+
             >>> Instruction(Foo).__name__ is None
             True
+
             >>> Instruction(Foo, name='foo').__name__ == 'foo'
             True
+
         """
         self.item = item
         if name is not None:
@@ -131,6 +149,7 @@ class Instruction(object):
             Traceback (most recent call last):
               ...
             NotImplementedError
+
         """
         raise NotImplementedError
 
@@ -214,18 +233,24 @@ class default(Stage1Instruction):
 
         .. code-block:: pycon
 
+            >>> from plumber.instructions import default
+
             >>> def1 = default(1)
             >>> def1 + def1 is def1
             True
+
             >>> def2 = default(2)
             >>> def1 + def2 is def1
             True
+
             >>> def2 + def1 is def2
             True
 
         Override wins over default.
 
         .. code-block:: pycon
+
+            >>> from plumber.instructions import override
 
             >>> ext3 = override(3)
             >>> def1 + ext3 is ext3
@@ -234,6 +259,8 @@ class default(Stage1Instruction):
         Finalize wins over default.
 
         .. code-block:: pycon
+
+            >>> from plumber.instructions import finalize
 
             >>> fin4 = finalize(4)
             >>> def1 + fin4 is fin4
@@ -247,10 +274,11 @@ class default(Stage1Instruction):
             >>> def1 + Instruction('foo')
             Traceback (most recent call last):
               ...
-            PlumbingCollision:
+            plumber.exceptions.PlumbingCollision:
                 <default 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload='foo'>
+
         """
         if self == right:
             return self
@@ -290,12 +318,16 @@ class override(Stage1Instruction):
             >>> ext1 = override(1)
             >>> ext1 + ext1 is ext1
             True
+
             >>> ext1 + override(1) is ext1
             True
+
             >>> ext1 + override(2) is ext1
             True
+
             >>> ext1 + default(2) is ext1
             True
+
             >>> fin3 = finalize(3)
             >>> ext1 + fin3 is fin3
             True
@@ -307,10 +339,11 @@ class override(Stage1Instruction):
             >>> ext1 + Instruction(1)
             Traceback (most recent call last):
               ...
-            PlumbingCollision:
+            plumber.exceptions.PlumbingCollision:
                 <override 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
+
         """
         if self == right:
             return self
@@ -348,10 +381,13 @@ class finalize(Stage1Instruction):
             >>> fin1 = finalize(1)
             >>> fin1 + fin1 is fin1
             True
+
             >>> fin1 + finalize(1) is fin1
             True
+
             >>> fin1 + default(2) is fin1
             True
+
             >>> fin1 + override(2) is fin1
             True
 
@@ -362,7 +398,7 @@ class finalize(Stage1Instruction):
             >>> fin1 + finalize(2)
             Traceback (most recent call last):
               ...
-            PlumbingCollision:
+            plumber.exceptions.PlumbingCollision:
                 <finalize 'None' of None payload=1>
               with:
                 <finalize 'None' of None payload=2>
@@ -374,10 +410,11 @@ class finalize(Stage1Instruction):
             >>> fin1 + Instruction(1)
             Traceback (most recent call last):
               ...
-            PlumbingCollision:
+            plumber.exceptions.PlumbingCollision:
                 <finalize 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
+
         """
         if self == right:
             return self
@@ -446,6 +483,8 @@ class plumb(Stage2Instruction):
 
         .. code-block:: pycon
 
+            >>> from plumber import plumb
+
             >>> plb1 = plumb(1)
             >>> plb1 + plumb(1) is plb1
             True
@@ -453,7 +492,7 @@ class plumb(Stage2Instruction):
             >>> plb1 + Instruction(1)
             Traceback (most recent call last):
               ...
-            PlumbingCollision:
+            plumber.exceptions.PlumbingCollision:
                 <plumb 'None' of None payload=1>
               with:
                 <Instruction 'None' of None payload=1>
@@ -461,10 +500,11 @@ class plumb(Stage2Instruction):
             >>> plumb(lambda x: None) + plumb(property(lambda x: None))
             Traceback (most recent call last):
               ...
-            PlumbingCollision:
+            plumber.exceptions.PlumbingCollision:
                 <plumb 'None' of None payload=<function <lambda> at 0x...>>
               with:
                 <plumb 'None' of None payload=<property object at 0x...>>
+
         """
         if self == right:
             return self
@@ -483,10 +523,11 @@ class plumb(Stage2Instruction):
             >>> plumb(1) + plumb(2)
             Traceback (most recent call last):
               ...
-            PlumbingCollision:
+            plumber.exceptions.PlumbingCollision:
                 <plumb 'None' of None payload=1>
               with:
                 <plumb 'None' of None payload=2>
+
         """
         if isinstance(p1, STR_TYPE):
             return isinstance(p2, STR_TYPE) or p2 is None
@@ -516,7 +557,8 @@ class plumb(Stage2Instruction):
             return p1.__class__(*propfuncs)
         if callable(p1):
             return plbfunc(p1, p2)
-        raise RuntimeError("We should not reach this code!")  # pragma: no cover
+        # Should never happen
+        raise RuntimeError('Unknown plumbing case.')  # pragma: no cover
 
     def __call__(self, cls):
         # Check for a method on the plumbing class itself.
@@ -543,14 +585,18 @@ if ZOPE_INTERFACE_AVAILABLE:
 
         .. code-block:: pycon
 
+            >>> from plumber.instructions import _implements
+
             >>> foo = _implements(('foo',))
             >>> foo == foo
             True
+
             >>> foo + foo is foo
             True
 
             >>> foo == _implements(('foo',))
             True
+
             >>> foo != _implements(('bar',))
             True
 
@@ -567,15 +613,16 @@ if ZOPE_INTERFACE_AVAILABLE:
             >>> foo + bar == bar + foo
             True
 
-            >>> foo + Instruction("bar")
+            >>> foo + Instruction('bar')
             Traceback (most recent call last):
               ...
-            PlumbingCollision:
+            plumber.exceptions.PlumbingCollision:
                 <_implements '__interfaces__' of None payload=('foo',)>
               with:
                 <Instruction 'None' of None payload='bar'>
+
         """
-        __name__ = "__interfaces__"
+        __name__ = '__interfaces__'
 
         def __add__(self, right):
             if self == right:

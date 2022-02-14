@@ -46,6 +46,8 @@ class behaviormetaclass(type):
 
     .. code-block:: pycon
 
+        >>> from plumber.behavior import Behavior
+        >>> from plumber.behavior import behaviormetaclass
         >>> from plumber.compat import add_metaclass
 
         >>> @add_metaclass(behaviormetaclass)
@@ -61,6 +63,7 @@ class behaviormetaclass(type):
 
         >>> getattr(A, '__plumbing_instructions__', None) and 'Behavior'
         'Behavior'
+
     """
 
     def __init__(cls, name, bases, dct):

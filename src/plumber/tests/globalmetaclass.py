@@ -22,6 +22,7 @@ class IBehavior1(Interface):
 
         >>> IBehavior1.__class__
         <class 'zope.interface.interface.InterfaceClass'>
+
     """
 
 
@@ -36,6 +37,7 @@ class Foo:
 
         >>> issubclass(Foo, object)
         True
+
     """
 
 
@@ -51,6 +53,7 @@ class ClassMaybeUsingAPlumbing(object):
 
         >>> ClassMaybeUsingAPlumbing.__class__
         <type 'type'>
+
     """
 
 
@@ -68,6 +71,7 @@ class ClassReallyUsingAPlumbing:
 
         >>> IBehavior1.implementedBy(ClassReallyUsingAPlumbing)
         True
+
     """
 
 
@@ -84,5 +88,6 @@ class BCClassReallyUsingAPlumbing:
 
         >>> IBehavior1.implementedBy(BCClassReallyUsingAPlumbing)
         True
+
     """
     __plumbing__ = Behavior1
