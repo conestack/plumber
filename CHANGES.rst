@@ -4,7 +4,19 @@ Changes
 1.7 (unreleased)
 ----------------
 
-- No changes yet.
+- Replace ``Bases`` wrapper with a ``set`` containing ``derived_members``
+  to avoid multiple base class iteration.
+  [rnix, 2022-02-13]
+
+- Only keep most recent instructions on ``Stacks`` when parsing behaviors.
+  [rnix, 2022-02-13]
+
+- Simplify ``Stacks`` object.
+  [rnix, 2022-02-13]
+
+- Apply stage 1 and stage 2 instructions in ``plumber.__new__`` instead of
+  applying stage 2 instructions in ``plumber.__init__``.
+  [rnix, 2022-02-13]
 
 
 1.6

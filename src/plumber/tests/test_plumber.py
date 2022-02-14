@@ -13,7 +13,6 @@ from plumber.instructions import Instruction
 from plumber.instructions import _implements
 from plumber.instructions import payload
 from plumber.instructions import plumb_str
-from plumber.plumber import searchnameinbases
 from zope.interface import Interface
 from zope.interface import implementer
 from zope.interface.interface import InterfaceClass
@@ -80,14 +79,10 @@ class TestInstructions(unittest.TestCase):
         self.assertTrue(Instruction(Foo).item is Foo)
         self.assertTrue(Instruction(Foo).__name__ is None)
         self.assertTrue(Instruction(Foo, name='foo').__name__ == 'foo')
-        self.assertRaises(
-            NotImplementedError,
-            lambda: Instruction(None) + 1
-        )
-        self.assertRaises(
-            NotImplementedError,
-            lambda: Instruction(None)(None)
-        )
+        with self.assertRaises(NotImplementedError):
+            Instruction(None) + 1
+        with self.assertRaises(NotImplementedError):
+            Instruction(None)(None)
 
     def test_default(self):
         # First default wins from left to right
@@ -181,7 +176,8 @@ class TestInstructions(unittest.TestCase):
             self.assertEqual(err.right.__class__.__name__, 'Instruction')
             self.assertEqual(err.right.payload, 1)
         try:
-            func_a = lambda x: None
+            def func_a(x):
+                return None  # pragma: no cover
             prop_b = property(lambda x: None)
             plumb(func_a) + plumb(prop_b)
         except PlumbingCollision as e:
@@ -220,7 +216,7 @@ class TestInstructions(unittest.TestCase):
         self.assertTrue(foo + bar == bar + foo)
         err = None
         try:
-            foo + Instruction("bar")
+            foo + Instruction('bar')
         except PlumbingCollision as e:
             err = e
         finally:
@@ -255,15 +251,15 @@ class TestBehavior(unittest.TestCase):
 
 class TestPlumber(unittest.TestCase):
 
-    def test_searchnameinbases(self):
+    def test_derived_members(self):
         class A(object):
             foo = 1
 
         class B(A):
             pass
 
-        self.assertTrue(searchnameinbases('foo', (B,)))
-        self.assertFalse(searchnameinbases('bar', (B,)))
+        self.assertTrue('foo' in plumber.derived_members((B,)))
+        self.assertFalse('bar' in plumber.derived_members((B,)))
 
 
 class TestGlobalMetaclass(unittest.TestCase):
@@ -329,7 +325,8 @@ class TestMetaclassHooks(unittest.TestCase):
         class Plumbing2(object):
             pass
 
-        self.assertRaises(AttributeError, lambda: Plumbing2.hooked)
+        with self.assertRaises(AttributeError):
+            Plumbing2.hooked
 
         plumber.__metaclass_hooks__.remove(test_metclass_hook)
 
@@ -375,13 +372,11 @@ class TestPlumberBasics(unittest.TestCase):
         self.assertEqual(Sub().foobar(), 5)
 
         stacks = Plumbing.__plumbing_stacks__
-        self.assertEqual(len(stacks['history']), 5)
-        stages = stacks['stages']
-        self.assertEqual(sorted(list(stages.keys())), ['stage1', 'stage2'])
-        stage_1 = stages['stage1']
-        self.assertEqual(sorted(list(stage_1.keys())), ['a', 'bar', 'foo'])
-        stage_2 = stages['stage2']
-        self.assertEqual(sorted(list(stage_2.keys())), ['__interfaces__'])
+        self.assertEqual(len(stacks.history), 5)
+        stage1 = stacks.stage1
+        self.assertEqual(sorted(list(stage1.keys())), ['a', 'bar', 'foo'])
+        stage2 = stacks.stage2
+        self.assertEqual(sorted(list(stage2.keys())), ['__interfaces__'])
 
     @unittest.skipIf(
         sys.version_info[0] >= 3,
@@ -416,7 +411,7 @@ class TestPlumberStage1(unittest.TestCase):
 
         res = list()
         for x in ['K', 'L', 'M', 'N']:
-            res.append("%s from %s" % (x, getattr(Plumbing, x)))
+            res.append('%s from %s' % (x, getattr(Plumbing, x)))
         self.assertEqual(res, [
             'K from Base',
             'L from Plumbing',
@@ -428,19 +423,19 @@ class TestPlumberStage1(unittest.TestCase):
         err = None
 
         class Behavior1(Behavior):
-            O = finalize(False)
+            O_ = finalize(False)
 
         try:
             @plumbing(Behavior1)
-            class Plumbing(object):
-                O = True
+            class Plumbing1(object):
+                O_ = True
         except PlumbingCollision as e:
             err = e
         finally:
             self.assertEqual(err.left, 'Plumbing class')
             self.assertEqual(err.right.__parent__.__name__, 'Behavior1')
             self.assertEqual(err.right.__class__.__name__, 'finalize')
-            self.assertEqual(err.right.__name__, 'O')
+            self.assertEqual(err.right.__name__, 'O_')
             self.assertFalse(err.right.payload)
 
         class Behavior2(Behavior):
@@ -448,7 +443,7 @@ class TestPlumberStage1(unittest.TestCase):
 
         try:
             @plumbing(Behavior2)
-            class Plumbing(object):
+            class Plumbing2(object):
                 P = True
         except PlumbingCollision as e:
             err = e
@@ -467,7 +462,7 @@ class TestPlumberStage1(unittest.TestCase):
 
         try:
             @plumbing(Behavior3, Behavior4)
-            class Plumbing(object):
+            class Plumbing3(object):
                 pass
         except PlumbingCollision as e:
             err = e
@@ -502,7 +497,7 @@ class TestPlumberStage1(unittest.TestCase):
 
         res = list()
         for x in ['K', 'L', 'M']:
-            res.append("%s from %s" % (x, getattr(Plumbing, x)))
+            res.append('%s from %s' % (x, getattr(Plumbing, x)))
         self.assertEqual(res, [
             'K from Plumbing',
             'L from Behavior2',
@@ -529,7 +524,7 @@ class TestPlumberStage1(unittest.TestCase):
 
         res = list()
         for x in ['K', 'L', 'M', 'N']:
-            res.append("%s from %s" % (x, getattr(Plumbing, x)))
+            res.append('%s from %s' % (x, getattr(Plumbing, x)))
         self.assertEqual(res, [
             'K from Base',
             'L from Plumbing',
@@ -556,7 +551,7 @@ class TestPlumberStage1(unittest.TestCase):
 
         res = list()
         for x in ['K', 'L']:
-            res.append("%s from %s" % (x, getattr(Plumbing, x)))
+            res.append('%s from %s' % (x, getattr(Plumbing, x)))
         self.assertEqual(res, [
             'K from Behavior2',
             'L from Behavior1'
@@ -581,7 +576,7 @@ class TestPlumberStage1(unittest.TestCase):
 
         res = list()
         for x in ['K', 'L']:
-            res.append("%s from %s" % (x, getattr(Plumbing, x)))
+            res.append('%s from %s' % (x, getattr(Plumbing, x)))
         self.assertEqual(res, [
             'K from Behavior2',
             'L from Behavior1'
@@ -606,7 +601,7 @@ class TestPlumberStage1(unittest.TestCase):
 
         res = list()
         for x in ['K', 'L']:
-            res.append("%s from %s" % (x, getattr(Plumbing, x)))
+            res.append('%s from %s' % (x, getattr(Plumbing, x)))
         self.assertEqual(res, [
             'K from Behavior2',
             'L from Behavior1'
@@ -645,18 +640,18 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumb
             def __getitem__(_next, self, key):
-                res.append("Behavior1 start")
+                res.append('Behavior1 start')
                 key = key.lower()
                 ret = _next(self, key)
-                res.append("Behavior1 stop")
+                res.append('Behavior1 stop')
                 return ret
 
         class Behavior2(Behavior):
             @plumb
             def __getitem__(_next, self, key):
-                res.append("Behavior2 start")
+                res.append('Behavior2 start')
                 ret = 2 * _next(self, key)
-                res.append("Behavior2 stop")
+                res.append('Behavior2 stop')
                 return ret
 
         Base = dict
@@ -743,7 +738,7 @@ class TestPlumberStage2(unittest.TestCase):
             foo = plumb(property(
                 None,
                 override(set_foo),
-                ))
+            ))
 
         @plumbing(Behavior2, Behavior3)
         class Plumbing2(object):
@@ -819,20 +814,20 @@ class TestPlumberStage2(unittest.TestCase):
             def foo(self):
                 """P1.foo
                 """
-            bar = plumb(property(None, None, None, "P1.bar"))
+            bar = plumb(property(None, None, None, 'P1.bar'))
 
         class P2(Behavior):
             @override
             def foo(self):
                 """P2.foo
                 """
-            bar = plumb(property(None, None, None, "P2.bar"))
+            bar = plumb(property(None, None, None, 'P2.bar'))
 
         @plumbing(P1, P2)
         class Plumbing(object):
             """Plumbing
             """
-            bar = property(None, None, None, "Plumbing.bar")
+            bar = property(None, None, None, 'Plumbing.bar')
 
         self.assertEqual(Plumbing.__doc__.strip(), 'Plumbing\n\nP1')
         self.assertEqual(Plumbing.foo.__doc__.strip(), 'P2.foo\n\nP1.foo')

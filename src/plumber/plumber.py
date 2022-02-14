@@ -3,56 +3,13 @@ from plumber.behavior import Instructions
 
 
 class Stacks(object):
-    """organize stacks for parsing behaviors, stored in the class' dict."""
-
-    attrname = '__plumbing_stacks__'
+    """Organize stacks for parsing behaviors, stored in the class dict."""
 
     def __init__(self, dct):
-        self.dct = dct
-        self.dct.setdefault(self.attrname, dict())
-        self.stacks.setdefault('stages', dict())
-        self.stages.setdefault('stage1', dict())
-        self.stages.setdefault('stage2', dict())
-        self.stacks.setdefault('history', [])
-
-    stacks = property(lambda self: self.dct[self.attrname])
-    stages = property(lambda self: self.stacks['stages'])
-    stage1 = property(lambda self: self.stages['stage1'])
-    stage2 = property(lambda self: self.stages['stage2'])
-    history = property(lambda self: self.stacks['history'])
-
-
-def searchnameinbases(name, bases):
-    """Search name in base classes.
-
-    .. code-block:: pycon
-
-        >>> class A(object):
-        ...     foo = 1
-
-        >>> class B(A):
-        ...     pass
-
-        >>> searchnameinbases('foo', (B,))
-        True
-        >>> searchnameinbases('bar', (B,))
-        False
-    """
-    for base in bases:
-        if name in base.__dict__:
-            return True
-        if searchnameinbases(name, base.__bases__):
-            return True
-    return False
-
-
-class Bases(object):
-    """Used to search in base classes for attributes."""
-    def __init__(self, bases):
-        self.bases = bases
-
-    def __contains__(self, name):
-        return searchnameinbases(name, self.bases)
+        dct['__plumbing_stacks__'] = self
+        self.history = list()
+        self.stage1 = dict()
+        self.stage2 = dict()
 
 
 class plumber(type):
@@ -68,56 +25,73 @@ class plumber(type):
         cls.__metaclass_hooks__.append(func)
         return func
 
-    def __new__(cls, name, bases, dct):
-        if '__plumbing__' not in dct:
-            return super(plumber, cls).__new__(cls, name, bases, dct)
+    @staticmethod
+    def apply_metaclasshooks(cls, name, bases, dct):
+        for hook in plumber.__metaclass_hooks__:
+            hook(cls, name, bases, dct)
+        return cls
 
-        # turn single behavior into a tuple of one behavior
+    @staticmethod
+    def derived_members(bases, attrs=None):
+        if attrs is None:
+            attrs = set()
+        for base in bases:
+            attrs.update(base.__dict__)
+            plumber.derived_members(base.__bases__, attrs=attrs)
+        return attrs
+
+    @staticmethod
+    def parse_behaviors(plb, dct):
+        # Stacks for parsing instructions.
+        stacks = Stacks(dct)
+        history = stacks.history
+
+        # Parse the behaviors.
+        for behavior in plb:
+            for instruction in Instructions(behavior):
+                # already seen instruction are ignored
+                if instruction not in history:
+                    stage = getattr(stacks, instruction.__stage__)
+                    instruction_name = instruction.__name__
+                    prev_instruction = stage.get(instruction_name)
+                    if prev_instruction:
+                        instruction = prev_instruction + instruction
+                    stage[instruction_name] = instruction
+                history.append(instruction)
+        return stacks
+
+    def __new__(mcls, name, bases, dct):
+        # No plumbing behaviors. Apply metaclasshooks and return class.
+        if '__plumbing__' not in dct:
+            cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
+            return plumber.apply_metaclasshooks(cls, name, bases, dct)
+
+        # Ensure plumbing behaviors are iterable.
         plb = dct['__plumbing__']
         if type(plb) is not tuple:
             plb = dct['__plumbing__'] = (plb,)
 
-        # stacks for parsing instructions
-        stacks = Stacks(dct)
+        # Parse behaviors
+        stacks = plumber.parse_behaviors(plb, dct)
 
-        # parse the behaviors
-        for behavior in plb:
-            for instruction in Instructions(behavior):
-                stage = stacks.stages[instruction.__stage__]
-                stack = stage.setdefault(instruction.__name__, [])
-                stacks.history.append(instruction)
-                if instruction not in stacks.history[:-1]:
-                    if stack:
-                        instruction = stack[-1] + instruction
-                    stack.append(instruction)
-                    continue
-                # already seen instruction is dropped
+        # Install stage 1.
+        members = plumber.derived_members(bases)
+        for instruction in stacks.stage1.values():
+            instruction(dct, members)
 
-        # install stage1
-        for stack in stacks.stage1.values():
-            instruction = stack[-1]
-            instruction(dct, Bases(bases))
+        # Build the class.
+        cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
 
-        # build the class and return it
-        return super(plumber, cls).__new__(cls, name, bases, dct)
+        # Install stage 2.
+        for instruction in stacks.stage2.values():
+            instruction(cls)
 
-    def __init__(cls, name, bases, dct):
-        super(plumber, cls).__init__(name, bases, dct)
-
-        # install stage2
-        if '__plumbing__' in dct:
-            stacks = Stacks(dct)
-            for stack in stacks.stage2.values():
-                instruction = stack[-1]
-                instruction(cls)
-
-        # run metaclass hooks
-        for hook in plumber.__metaclass_hooks__:
-            hook(cls, name, bases, dct)
+        # Apply metaclasshooks and return class.
+        return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
 
 class plumbing(object):
-    """Plumbeing decorator."""
+    """Plumbing decorator."""
 
     def __init__(self, *behaviors):
         assert len(behaviors) > 0

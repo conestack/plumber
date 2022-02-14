@@ -95,18 +95,18 @@ before returning it and both are chatty about start/stop.
 
     >>> class Mixin1(object):
     ...     def __getitem__(self, key):
-    ...         print "Mixin1 start"
+    ...         print('Mixin1 start')
     ...         key = key.lower()
     ...         ret = super(Mixin1, self).__getitem__(key)
-    ...         print "Mixin1 stop"
+    ...         print('Mixin1 stop')
     ...         return ret
 
     >>> class Mixin2(object):
     ...     def __getitem__(self, key):
-    ...         print "Mixin2 start"
+    ...         print('Mixin2 start')
     ...         ret = super(Mixin2, self).__getitem__(key)
     ...         ret = 2 * ret
-    ...         print "Mixin2 stop"
+    ...         print('Mixin2 stop')
     ...         return ret
 
     >>> Base = dict
@@ -267,45 +267,45 @@ The plumber gathers instructions
 A plumbing declaration provides a list of behaviors via the ``plumbing``
 decorator. Behaviors provide instructions to be applied in two stages:
 
-stage1
-  - extension via ``default``, ``override`` and ``finalize``, the result of this
-    stage is the base for stage2.
+**Stage 1**
 
-stage2
-  - creation of pipelines via ``plumb`` and ``plumbifexists``
-  - plumbing of docstrings
-  - implemented interfaces from ``zope.interface``, iff available
+- Extension via ``default``, ``override`` and ``finalize``. This happens by
+  manipulating the class dict before the actual class is created.
 
-The plumber walks the Behavior list from left to right (behavior order). On its
-way it gathers instructions onto stacks, sorted by stage and attribute name. A 
-history of all instructions is kept.
+**Stage 2**
+
+- Creation of pipelines via ``plumb`` and ``plumbifexists``.
+- Plumbing of docstrings.
+- Implemented interfaces from ``zope.interface``, if available.
+- Stage 2 instructions are applied on the class object.
+
+The plumber iterates the Behavior list from left to right (behavior order) and
+gathers the instructions to apply. A history of all seen instructions is kept.
 
 .. code-block:: pycon
 
-    >>> pprint(Plumbing.__plumbing_stacks__)
-    {'history':
-      [<_implements '__interfaces__' of None payload=()>,
-       <default 'a' of <class 'Behavior1'> payload=True>,
-       <default 'foo' of <class 'Behavior1'> payload=<function foo at 0x...>>,
-       <_implements '__interfaces__' of None payload=()>,
-       <default 'bar' of <class 'Behavior2'> payload=<property object at 0x...>>],
-     'stages':
-       {'stage1':
-         {'a': [<default 'a' of <class 'Behavior1'> payload=True>],
-          'bar': [<default 'bar' of <class 'Behavior2'> payload=<property ...
-          'foo': [<default 'foo' of <class 'Behavior1'> payload=<function foo ...
-        'stage2':
-         {'__interfaces__': [<_implements '__interfaces__' of None payload=()...
+    >>> pprint(Plumbing.__plumbing_stacks__.stage1)
+    {'a': <default 'a' of <class 'Behavior1'> payload=True>,
+     'bar': <default 'bar' of <class 'Behavior2'> payload=<property object at ...>>,
+     'foo': <default 'foo' of <class 'Behavior1'> payload=<function Behavior1.foo at ...>>}
 
-Before putting a new instruction onto a stack, it is compared with the latest
-instruction on the stack. It is either taken as is, discarded, merged or a
-``PlumbingCollision`` is raised. This is detailed in the following sections.
+    >>> pprint(Plumbing.__plumbing_stacks__.stage2)
+    {'__interfaces__': <_implements '__interfaces__' of None payload=()>}
 
-After all instructions are gathered onto the stacks, they are applied in two
-stages taking declarations on the plumbing class and base classes into account.
+    >>> pprint(Plumbing.__plumbing_stacks__.history)
+    [<_implements '__interfaces__' of None payload=()>,
+     <default 'a' of <class 'Behavior1'> payload=True>,
+     <default 'foo' of <class 'Behavior1'> payload=<function Behavior1.foo at ...>>,
+     <_implements '__interfaces__' of None payload=()>,
+     <default 'bar' of <class 'Behavior2'> payload=<property object at ...>>]
 
-The result of the first stage is the base for the application of the second
-stage.
+Each instruction belongs to a class member name and gets compared with the
+previous instruction for this name if exists. It is then either taken as is,
+discarded, merged or a ``PlumbingCollision`` is raised. This is detailed in the
+following sections.
+
+After all instructions are collected, they are applied taking declarations on
+the plumbing class and base classes into account.
 
 .. note:: The payload of an instruction is the attribute value passed to the
   instruction via function call or decoration. An instruction knows the
@@ -379,7 +379,7 @@ In code.
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print('%s from %s' % (x, getattr(Plumbing, x)))
     K from Base
     L from Plumbing
     M from Behavior2
@@ -424,7 +424,7 @@ collisions.
     ...     O = True
     Traceback (most recent call last):
       ...
-    PlumbingCollision:
+    plumber.exceptions.PlumbingCollision:
         Plumbing class
       with:
         <finalize 'O' of <class 'Behavior1'> payload=False>
@@ -437,7 +437,7 @@ collisions.
     ...     P = True
     Traceback (most recent call last):
       ...
-    PlumbingCollision:
+    plumber.exceptions.PlumbingCollision:
         Plumbing class
       with:
         <finalize 'P' of <class 'Behavior2'> payload=False>
@@ -453,7 +453,7 @@ collisions.
     ...     pass
     Traceback (most recent call last):
       ...
-    PlumbingCollision:
+    plumber.exceptions.PlumbingCollision:
         <finalize 'Q' of <class 'Behavior1'> payload=False>
       with:
         <finalize 'Q' of <class 'Behavior2'> payload=True>
@@ -487,7 +487,7 @@ in code.
     ...     K = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print('%s from %s' % (x, getattr(Plumbing, x)))
     K from Plumbing
     L from Behavior2
     M from Behavior1
@@ -536,7 +536,7 @@ in code.
     ...     L = 'Plumbing'
 
     >>> for x in ['K', 'L', 'M', 'N']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print('%s from %s' % (x, getattr(Plumbing, x)))
     K from Base
     L from Plumbing
     M from Behavior2
@@ -587,7 +587,7 @@ in code.
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print('%s from %s' % (x, getattr(Plumbing, x)))
     K from Behavior2
     L from Behavior1
 
@@ -632,7 +632,7 @@ in code.
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print('%s from %s' % (x, getattr(Plumbing, x)))
     K from Behavior2
     L from Behavior1
 
@@ -677,7 +677,7 @@ in code.
     ...     pass
 
     >>> for x in ['K', 'L']:
-    ...     print "%s from %s" % (x, getattr(Plumbing, x))
+    ...     print('%s from %s' % (x, getattr(Plumbing, x)))
     K from Behavior2
     L from Behavior1
 
@@ -802,18 +802,18 @@ them.
     >>> class Behavior1(Behavior):
     ...     @plumb
     ...     def __getitem__(_next, self, key):
-    ...         print "Behavior1 start"
+    ...         print('Behavior1 start')
     ...         key = key.lower()
     ...         ret = _next(self, key)
-    ...         print "Behavior1 stop"
+    ...         print ('Behavior1 stop')
     ...         return ret
 
     >>> class Behavior2(Behavior):
     ...     @plumb
     ...     def __getitem__(_next, self, key):
-    ...         print "Behavior2 start"
+    ...         print('Behavior2 start')
     ...         ret = 2 * _next(self, key)
-    ...         print "Behavior2 stop"
+    ...         print('Behavior2 stop')
     ...         return ret
 
     >>> Base = dict
@@ -999,8 +999,8 @@ to mix properties with methods.
     ...         return 5
     Traceback (most recent call last):
       ...
-    PlumbingCollision:
-        <plumb 'foo' of <class 'Behavior1'> payload=<function foo at 0x...>>
+    plumber.exceptions.PlumbingCollision:
+        <plumb 'foo' of <class 'Behavior1'> payload=<function Behavior1.foo at 0x...>>
       with:
         <class 'Plumbing'>
 
@@ -1021,34 +1021,34 @@ plumbing declaration and followed by the behaviors in reverse order.
     ...     def foo(self):
     ...         """P1.foo
     ...         """
-    ...     bar = plumb(property(None, None, None, "P1.bar"))
+    ...     bar = plumb(property(None, None, None, 'P1.bar'))
 
     >>> class P2(Behavior):
     ...     @override
     ...     def foo(self):
     ...         """P2.foo
     ...         """
-    ...     bar = plumb(property(None, None, None, "P2.bar"))
+    ...     bar = plumb(property(None, None, None, 'P2.bar'))
 
     >>> @plumbing(P1, P2)
     ... class Plumbing(object):
     ...     """Plumbing
     ...     """
-    ...     bar = property(None, None, None, "Plumbing.bar")
+    ...     bar = property(None, None, None, 'Plumbing.bar')
 
-    >>> print Plumbing.__doc__
+    >>> print(Plumbing.__doc__)
     Plumbing
     <BLANKLINE>
     P1
     <BLANKLINE>
 
-    >>> print Plumbing.foo.__doc__
+    >>> print(Plumbing.foo.__doc__)
     P2.foo
     <BLANKLINE>
     P1.foo
     <BLANKLINE>
 
-    >>> print Plumbing.bar.__doc__
+    >>> print(Plumbing.bar.__doc__)
     Plumbing.bar
     <BLANKLINE>
     P2.bar
@@ -1187,34 +1187,34 @@ An instance of the class provides the interfaces.
 
 .. code-block:: pycon
 
-    >>> plumbing = PlumbingClass()
+    >>> plb = PlumbingClass()
 
-    >>> IPlumbingClass.providedBy(plumbing)
+    >>> IPlumbingClass.providedBy(plb)
     True
 
-    >>> IBase.providedBy(plumbing)
+    >>> IBase.providedBy(plb)
     True
 
-    >>> IBehavior1.providedBy(plumbing)
+    >>> IBehavior1.providedBy(plb)
     True
 
-    >>> IBehavior2.providedBy(plumbing)
+    >>> IBehavior2.providedBy(plb)
     True
 
-    >>> IBehavior2Base.providedBy(plumbing)
+    >>> IBehavior2Base.providedBy(plb)
     True
 
 
 plumber metaclass hooks
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-In case one writes a plumbing behavior requiring class manipulation at plumber
-metaclass execution time a decorator is provided for registering callbacks
-which are executed at the end of the plumber metaclass ``__init__`` function.
-Executing at last task ensures stage 1 and stage 2 instructions already have
-been executed and we're working on a complete plumbing class.
+In case one writes a plumbing behavior requiring class manipulation at creation
+time, a decorator is provided for registering callbacks which are executed
+after stage 1 and stage 2 instructions have been applied.
 
 .. code-block:: pycon
+
+    >>> from plumber import plumber
 
     >>> class IBehaviorInterface(Interface):
     ...     pass
