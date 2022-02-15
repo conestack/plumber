@@ -27,8 +27,8 @@ non-experimental features are fully test covered.
     :depth: 2
 
 
-Motivation: limitations of subclassing
---------------------------------------
+Motivation - Limitations of subclassing
+---------------------------------------
 
 Plumbing is an alternative to mixin-based extension of classes, motivated by
 limitations and/or design choice of python's subclassing:
@@ -84,8 +84,8 @@ class does not provide a (more efficient) implementation.
 defaults.
 
 
-``super``-chains are not verified during class creation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``super`` - chains are not verified during class creation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is possible to build a chain of methods using ``super``: ``Mixin1`` turns
 the key lowercase before passing it on, ``Mixin2`` multiplies the result by 2
@@ -146,8 +146,8 @@ creation.
 using nested closures. These are create and verified during class creation.
 
 
-No conditional ``super``-chains
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+No conditional ``super`` - chains
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A mixin with subclassing needs to fit exactly the base class, there is no way
 to conditionally hook into method calls depending on whether the base class
@@ -324,8 +324,8 @@ the plumbing class and base classes into account.
   a box of your favorite beverage, please let us know.
 
 
-Stage 1: Extension
-^^^^^^^^^^^^^^^^^^
+Stage 1 - Extension
+^^^^^^^^^^^^^^^^^^^
 
 The extension stage creates endpoints for the pipelines created in stage 2. If
 no pipeline uses the endpoint, it will just live on as a normal attribute in
@@ -355,8 +355,8 @@ The extension decorators:
     :local:
 
 
-Interaction: ``finalize``, plumbing declaration and base classes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interaction - ``finalize``, plumbing declaration and base classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In code.
 
@@ -459,8 +459,8 @@ collisions.
         <finalize 'Q' of <class 'Behavior2'> payload=True>
 
 
-Interaction: ``override``, plumbing declaration and base classes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interaction - ``override``, plumbing declaration and base classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 in code.
 
@@ -511,8 +511,8 @@ summary:
 +------+-----------+-----------+----------+------+
 
 
-Interaction: ``default``, plumbing declaration and base class
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interaction - ``default``, plumbing declaration and base class
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 in code.
 
@@ -563,8 +563,8 @@ summary:
 +------+-----------+-----------+----------+-------+
 
 
-Interaction: ``finalize`` wins over ``override``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interaction - ``finalize`` wins over ``override``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 in code.
 
@@ -608,7 +608,7 @@ summary:
 +------+-----------+-----------+----------+------+
 
 
-Interaction: ``finalize`` wins over ``default``:
+Interaction - ``finalize`` wins over ``default``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 in code.
@@ -653,8 +653,8 @@ summary:
 +------+-----------+-----------+----------+------+
 
 
-Interaction: ``override`` wins over ``default``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interaction - ``override`` wins over ``default``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~
 
 in code.
 
@@ -735,8 +735,8 @@ in code.
     'Behavior2'
 
 
-Stage 2: Pipeline, docstrings and ``zope.interface`` instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Stage 2 - Pipeline, docstrings and ``zope.interface`` instructions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In stage1 plumbing class attributes were set, which can serve as endpoints for
 plumbing pipelines that are build in stage2. Plumbing pipelines correspond to
@@ -1005,7 +1005,7 @@ to mix properties with methods.
         <class 'Plumbing'>
 
 
-docstrings of classes, methods and properties
+Docstrings of classes, methods and properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Normal docstrings of the plumbing declaration and the behavior classes, plumbed
@@ -1205,8 +1205,8 @@ An instance of the class provides the interfaces.
     True
 
 
-plumber metaclass hooks
-~~~~~~~~~~~~~~~~~~~~~~~
+Plumber metaclass hooks
+^^^^^^^^^^^^^^^^^^^^^^^
 
 In case one writes a plumbing behavior requiring class manipulation at creation
 time, a decorator is provided for registering callbacks which are executed
@@ -1243,7 +1243,7 @@ Miscellanea
 Nomenclature
 ^^^^^^^^^^^^
 
-**``plumber``**
+**plumber**
     Metaclass that creates a plumbing according to the instructions declared on
     plumbing behaviors. Instructions are given by decorators: ``default``,
     ``override``, ``finalize``, ``plumb`` and ``plumbifexists``.
@@ -1290,7 +1290,7 @@ corresponding text.
 Python Versions
 ^^^^^^^^^^^^^^^
 
-- Python 2.6+, 3.3+, pypy
+- Python 2.7, 3.3+, pypy
 
 - May work with other versions (untested)
 
