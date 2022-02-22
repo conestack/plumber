@@ -102,8 +102,8 @@ def plumb_str(leftdoc, rightdoc):
         return rightdoc
     if rightdoc is None:
         return leftdoc
-    _next = re.search(r'\n\s*\n\s*__plbnext__\s*\n\s*\n', leftdoc)
-    if not _next:
+    next_ = re.search(r'\n\s*\n\s*__plbnext__\s*\n\s*\n', leftdoc)
+    if not next_:
         return '\n\n'.join((rightdoc.rstrip(), leftdoc))
     return leftdoc.replace('__plbnext__', rightdoc.rstrip())
 
@@ -443,24 +443,24 @@ class Stage2Instruction(Instruction):
         raise NotImplementedError  # pragma: no cover
 
 
-def entrancefor(plumbing_method, _next):
-    """An entrance for a plumbing method, given _next.
+def entrancefor(plumbing_method, next_):
+    """An entrance for a plumbing method, given next_.
 
     The entrance returned is a closure with signature: (self, *args, **kw), it
-    wraps a call of plumbing_method curried with _next.
+    wraps a call of plumbing_method curried with next_.
     """
     def entrance(self, *args, **kw):
-        return plumbing_method(_next, self, *args, **kw)
-    entrance.__doc__ = plumb_str(plumbing_method.__doc__, _next.__doc__)
+        return plumbing_method(next_, self, *args, **kw)
+    entrance.__doc__ = plumb_str(plumbing_method.__doc__, next_.__doc__)
     entrance.__name__ = plumbing_method.__name__
     return entrance
 
 
-def plumbingfor(plumbing_method, _next):
+def plumbingfor(plumbing_method, next_):
     """A plumbing method combining two plumbing methods."""
-    def plumbing(__next, self, *args, **kw):
-        return plumbing_method(entrancefor(_next, __next), self, *args, **kw)
-    plumbing.__doc__ = plumb_str(plumbing_method.__doc__, _next.__doc__)
+    def plumbing(next__, self, *args, **kw):
+        return plumbing_method(entrancefor(next_, next__), self, *args, **kw)
+    plumbing.__doc__ = plumb_str(plumbing_method.__doc__, next_.__doc__)
     plumbing.__name__ = plumbing_method.__name__
     return plumbing
 
@@ -562,10 +562,10 @@ class plumb(Stage2Instruction):
 
     def __call__(self, cls):
         # Check for a method on the plumbing class itself.
-        _next = getattr(cls, self.name)
-        if not self.ok(self.payload, _next):
+        next_ = getattr(cls, self.name)
+        if not self.ok(self.payload, next_):
             raise PlumbingCollision(self, cls)
-        entrance = self.plumb(entrancefor, self.payload, _next)
+        entrance = self.plumb(entrancefor, self.payload, next_)
         setattr(cls, self.name, entrance)
 
 

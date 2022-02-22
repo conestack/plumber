@@ -756,17 +756,17 @@ Elements for plumbing pipelines are declared with the ``plumb`` and
 
 ``plumb``
     Marks a method to be used as behavior of a plumbing pipeline.  The signature of
-    such a plumbing method is ``def foo(_next, self, *args, **kw)``.  Via
-    ``_next`` it is passed the next plumbing method to be called. ``self`` is
+    such a plumbing method is ``def foo(next_, self, *args, **kw)``.  Via
+    ``next_`` it is passed the next plumbing method to be called. ``self`` is
     an instance of the plumbing class, not the behavior.
 
 ``plumbifexists``
     Like ``plumb``, but only used if an endpoint exists.
 
-The user of a plumbing class does not know which ``_next`` to pass. Therefore,
+The user of a plumbing class does not know which ``next_`` to pass. Therefore,
 after the pipelines are built, an entrance method is generated for each pipe,
-that wraps the first plumbing method passing it the correct ``_next``. Each
-``_next`` method is an entrance to the rest of the pipeline.
+that wraps the first plumbing method passing it the correct ``next_``. Each
+``next_`` method is an entrance to the rest of the pipeline.
 
 The pipelines are build in behavior order, skipping behaviors that do not
 define a pipeline element with the same attribute name::
@@ -801,18 +801,18 @@ them.
 
     >>> class Behavior1(Behavior):
     ...     @plumb
-    ...     def __getitem__(_next, self, key):
+    ...     def __getitem__(next_, self, key):
     ...         print('Behavior1 start')
     ...         key = key.lower()
-    ...         ret = _next(self, key)
+    ...         ret = next_(self, key)
     ...         print ('Behavior1 stop')
     ...         return ret
 
     >>> class Behavior2(Behavior):
     ...     @plumb
-    ...     def __getitem__(_next, self, key):
+    ...     def __getitem__(next_, self, key):
     ...         print('Behavior2 start')
-    ...         ret = 2 * _next(self, key)
+    ...         ret = 2 * next_(self, key)
     ...         print('Behavior2 stop')
     ...         return ret
 
@@ -838,7 +838,7 @@ Plumbing pipelines need endpoints. If no endpoint is available an
 
     >>> class Behavior1(Behavior):
     ...     @plumb
-    ...     def foo(_next, self):
+    ...     def foo(next_, self):
     ...         pass
 
     >>> @plumbing(Behavior1)
@@ -857,12 +857,12 @@ If no endpoint is available and a behavior does not care about that,
 
     >>> class Behavior1(Behavior):
     ...     @plumbifexists
-    ...     def foo(_next, self):
+    ...     def foo(next_, self):
     ...         pass
     ...
     ...     @plumbifexists
-    ...     def bar(_next, self):
-    ...         return 2 * _next(self)
+    ...     def bar(next_, self):
+    ...         return 2 * next_(self)
 
     >>> @plumbing(Behavior1)
     ... class Plumbing(object):
@@ -891,8 +891,8 @@ Plumbing of read only properties.
     >>> class Behavior1(Behavior):
     ...     @plumb
     ...     @property
-    ...     def foo(_next, self):
-    ...         return 2 * _next(self)
+    ...     def foo(next_, self):
+    ...         return 2 * next_(self)
 
     >>> @plumbing(Behavior1)
     ... class Plumbing(object):
@@ -912,8 +912,8 @@ It is possible to extend a property with so far unset getter/setter/deleter.
     >>> class Behavior1(Behavior):
     ...     @plumb
     ...     @property
-    ...     def foo(_next, self):
-    ...         return 2 * _next(self)
+    ...     def foo(next_, self):
+    ...         return 2 * next_(self)
 
     >>> class Behavior2(Behavior):
     ...     def set_foo(self, value):
@@ -948,18 +948,18 @@ subclassing, pipeline instructions are aggregated.
     >>> class Behavior1(Behavior):
     ... 
     ...     @plumb
-    ...     def foo(_next, self):
-    ...         return 'Behavior1 ' + _next(self)
+    ...     def foo(next_, self):
+    ...         return 'Behavior1 ' + next_(self)
     ... 
     ...     @plumb
-    ...     def bar(_next, self):
-    ...         return 'Behavior1 ' + _next(self)
+    ...     def bar(next_, self):
+    ...         return 'Behavior1 ' + next_(self)
 
     >>> class Behavior2(Behavior1):
     ... 
     ...     @plumb
-    ...     def foo(_next, self):
-    ...         return 'Behavior2 ' + _next(self)
+    ...     def foo(next_, self):
+    ...         return 'Behavior2 ' + next_(self)
 
     >>> @plumbing(Behavior2)
     ... class Plumbing(object):
@@ -988,8 +988,8 @@ to mix properties with methods.
 
     >>> class Behavior1(Behavior):
     ...     @plumb
-    ...     def foo(_next, self):
-    ...         return _next(self)
+    ...     def foo(next_, self):
+    ...         return next_(self)
 
     >>> @plumbing(Behavior1)
     ... class Plumbing(object):
@@ -1265,18 +1265,18 @@ Nomenclature
     Plumbing methods/properties with the same name form a pipeline. The
     entrance and end-point have the signature of normal methods: ``def
     foo(self, *args, **kw)``. The plumbing pipelines is a series of nested
-    closures (see ``_next``).
+    closures (see ``next_``).
 
 **entrance (method)**
     A method with a normal signature. i.e. expecting ``self`` as first
-    argument, that is used to enter a pipeline. It is a ``_next`` function. A
+    argument, that is used to enter a pipeline. It is a ``next_`` function. A
     method declared on the class with the same name, will be overwritten, but
     referenced in the pipelines as the innermost method, the endpoint.
 
-**``_next`` function**
-    The ``_next`` function is used to call the next method in a pipelines: in
+**``next_`` function**
+    The ``next_`` function is used to call the next method in a pipelines: in
     case of a plumbing method, it is a wrapper of it that passes the correct
-    next ``_next`` as first argument and in case of an end-point, just the
+    next ``next_`` as first argument and in case of an end-point, just the
     end-point method itself.
 
 **end-point (method)**

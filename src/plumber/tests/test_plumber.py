@@ -639,18 +639,18 @@ class TestPlumberStage2(unittest.TestCase):
 
         class Behavior1(Behavior):
             @plumb
-            def __getitem__(_next, self, key):
+            def __getitem__(next_, self, key):
                 res.append('Behavior1 start')
                 key = key.lower()
-                ret = _next(self, key)
+                ret = next_(self, key)
                 res.append('Behavior1 stop')
                 return ret
 
         class Behavior2(Behavior):
             @plumb
-            def __getitem__(_next, self, key):
+            def __getitem__(next_, self, key):
                 res.append('Behavior2 start')
-                ret = 2 * _next(self, key)
+                ret = 2 * next_(self, key)
                 res.append('Behavior2 stop')
                 return ret
 
@@ -675,7 +675,7 @@ class TestPlumberStage2(unittest.TestCase):
 
         class Behavior1(Behavior):
             @plumb
-            def foo(_next, self):
+            def foo(next_, self):
                 pass  # pragma: no cover
 
         try:
@@ -693,12 +693,12 @@ class TestPlumberStage2(unittest.TestCase):
     def test_plumb_if_exists(self):
         class Behavior1(Behavior):
             @plumbifexists
-            def foo(_next, self):
+            def foo(next_, self):
                 pass  # pragma: no cover
 
             @plumbifexists
-            def bar(_next, self):
-                return 2 * _next(self)
+            def bar(next_, self):
+                return 2 * next_(self)
 
         @plumbing(Behavior1)
         class Plumbing(object):
@@ -713,8 +713,8 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
             @plumb
             @property
-            def foo(_next, self):
-                return 2 * _next(self)
+            def foo(next_, self):
+                return 2 * next_(self)
 
         @plumbing(Behavior1)
         class Plumbing1(object):
@@ -729,8 +729,8 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior2(Behavior):
             @plumb
             @property
-            def foo(_next, self):
-                return 2 * _next(self)
+            def foo(next_, self):
+                return 2 * next_(self)
 
         class Behavior3(Behavior):
             def set_foo(self, value):
@@ -755,18 +755,18 @@ class TestPlumberStage2(unittest.TestCase):
         class Behavior1(Behavior):
 
             @plumb
-            def foo(_next, self):
-                return 'Behavior1 ' + _next(self)
+            def foo(next_, self):
+                return 'Behavior1 ' + next_(self)
 
             @plumb
-            def bar(_next, self):
-                return 'Behavior1 ' + _next(self)
+            def bar(next_, self):
+                return 'Behavior1 ' + next_(self)
 
         class Behavior2(Behavior1):
 
             @plumb
-            def foo(_next, self):
-                return 'Behavior2 ' + _next(self)
+            def foo(next_, self):
+                return 'Behavior2 ' + next_(self)
 
         @plumbing(Behavior2)
         class Plumbing(object):
@@ -786,8 +786,8 @@ class TestPlumberStage2(unittest.TestCase):
 
         class Behavior1(Behavior):
             @plumb
-            def foo(_next, self):
-                return _next(self)  # pragma: no cover
+            def foo(next_, self):
+                return next_(self)  # pragma: no cover
 
         try:
             @plumbing(Behavior1)
