@@ -23,6 +23,7 @@ else:  # pragma: no cover
 
 def test_suite():
     from plumber.tests import test_plumber
+
     suite = unittest.TestSuite()
     suite.addTest(unittest.findTestCases(test_plumber))
     suite.addTests([
@@ -37,5 +38,6 @@ def test_suite():
 
 
 if __name__ == '__main__':
-    runner = unittest.TextTestRunner()
-    runner.run(test_suite())
+    runner = unittest.TextTestRunner(failfast=True)
+    result = runner.run(test_suite())
+    sys.exit(not result.wasSuccessful())
