@@ -1,3 +1,16 @@
+.. image:: https://img.shields.io/pypi/v/plumber.svg
+    :target: https://pypi.python.org/pypi/plumber
+    :alt: Latest PyPI version
+
+.. image:: https://img.shields.io/pypi/dm/plumber.svg
+    :target: https://pypi.python.org/pypi/plumber
+    :alt: Number of PyPI downloads
+
+.. image:: https://github.com/conestack/plumber/actions/workflows/test.yaml/badge.svg
+    :target: https://github.com/conestack/plumber/actions/workflows/test.yaml
+    :alt: Test plumber
+
+
 Plumber
 =======
 
@@ -8,20 +21,6 @@ described in detail with code examples. Some design choices and ongoing
 discussions are explained. Finally, in miscellanea you find nomenclature,
 coverage report, list of contributors, changes and some todos.  All
 non-experimental features are fully test covered.
-
-.. image:: https://img.shields.io/pypi/v/plumber.svg
-    :target: https://pypi.python.org/pypi/plumber
-    :alt: Latest PyPI version
-
-.. image:: https://img.shields.io/pypi/dm/plumber.svg
-    :target: https://pypi.python.org/pypi/plumber
-    :alt: Number of PyPI downloads
-
-.. image:: https://travis-ci.org/bluedynamics/plumber.svg?branch=master
-    :target: https://travis-ci.org/bluedynamics/plumber
-
-.. image:: https://coveralls.io/repos/github/bluedynamics/plumber/badge.svg?branch=master
-    :target: https://coveralls.io/github/bluedynamics/plumber?branch=master
 
 .. contents::
     :depth: 2
@@ -1290,7 +1289,7 @@ corresponding text.
 Python Versions
 ^^^^^^^^^^^^^^^
 
-- Python 2.7, 3.3+, pypy
+- Python 2.7, 3.7+
 
 - May work with other versions (untested)
 

@@ -4,6 +4,9 @@ Changes
 1.7 (unreleased)
 ----------------
 
+- Do not run test suites for Python 2.6 and Python < 3.7 any more.
+  [rnix, 2022-03-16]
+
 - Replace ``Bases`` wrapper with a ``set`` containing ``derived_members``
   to avoid multiple base class iteration.
   [rnix, 2022-02-13]
