@@ -33,6 +33,7 @@ jobs:
 
       - name: Install
         run: |
+          pip install wheel
           pip install coverage
           pip install -e .[test]
 
