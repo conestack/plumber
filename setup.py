@@ -34,7 +34,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10'
     ],
-    keywords='',
+    keywords='class extension mixin alternative',
     author='Node Contributors',
     author_email='dev@conestack.org',
     url='http://github.com/conestack/plumber',
