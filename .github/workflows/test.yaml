@@ -44,4 +44,4 @@ jobs:
       - name: Run coverage
         run: |
           coverage run -m plumber.tests.__init__
-          coverage report -m --fail-under=100
+          coverage report -m --fail-under=98
