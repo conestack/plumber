@@ -1,3 +1,4 @@
+from plumber import compat
 from pprint import pprint
 import doctest
 import sys
@@ -10,8 +11,8 @@ optionflags = (
     | doctest.REPORT_ONLY_FIRST_FAILURE
 )
 
-if sys.version_info[0] >= 3 \
-        and sys.version.find('PyPy') == -1:  # pragma: no cover
+
+if not compat.IS_PY2 and not compat.IS_PYPY:  # pragma: no cover
     TESTFILES = [
         '../../../README.rst',
         '../behavior.py',

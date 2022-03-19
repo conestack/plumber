@@ -3,6 +3,7 @@ import sys
 
 
 IS_PY2 = sys.version_info[0] < 3
+IS_PYPY = '__pypy__' in sys.builtin_module_names
 ITER_FUNC = 'iteritems' if IS_PY2 else 'items'
 STR_TYPE = basestring if IS_PY2 else str
 
