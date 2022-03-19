@@ -10,8 +10,8 @@ optionflags = (
     | doctest.REPORT_ONLY_FIRST_FAILURE
 )
 
-
-if sys.version_info[0] >= 3:  # pragma: no cover
+if sys.version_info[0] >= 3 \
+        and sys.version.find('PyPy') == -1:  # pragma: no cover
     TESTFILES = [
         '../../../README.rst',
         '../behavior.py',
