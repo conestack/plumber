@@ -6,18 +6,12 @@ import unittest
 
 
 optionflags = (
-    doctest.NORMALIZE_WHITESPACE
-    | doctest.ELLIPSIS
-    | doctest.REPORT_ONLY_FIRST_FAILURE
+    doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS | doctest.REPORT_ONLY_FIRST_FAILURE
 )
 
 
 if not compat.IS_PY2 and not compat.IS_PYPY:  # pragma: no cover
-    TESTFILES = [
-        '../../../README.rst',
-        '../behavior.py',
-        '../instructions.py'
-    ]
+    TESTFILES = ['../../../README.rst', '../behavior.py', '../instructions.py']
 else:  # pragma: no cover
     TESTFILES = []
 
@@ -27,14 +21,14 @@ def test_suite():
 
     suite = unittest.TestSuite()
     suite.addTest(unittest.findTestCases(test_plumber))
-    suite.addTests([
-        doctest.DocFileSuite(
-            testfile,
-            globs=dict(pprint=pprint),
-            optionflags=optionflags
-        )
-        for testfile in TESTFILES
-    ])
+    suite.addTests(
+        [
+            doctest.DocFileSuite(
+                testfile, globs=dict(pprint=pprint), optionflags=optionflags
+            )
+            for testfile in TESTFILES
+        ]
+    )
     return suite
 
 

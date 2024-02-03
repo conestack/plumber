@@ -18,6 +18,7 @@ class plumber(type):
     Create and call a real plumber, for classes declaring a ``__plumbing__``
     attribute (inheritance is not enough):
     """
+
     __metaclass_hooks__ = list()
 
     @classmethod

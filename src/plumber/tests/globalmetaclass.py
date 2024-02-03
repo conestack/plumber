@@ -90,4 +90,5 @@ class BCClassReallyUsingAPlumbing:
         True
 
     """
+
     __plumbing__ = Behavior1

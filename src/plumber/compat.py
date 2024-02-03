@@ -5,11 +5,12 @@ import sys
 IS_PY2 = sys.version_info[0] < 3
 IS_PYPY = '__pypy__' in sys.builtin_module_names
 ITER_FUNC = 'iteritems' if IS_PY2 else 'items'
-STR_TYPE = basestring if IS_PY2 else str
+STR_TYPE = basestring if IS_PY2 else str  # noqa
 
 
 def add_metaclass(metaclass):
     """Class decorator for creating a class with a metaclass."""
+
     # This is taken from six
     def wrapper(cls):
         orig_vars = cls.__dict__.copy()
@@ -25,4 +26,5 @@ def add_metaclass(metaclass):
             for slots_var in slots:  # pragma: no cover
                 orig_vars.pop(slots_var)
         return metaclass(cls.__name__, cls.__bases__, orig_vars)
+
     return wrapper

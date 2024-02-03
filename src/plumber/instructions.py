@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from plumber.compat import STR_TYPE
 from plumber.exceptions import PlumbingCollision
+
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
+
     ZOPE_INTERFACE_AVAILABLE = True
 except ImportError:  # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False
@@ -13,6 +15,7 @@ import re
 ###############################################################################
 # Instruction base class and helper function
 ###############################################################################
+
 
 def payload(item):
     """Get to the payload through a chain of instructions.
@@ -114,6 +117,7 @@ class Instruction(object):
     An instruction works on the attribute sharing its name, parent is the part
     declaring it. An instruction declares the stage to be applied in.
     """
+
     __name__ = None
     __parent__ = None
     __stage__ = None
@@ -198,7 +202,7 @@ class Instruction(object):
             cls=self.__class__.__name__,
             name=self.name or 'None',
             parent=self.__parent__ or 'None',
-            payload=repr(self.payload)
+            payload=repr(self.payload),
         )
 
     __str__ = __repr__
@@ -208,6 +212,7 @@ class Instruction(object):
 # Stage 1 instructions
 ###############################################################################
 
+
 class Stage1Instruction(Instruction):
     """Instructions installed in stage1.
 
@@ -215,6 +220,7 @@ class Stage1Instruction(Instruction):
     - override
     - finalize
     """
+
     __stage__ = 'stage1'
 
 
@@ -434,8 +440,10 @@ class finalize(Stage1Instruction):
 # Stage2 instructions
 ###############################################################################
 
+
 class Stage2Instruction(Instruction):
     """Instructions installed in stage2: so far only plumb."""
+
     __stage__ = 'stage2'
 
     def __call__(self, cls):
@@ -449,8 +457,10 @@ def entrancefor(plumbing_method, next_):
     The entrance returned is a closure with signature: (self, *args, **kw), it
     wraps a call of plumbing_method curried with next_.
     """
+
     def entrance(self, *args, **kw):
         return plumbing_method(next_, self, *args, **kw)
+
     entrance.__doc__ = plumb_str(plumbing_method.__doc__, next_.__doc__)
     entrance.__name__ = plumbing_method.__name__
     return entrance
@@ -458,8 +468,10 @@ def entrancefor(plumbing_method, next_):
 
 def plumbingfor(plumbing_method, next_):
     """A plumbing method combining two plumbing methods."""
+
     def plumbing(next__, self, *args, **kw):
         return plumbing_method(entrancefor(next_, next__), self, *args, **kw)
+
     plumbing.__doc__ = plumb_str(plumbing_method.__doc__, next_.__doc__)
     plumbing.__name__ = plumbing_method.__name__
     return plumbing
@@ -512,8 +524,9 @@ class plumb(Stage2Instruction):
             raise PlumbingCollision(self, right)
         if not self.ok(self.payload, right.payload):
             raise PlumbingCollision(self, right)
-        return plumb(self.plumb(plumbingfor, self.payload, right.payload),
-                     name=self.name)
+        return plumb(
+            self.plumb(plumbingfor, self.payload, right.payload), name=self.name
+        )
 
     def ok(self, p1, p2):
         """Check whether we can merge two payloads.
@@ -580,6 +593,7 @@ class plumbifexists(plumb):
 
 
 if ZOPE_INTERFACE_AVAILABLE:
+
     class _implements(Stage2Instruction):
         """classImplements interfaces.
 
@@ -622,6 +636,7 @@ if ZOPE_INTERFACE_AVAILABLE:
                 <Instruction 'None' of None payload='bar'>
 
         """
+
         __name__ = '__interfaces__'
 
         def __add__(self, right):

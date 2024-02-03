@@ -3,8 +3,10 @@ from plumber.compat import ITER_FUNC
 from plumber.compat import add_metaclass
 from plumber.instructions import Instruction
 from plumber.instructions import plumb
+
 try:
     from plumber.instructions import _implements
+
     ZOPE_INTERFACE_AVAILABLE = True
 except ImportError:  # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False
@@ -16,6 +18,7 @@ class _Behavior(object):
 
 class Instructions(object):
     """Adapter to set instructions on a behavior."""
+
     attrname = '__plumbing_instructions__'
 
     def __init__(self, behavior):
@@ -102,8 +105,7 @@ class behaviormetaclass(type):
                     continue
                 # stage1 instructions with the same name are ignored
                 if instr.__name__ in [
-                    x.__name__ for x in instructions
-                    if x.__stage__ == 'stage1'
+                    x.__name__ for x in instructions if x.__stage__ == 'stage1'
                 ]:
                     continue
                 instructions.append(instr)
