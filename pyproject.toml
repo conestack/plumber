@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plumber"
+version = "1.8.dev0"
+description = "An alternative to mixin-based extension of classes."
+readme = "README.rst"
+license = {text = "Simplified BSD"}
+authors = [{name = "Node Contributors", email = "dev@conestack.org"}]
+keywords = ["class", "extension", "mixin", "alternative"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: Python Software Foundation License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+
+[project.optional-dependencies]
+test = [
+    "zope.interface",
+]
+
+[project.urls]
+Homepage = "http://github.com/conestack/plumber"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[tool.setuptools]
+zip-safe = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.zest-releaser]
+create-wheel = true
