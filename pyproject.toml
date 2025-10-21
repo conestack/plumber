@@ -31,5 +31,8 @@ test = [
 [project.urls]
 Homepage = "http://github.com/conestack/plumber"
 
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plumber"]
 [tool.zest-releaser]
 create-wheel = true
