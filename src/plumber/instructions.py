@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from plumber.compat import STR_TYPE
-from plumber.exceptions import PlumbingCollision
+from .exceptions import PlumbingCollision
 
 try:
     from zope.interface import classImplements
@@ -30,7 +28,6 @@ def payload(item):
 
         >>> payload(Instruction(Instruction(Foo))) is Foo
         True
-
     """
     if not isinstance(item, Instruction):
         return item
@@ -99,7 +96,6 @@ def plumb_str(leftdoc, rightdoc):
 
         >>> plumb_str(None, None) is None
         True
-
     """
     if leftdoc is None:
         return rightdoc
@@ -540,10 +536,9 @@ class plumb(Stage2Instruction):
                 <plumb 'None' of None payload=1>
               with:
                 <plumb 'None' of None payload=2>
-
         """
-        if isinstance(p1, STR_TYPE):
-            return isinstance(p2, STR_TYPE) or p2 is None
+        if isinstance(p1, str):
+            return isinstance(p2, str) or p2 is None
         if isinstance(p1, property):
             return isinstance(p2, property)
         if callable(p1):
@@ -551,7 +546,7 @@ class plumb(Stage2Instruction):
         return False
 
     def plumb(self, plbfunc, p1, p2):
-        if isinstance(p1, STR_TYPE):
+        if isinstance(p1, str):
             return plumb_str(p1, p2)
         if isinstance(p1, property):
             # XXX: This should be split up into instructions during part
@@ -634,7 +629,6 @@ if ZOPE_INTERFACE_AVAILABLE:
                 <_implements '__interfaces__' of None payload=('foo',)>
               with:
                 <Instruction 'None' of None payload='bar'>
-
         """
 
         __name__ = '__interfaces__'

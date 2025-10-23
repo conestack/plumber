@@ -4,7 +4,11 @@ Changes
 1.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Refactor package layout to use ``pyproject.toml`` and implecit namespace packages.
+  [rnix]
+
+- Drop Python 2 support.
+  [rnix]
 
 
 1.7 (2022-03-17)
