@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.8 (unreleased)
-----------------
+2.0.0 (unreleased)
+------------------
 
 - Refactor package layout to use ``pyproject.toml`` and implicit namespace packages.
   [rnix]
