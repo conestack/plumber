@@ -27,6 +27,7 @@ classifiers = [
 [project.optional-dependencies]
 test = [
     "zope.interface",
+    "pytest"
 ]
 
 [project.urls]
