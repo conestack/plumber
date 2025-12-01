@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from plumber.compat import ITER_FUNC
-from plumber.compat import add_metaclass
-from plumber.instructions import Instruction
-from plumber.instructions import plumb
+from .instructions import Instruction
+from .instructions import plumb
 
 try:
-    from plumber.instructions import _implements
+    from .instructions import _implements
 
     ZOPE_INTERFACE_AVAILABLE = True
 except ImportError:  # pragma: no cover
@@ -51,22 +48,18 @@ class behaviormetaclass(type):
 
         >>> from plumber.behavior import Behavior
         >>> from plumber.behavior import behaviormetaclass
-        >>> from plumber.compat import add_metaclass
 
-        >>> @add_metaclass(behaviormetaclass)
-        ... class A(object):
+        ... class A(object, metaclass=behaviormetaclass):
         ...     pass
 
         >>> getattr(A, '__plumbing_instructions__', 'No behavior')
         'No behavior'
 
-        >>> @add_metaclass(behaviormetaclass)
-        ... class A(Behavior):
+        ... class A(Behavior, metaclass=behaviormetaclass):
         ...     pass
 
         >>> getattr(A, '__plumbing_instructions__', None) and 'Behavior'
         'Behavior'
-
     """
 
     def __init__(cls, name, bases, dct):
@@ -87,7 +80,7 @@ class behaviormetaclass(type):
         if ZOPE_INTERFACE_AVAILABLE:
             instructions.append(_implements(cls))
 
-        for name, item in getattr(cls.__dict__, ITER_FUNC)():
+        for name, item in cls.__dict__.items():
             # adopt instructions and enlist them
             if isinstance(item, Instruction):
                 item.__name__ = name
@@ -113,6 +106,5 @@ class behaviormetaclass(type):
 
 # Base class for plumbing behaviors: identification and metaclass setting
 # No doctest allowed here, it would be recognized as an instruction.
-@add_metaclass(behaviormetaclass)
-class Behavior(_Behavior):
+class Behavior(_Behavior, metaclass=behaviormetaclass):
     pass

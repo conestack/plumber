@@ -16,13 +16,11 @@ jobs:
           - macos-latest
 
         python:
-          - "3.7"
-          - "3.8"
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
-          - "pypy3.9"
+          - "3.13"
+          - "3.14"
 
     steps:
       - uses: actions/checkout@v4
@@ -34,15 +32,12 @@ jobs:
 
       - name: Install
         run: |
-          pip install coverage
-          pip install -e .[test]
+          make install
 
       - name: Run tests
         run: |
-          python --version
-          python -m plumber.tests.__init__
+          make test
 
       - name: Run coverage
         run: |
-          coverage run -m plumber.tests.__init__
-          coverage report --fail-under=98
+          make coverage

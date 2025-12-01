@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from plumber.behavior import Instructions
+from .behavior import Instructions
 
 
 class Stacks(object):

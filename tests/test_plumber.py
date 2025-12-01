@@ -8,16 +8,13 @@ from plumber import plumber
 from plumber import plumbifexists
 from plumber import plumbing
 from plumber.behavior import behaviormetaclass
-from plumber.compat import add_metaclass
 from plumber.instructions import Instruction
 from plumber.instructions import _implements
 from plumber.instructions import payload
 from plumber.instructions import plumb_str
 from zope.interface import Interface
 from zope.interface import implementer
-from zope.interface.interface import InterfaceClass
 import inspect
-import sys
 import unittest
 
 
@@ -229,16 +226,14 @@ class TestInstructions(unittest.TestCase):
 
 class TestBehavior(unittest.TestCase):
     def test_behaviormetaclass(self):
-        @add_metaclass(behaviormetaclass)
-        class A(object):
+        class A(object, metaclass=behaviormetaclass):
             pass
 
         self.assertEqual(
             getattr(A, '__plumbing_instructions__', 'No behavior'), 'No behavior'
         )
 
-        @add_metaclass(behaviormetaclass)
-        class B(Behavior):
+        class B(Behavior, metaclass=behaviormetaclass):
             pass
 
         self.assertEqual(
@@ -256,35 +251,6 @@ class TestPlumber(unittest.TestCase):
 
         self.assertTrue('foo' in plumber.derived_members((B,)))
         self.assertFalse('bar' in plumber.derived_members((B,)))
-
-
-class TestGlobalMetaclass(unittest.TestCase):
-    @unittest.skipIf(
-        sys.version_info[0] >= 3,
-        '__metaclass__ attribute on module leven only works in python 2',
-    )
-    def test_global_metaclass(self):
-        from plumber.tests import globalmetaclass as gm
-
-        # A zope.interface.Interface is not affected by the global
-        # ``__metaclass__``.
-        self.assertEqual(gm.IBehavior1.__class__, InterfaceClass)
-
-        # A global meta-class declaration makes all classes at least new-style
-        # classes, even when not subclassing subclasses
-        self.assertEqual(gm.Foo.__class__, plumber)
-        self.assertTrue(issubclass(gm.Foo, object))
-
-        # If subclassing object, the global metaclass declaration is ignored::
-        self.assertEqual(gm.ClassMaybeUsingAPlumbing.__class__, type)
-
-        self.assertEqual(gm.ClassReallyUsingAPlumbing.__class__, plumber)
-        self.assertTrue(issubclass(gm.ClassReallyUsingAPlumbing, object))
-        self.assertTrue(gm.IBehavior1.implementedBy(gm.ClassReallyUsingAPlumbing))
-
-        self.assertEqual(gm.BCClassReallyUsingAPlumbing.__class__, plumber)
-        self.assertTrue(issubclass(gm.BCClassReallyUsingAPlumbing, object))
-        self.assertTrue(gm.IBehavior1.implementedBy(gm.BCClassReallyUsingAPlumbing))
 
 
 class TestMetaclassHooks(unittest.TestCase):
@@ -367,20 +333,6 @@ class TestPlumberBasics(unittest.TestCase):
         self.assertEqual(sorted(list(stage1.keys())), ['a', 'bar', 'foo'])
         stage2 = stacks.stage2
         self.assertEqual(sorted(list(stage2.keys())), ['__interfaces__'])
-
-    @unittest.skipIf(
-        sys.version_info[0] >= 3, '__metaclass__ property only works in python 2'
-    )
-    def test_bc_plumbing_py2(self):
-        class Behavior1(Behavior):
-            a = default(True)
-
-        class BCPlumbing(object):
-            __metaclass__ = plumber
-            __plumbing__ = Behavior1
-
-        plb = BCPlumbing()
-        self.assertTrue(plb.a)
 
 
 class TestPlumberStage1(unittest.TestCase):
