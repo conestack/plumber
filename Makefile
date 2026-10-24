@@ -97,7 +97,7 @@ MXMAKE?=mxmake
 
 # Source folder to scan for Python files to run ruff on.
 # Default: src
-RUFF_SRC?=src
+RUFF_SRC?=src tests
 
 ## core.mxfiles
 

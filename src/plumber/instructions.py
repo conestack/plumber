@@ -1,5 +1,6 @@
 from .exceptions import PlumbingCollision
 
+
 try:
     from zope.interface import classImplements
     from zope.interface import implementedBy
@@ -107,7 +108,7 @@ def plumb_str(leftdoc, rightdoc):
     return leftdoc.replace('__plbnext__', rightdoc.rstrip())
 
 
-class Instruction(object):
+class Instruction:
     """Base class for all plumbing instructions.
 
     An instruction works on the attribute sharing its name, parent is the part
@@ -520,9 +521,7 @@ class plumb(Stage2Instruction):
             raise PlumbingCollision(self, right)
         if not self.ok(self.payload, right.payload):
             raise PlumbingCollision(self, right)
-        return plumb(
-            self.plumb(plumbingfor, self.payload, right.payload), name=self.name
-        )
+        return plumb(self.plumb(plumbingfor, self.payload, right.payload), name=self.name)
 
     def ok(self, p1, p2):
         """Check whether we can merge two payloads.

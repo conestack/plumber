@@ -1,7 +1,7 @@
 from .behavior import Instructions
 
 
-class Stacks(object):
+class Stacks:
     """Organize stacks for parsing behaviors, stored in the class dict."""
 
     def __init__(self, dct):
@@ -90,7 +90,7 @@ class plumber(type):
         return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
 
-class plumbing(object):
+class plumbing:
     """Plumbing decorator."""
 
     def __init__(self, *behaviors):

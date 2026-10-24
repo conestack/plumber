@@ -1,6 +1,7 @@
 from .instructions import Instruction
 from .instructions import plumb
 
+
 try:
     from .instructions import _implements
 
@@ -9,11 +10,11 @@ except ImportError:  # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False
 
 
-class _Behavior(object):
+class _Behavior:
     """Marker for behavior implementation."""
 
 
-class Instructions(object):
+class Instructions:
     """Adapter to set instructions on a behavior."""
 
     attrname = '__plumbing_instructions__'
