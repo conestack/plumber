@@ -334,6 +334,16 @@ class TestPlumberBasics(unittest.TestCase):
         stage2 = stacks.stage2
         self.assertEqual(sorted(list(stage2.keys())), ['__interfaces__'])
 
+    def test_metaclass_with_single_behavior(self):
+        class Behavior1(Behavior):
+            a = default(True)
+
+        class Plumbing(metaclass=plumber):
+            __plumbing__ = Behavior1
+
+        self.assertEqual(Plumbing.__plumbing__, (Behavior1,))
+        self.assertTrue(Plumbing().a)
+
 
 class TestPlumberStage1(unittest.TestCase):
     def test_finalize_instruction(self):
