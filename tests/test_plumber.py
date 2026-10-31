@@ -298,6 +298,56 @@ class TestPlumber(unittest.TestCase):
         self.assertTrue('foo' in plumber.derived_members((B,)))
         self.assertFalse('bar' in plumber.derived_members((B,)))
 
+    def test_derived_members_diamond(self):
+        class A:
+            a = 1
+
+        class B(A):
+            b = 1
+
+        class C(A):
+            c = 1
+
+        class D(B, C):
+            pass
+
+        members = plumber.derived_members((D,))
+        self.assertTrue({'a', 'b', 'c', '__init__'} <= members)
+
+    def test_inherited_instruction_applied_once(self):
+        class Behavior1(Behavior):
+            @plumb
+            def foo(next_, self):
+                return 'Behavior1 ' + next_(self)
+
+        class Behavior2(Behavior1):
+            pass
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            def foo(self):
+                return 'foo'
+
+        self.assertEqual(Plumbing().foo(), 'Behavior1 foo')
+
+    def test_equal_instructions_applied_once(self):
+        def foo(next_, self):
+            return 'foo ' + next_(self)
+
+        class Behavior1(Behavior):
+            bar = plumb(foo)
+
+        class Behavior2(Behavior):
+            bar = plumb(foo)
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            def bar(self):
+                return 'bar'
+
+        self.assertEqual(Plumbing().bar(), 'foo bar')
+        self.assertEqual(len(Plumbing.__plumbing_stacks__.history), 4)
+
 
 class TestMetaclassHooks(unittest.TestCase):
     def test_metaclasshook(self):

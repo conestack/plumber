@@ -41,6 +41,14 @@ Changes
   types.
   [rnix]
 
+- Speed up plumbing class creation: ``parse_behaviors`` only compares
+  instructions of the same name to skip already seen ones, instead of the
+  whole history. ``derived_members`` uses the ``__mro__`` of the bases instead
+  of visiting shared bases repeatedly, its ``attrs`` argument is removed.
+  Creating a plumbing class with 12 ``node`` behaviors takes about a third
+  less time.
+  [rnix]
+
 
 2.0.1 (2026-10-31)
 ------------------

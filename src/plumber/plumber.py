@@ -33,32 +33,31 @@ class plumber(type):
         return cls
 
     @staticmethod
-    def derived_members(bases, attrs=None):
-        if attrs is None:
-            attrs = set()
-        for base in bases:
-            attrs.update(base.__dict__)
-            plumber.derived_members(base.__bases__, attrs=attrs)
-        return attrs
+    def derived_members(bases):
+        return {name for base in bases for cls in base.__mro__ for name in cls.__dict__}
 
     @staticmethod
     def parse_behaviors(plb, dct):
         # Stacks for parsing instructions.
         stacks = Stacks(dct)
-        history = stacks.history
+        # Seen instructions by name. Equal instructions share their name, so
+        # only instructions of the same name need to be compared.
+        seen = dict()
 
         # Parse the behaviors.
         for behavior in plb:
             for instruction in Instructions(behavior):
+                instruction_name = instruction.__name__
+                seen_with_name = seen.setdefault(instruction_name, [])
                 # already seen instruction are ignored
-                if instruction not in history:
+                if instruction not in seen_with_name:
                     stage = getattr(stacks, instruction.__stage__)
-                    instruction_name = instruction.__name__
                     prev_instruction = stage.get(instruction_name)
                     if prev_instruction:
                         instruction = prev_instruction + instruction
                     stage[instruction_name] = instruction
-                history.append(instruction)
+                seen_with_name.append(instruction)
+                stacks.history.append(instruction)
         return stacks
 
     def __new__(mcls, name, bases, dct):
