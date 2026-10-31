@@ -763,9 +763,20 @@ Elements for plumbing pipelines are declared with the ``plumb`` and
     Like ``plumb``, but only used if an endpoint exists.
 
 The user of a plumbing class does not know which ``next_`` to pass. Therefore,
-after the pipelines are built, an entrance method is generated for each pipe,
-that wraps the first plumbing method passing it the correct ``next_``. Each
-``next_`` method is an entrance to the rest of the pipeline.
+an entrance method is generated for each pipe, that calls the first plumbing
+method passing it the correct ``next_``. Each ``next_`` is a
+``functools.partial`` of the next plumbing method with the rest of the
+pipeline. Pipelines are built once at class creation time.
+
+Tracebacks show the plumbing class and the behaviors of a pipeline. The
+entrance frame names the plumbing class and the behaviors in pipeline order,
+each plumbing method frame names its behavior and the plumbing class. pytest
+hides the entrance frame::
+
+    File ".../plumber/instructions.py", line ..., in Plumbing.foo [Behavior1 -> Behavior2]
+    File "behaviors.py", line 7, in Behavior1.foo [plumbing Plumbing]
+    File "behaviors.py", line 13, in Behavior2.foo [plumbing Plumbing]
+    File "plumbing.py", line 5, in foo
 
 The pipelines are build in behavior order, skipping behaviors that do not
 define a pipeline element with the same attribute name::
@@ -1263,20 +1274,20 @@ Nomenclature
 **plumbing pipeline**
     Plumbing methods/properties with the same name form a pipeline. The
     entrance and end-point have the signature of normal methods: ``def
-    foo(self, *args, **kw)``. The plumbing pipelines is a series of nested
-    closures (see ``next_``).
+    foo(self, *args, **kw)``. The plumbing pipeline is a chain of
+    ``functools.partial`` objects (see ``next_``).
 
 **entrance (method)**
     A method with a normal signature. i.e. expecting ``self`` as first
-    argument, that is used to enter a pipeline. It is a ``next_`` function. A
-    method declared on the class with the same name, will be overwritten, but
-    referenced in the pipelines as the innermost method, the endpoint.
+    argument, that is used to enter a pipeline. A method declared on the class
+    with the same name, will be overwritten, but referenced in the pipelines
+    as the innermost method, the endpoint.
 
 **``next_`` function**
     The ``next_`` function is used to call the next method in a pipelines: in
-    case of a plumbing method, it is a wrapper of it that passes the correct
-    next ``next_`` as first argument and in case of an end-point, just the
-    end-point method itself.
+    case of a plumbing method, it is a ``functools.partial`` of it that passes
+    the correct next ``next_`` as first argument and in case of an end-point,
+    just the end-point method itself.
 
 **end-point (method)**
     Method retrieved from the plumbing class with ``getattr()``, before setting

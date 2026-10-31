@@ -4,7 +4,22 @@ Changes
 3.0.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Build plumbing pipelines once at class creation time instead of creating
+  closures and joining docstrings on every call. Each ``next_`` is a
+  ``functools.partial`` now. Calling a method plumbed by 5 behaviors takes
+  about a tenth of the time.
+  [rnix]
+
+- Tracebacks show the plumbing class and behaviors: the entrance frame reads
+  ``Plumbing.foo [Behavior1 -> Behavior2]``, plumbing method frames read
+  ``Behavior1.foo [plumbing Plumbing]``. pytest hides the entrance frame.
+  Entrance methods get ``__qualname__`` and ``__module__`` of the plumbing
+  class.
+  [rnix]
+
+- Plumb property accessors independently. Behaviors not defining an accessor
+  are skipped instead of failing at class creation.
+  [rnix]
 
 
 2.0.1 (2026-10-31)
