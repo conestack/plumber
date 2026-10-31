@@ -488,19 +488,26 @@ def chainfor(layers, endpoint, cls, name):
     """
     next_ = endpoint
     for instruction, func in reversed(layers):
-        behavior = instruction.__parent__.__name__
-        label = '%s.%s [plumbing %s]' % (behavior, name, cls.__name__)
-        next_ = partial(labeled(func, label), next_)
+        next_ = partial(layerfor(instruction, func, cls, name), next_)
     return next_
 
 
-def entrancefor(chain, cls, name, behaviors):
+def layerfor(instruction, func, cls, name):
+    """Copy of plumbing function ``func`` labeled with its behavior and the
+    plumbing class.
+    """
+    behavior = instruction.__parent__.__name__
+    return labeled(func, '%s.%s [plumbing %s]' % (behavior, name, cls.__name__))
+
+
+def entrancefor(func, next_, cls, name, behaviors):
     """Entrance method of a method pipeline.
 
-    Tracebacks show it as ``Plumbing.name [Behavior1 -> Behavior2]``, pytest
-    hides it.
+    Calls the outermost plumbing function directly. Tracebacks show it as
+    ``Plumbing.name [Behavior1 -> Behavior2]``, pytest hides it.
 
-    :param chain: The outermost link of the pipeline.
+    :param func: The outermost plumbing function.
+    :param next_: The rest of the pipeline.
     :param cls: The plumbing class.
     :param name: The attribute name of the pipeline.
     :param behaviors: Names of the behaviors in the pipeline, outermost first.
@@ -509,7 +516,7 @@ def entrancefor(chain, cls, name, behaviors):
 
     def entrance(self, *args, **kw):
         __tracebackhide__ = True
-        return chain(self, *args, **kw)
+        return func(next_, self, *args, **kw)
 
     label = '%s.%s [%s]' % (cls.__name__, name, ' -> '.join(behaviors))
     entrance.__code__ = entrance.__code__.replace(co_name=label)
@@ -615,10 +622,11 @@ class plumb(Stage2Instruction):
                 for accessor in ('fget', 'fset', 'fdel')
             ]
             return self.payload.__class__(*accessors, doc)
-        layers = [(instruction, instruction.payload) for instruction in self.stack]
-        chain = chainfor(layers, endpoint, cls, self.name)
+        (outermost, func), *inner = [(i, i.payload) for i in self.stack]
+        func = layerfor(outermost, func, cls, self.name)
+        next_ = chainfor(inner, endpoint, cls, self.name)
         behaviors = [instruction.__parent__.__name__ for instruction in self.stack]
-        entrance = entrancefor(chain, cls, self.name, behaviors)
+        entrance = entrancefor(func, next_, cls, self.name, behaviors)
         entrance.__doc__ = doc
         entrance.__name__ = self.payload.__name__
         return entrance

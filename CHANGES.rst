@@ -5,9 +5,11 @@ Changes
 ------------------
 
 - Build plumbing pipelines once at class creation time instead of creating
-  closures and joining docstrings on every call. Each ``next_`` is a
-  ``functools.partial`` now. Calling a method plumbed by 5 behaviors takes
-  about a tenth of the time.
+  closures and joining docstrings on every call. The entrance method calls the
+  outermost plumbing function directly, each ``next_`` is a
+  ``functools.partial`` of the rest of the pipeline. Calling a method plumbed
+  by 5 behaviors takes about a tenth of the time, a method plumbed by a single
+  behavior is as fast as before.
   [rnix]
 
 - Tracebacks show the plumbing class and behaviors: the entrance frame reads
