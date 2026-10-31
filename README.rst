@@ -259,6 +259,12 @@ A plumbing class can be subclassed like normal classes.
     >>> Sub().foobar()
     5
 
+.. note:: The ``plumbing`` decorator creates a new class from the decorated
+  one. The ``__class__`` cell used by zero argument ``super()`` refers to the
+  new class, so ``super()`` works in methods, ``classmethod``,
+  ``staticmethod`` and ``property`` functions of a plumbing class, as well as
+  in functions decorated with ``functools.wraps``.
+
 
 The plumber gathers instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

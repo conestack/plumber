@@ -14,6 +14,7 @@ from plumber.instructions import payload
 from plumber.instructions import plumb_str
 from zope.interface import implementer
 from zope.interface import Interface
+import functools
 import inspect
 import traceback
 import unittest
@@ -344,6 +345,82 @@ class TestPlumberBasics(unittest.TestCase):
 
         self.assertEqual(Plumbing.__plumbing__, (Behavior1,))
         self.assertTrue(Plumbing().a)
+
+
+class TestPlumbingDecorator(unittest.TestCase):
+    class Base:
+        def foo(self):
+            return 'Base'
+
+        @classmethod
+        def bar(cls):
+            return 'Base'
+
+        @property
+        def baz(self):
+            return 'Base'
+
+    def test_zero_argument_super_in_method(self):
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            def foo(self):
+                return 'Plumbing ' + super().foo()
+
+        self.assertEqual(Plumbing().foo(), 'Plumbing Base')
+
+    def test_zero_argument_super_in_classmethod(self):
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            @classmethod
+            def bar(cls):
+                return 'Plumbing ' + super().bar()
+
+        self.assertEqual(Plumbing.bar(), 'Plumbing Base')
+
+    def test_zero_argument_super_in_property(self):
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            @property
+            def baz(self):
+                return 'Plumbing ' + super().baz
+
+        self.assertEqual(Plumbing().baz, 'Plumbing Base')
+
+    def test_zero_argument_super_in_decorated_method(self):
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kw):
+                return func(*args, **kw)
+
+            return wrapper
+
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            @decorator
+            def foo(self):
+                return 'Plumbing ' + super().foo()
+
+        self.assertEqual(Plumbing().foo(), 'Plumbing Base')
+
+    def test_dunder_class_refers_to_plumbing_class(self):
+        @plumbing(Behavior)
+        class Plumbing:
+            @staticmethod
+            def cls():
+                return __class__
+
+        self.assertIs(Plumbing.cls(), Plumbing)
+
+    def test_foreign_class_cell_untouched(self):
+        class Other(self.Base):
+            def foo(self):
+                return 'Other ' + super().foo()
+
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            foo = Other.foo
+
+        self.assertEqual(Other().foo(), 'Other Base')
 
 
 class TestPlumberStage1(unittest.TestCase):

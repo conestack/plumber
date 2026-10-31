@@ -1,4 +1,5 @@
 from .behavior import Instructions
+import types
 
 
 class Stacks:
@@ -63,7 +64,7 @@ class plumber(type):
     def __new__(mcls, name, bases, dct):
         # No plumbing behaviors. Apply metaclasshooks and return class.
         if '__plumbing__' not in dct:
-            cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
+            cls = super().__new__(mcls, name, bases, dct)
             return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
         # Ensure plumbing behaviors are iterable.
@@ -80,7 +81,7 @@ class plumber(type):
             instruction(dct, members)
 
         # Build the class.
-        cls = super(plumber, mcls).__new__(mcls, name, bases, dct)
+        cls = super().__new__(mcls, name, bases, dct)
 
         # Install stage 2.
         for instruction in stacks.stage2.values():
@@ -90,8 +91,42 @@ class plumber(type):
         return plumber.apply_metaclasshooks(cls, name, bases, dct)
 
 
+def class_cell(namespace, cls):
+    """Find the ``__class__`` cell of the class body of ``cls``.
+
+    All functions of a class body using zero argument ``super()`` or
+    ``__class__`` share this cell. Functions wrapped by ``classmethod``,
+    ``staticmethod``, ``property`` or decorators setting ``__wrapped__`` are
+    found.
+
+    :param namespace: The class namespace.
+    :param cls: The class created from the class body.
+    :return: The cell or ``None``, if no function refers to ``__class__``.
+    """
+    candidates = list(namespace.values())
+    while candidates:
+        value = candidates.pop()
+        if isinstance(value, (classmethod, staticmethod)):
+            candidates.append(value.__func__)
+        elif isinstance(value, property):
+            candidates.extend((value.fget, value.fset, value.fdel))
+        elif isinstance(value, types.FunctionType):
+            if '__wrapped__' in value.__dict__:
+                candidates.append(value.__wrapped__)
+            code = value.__code__
+            if '__class__' in code.co_freevars:
+                cell = value.__closure__[code.co_freevars.index('__class__')]
+                if cell.cell_contents is cls:
+                    return cell
+    return None
+
+
 class plumbing:
-    """Plumbing decorator."""
+    """Plumbing decorator.
+
+    Creates a new class from the decorated one. The ``__class__`` cell used by
+    zero argument ``super()`` refers to the new class.
+    """
 
     def __init__(self, *behaviors):
         assert len(behaviors) > 0
@@ -109,4 +144,8 @@ class plumbing:
             for slots_var in slots:
                 orig_vars.pop(slots_var)
         orig_vars['__plumbing__'] = self.behaviors
+        cell = class_cell(orig_vars, cls)
+        if cell is not None:
+            # type.__new__ points the cell to the new class
+            orig_vars['__classcell__'] = cell
         return plumber(cls.__name__, cls.__bases__, orig_vars)

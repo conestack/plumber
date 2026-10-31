@@ -21,6 +21,15 @@ Changes
   are skipped instead of failing at class creation.
   [rnix]
 
+- Zero argument ``super()`` and ``__class__`` work in classes decorated with
+  ``plumbing``. The decorator points the ``__class__`` cell of the class body
+  to the class it creates.
+  [rnix]
+
+- Use zero argument ``super()`` and drop the ``UP008`` exception from the ruff
+  configuration.
+  [rnix]
+
 
 2.0.1 (2026-10-31)
 ------------------

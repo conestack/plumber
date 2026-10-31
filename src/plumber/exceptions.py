@@ -10,4 +10,4 @@ class PlumbingCollision(RuntimeError):
                 '    %s',
             ]
         ) % (left, right)
-        super(PlumbingCollision, self).__init__(msg)
+        super().__init__(msg)

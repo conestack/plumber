@@ -64,7 +64,7 @@ class behaviormetaclass(type):
     """
 
     def __init__(cls, name, bases, dct):
-        super(behaviormetaclass, cls).__init__(name, bases, dct)
+        super().__init__(name, bases, dct)
         if not issubclass(cls, _Behavior):
             return
 

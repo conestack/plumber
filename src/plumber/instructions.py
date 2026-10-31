@@ -536,7 +536,7 @@ class plumb(Stage2Instruction):
     """
 
     def __init__(self, item, name=None, stack=None):
-        super(plumb, self).__init__(item, name=name)
+        super().__init__(item, name=name)
         self.stack = stack if stack is not None else (self,)
 
     def __add__(self, right):
@@ -650,7 +650,7 @@ class plumbifexists(plumb):
 
     def __call__(self, cls):
         try:
-            super(plumbifexists, self).__call__(cls)
+            super().__call__(cls)
         except AttributeError:
             pass
 
