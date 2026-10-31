@@ -1,5 +1,6 @@
 from .instructions import Instruction
 from .instructions import plumb
+import warnings
 
 
 try:
@@ -8,10 +9,6 @@ try:
     ZOPE_INTERFACE_AVAILABLE = True
 except ImportError:  # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False
-
-
-class _Behavior:
-    """Marker for behavior implementation."""
 
 
 class Instructions:
@@ -39,36 +36,27 @@ class Instructions:
 
 
 class behaviormetaclass(type):
-    """Metaclass for behavior creation.
-
-    Turn __doc__ and implemented zope interfaces into instructions and tell
-    existing instructions their name and parent, for subclasses of
-    ``Behavior``.
-
-    .. code-block:: pycon
-
-        >>> from plumber.behavior import Behavior
-        >>> from plumber.behavior import behaviormetaclass
-
-        ... class A(object, metaclass=behaviormetaclass):
-        ...     pass
-
-        >>> getattr(A, '__plumbing_instructions__', 'No behavior')
-        'No behavior'
-
-        ... class A(Behavior, metaclass=behaviormetaclass):
-        ...     pass
-
-        >>> getattr(A, '__plumbing_instructions__', None) and 'Behavior'
-        'Behavior'
-    """
+    """Deprecated, ``Behavior`` collects instructions in ``__init_subclass__``."""
 
     def __init__(cls, name, bases, dct):
+        warnings.warn(
+            '``behaviormetaclass`` is deprecated, subclass ``Behavior`` instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(name, bases, dct)
-        if not issubclass(cls, _Behavior):
-            return
 
-        # Get the behavior's instructions list
+
+class Behavior:
+    """Base class for plumbing behaviors.
+
+    Turns ``__doc__`` and implemented zope interfaces of subclasses into
+    instructions and tells existing instructions their name and parent.
+    ``Behavior`` itself is no behavior, its docstring is not plumbed.
+    """
+
+    def __init_subclass__(cls, **kw):
+        super().__init_subclass__(**kw)
         instructions = Instructions(cls)
 
         # An existing docstring is an implicit plumb instruction for __doc__
@@ -91,9 +79,8 @@ class behaviormetaclass(type):
         # XXX: introduce C3 resolution
         # check our bases for instructions we don't have already and which
         # are not overwritten by our instructions (stage1)
-        for base in bases:
-            # XXX: I don't like this code
-            for instr in Instructions(base):
+        for base in cls.__bases__:
+            for instr in base.__dict__.get(Instructions.attrname, ()):
                 # skip instructions we have already
                 if instr in instructions:
                     continue
@@ -103,9 +90,3 @@ class behaviormetaclass(type):
                 ]:
                     continue
                 instructions.append(instr)
-
-
-# Base class for plumbing behaviors: identification and metaclass setting
-# No doctest allowed here, it would be recognized as an instruction.
-class Behavior(_Behavior, metaclass=behaviormetaclass):
-    pass

@@ -316,8 +316,9 @@ the plumbing class and base classes into account.
   instruction via function call or decoration. An instruction knows the
   behavior it is declared on.
 
-.. note:: Behaviors are created by ``behaviormetaclass``. If ``zope.interface``
-  is available, it will generate ``_implements`` instructions for each behavior.
+.. note:: Behaviors collect their instructions in ``__init_subclass__`` of
+  ``Behavior``. If ``zope.interface`` is available, it will generate
+  ``_implements`` instructions for each behavior.
   During behavior creation the interfaces are not yet implemented, they are
   checked at a later stage. Therefore the ``_implements`` instructions are 
   generated even if the behaviors do not implement interfaces, which results in

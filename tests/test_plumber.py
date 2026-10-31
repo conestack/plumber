@@ -228,19 +228,63 @@ class TestInstructions(unittest.TestCase):
 
 class TestBehavior(unittest.TestCase):
     def test_behaviormetaclass(self):
-        class A(metaclass=behaviormetaclass):
-            pass
+        with self.assertWarns(DeprecationWarning):
+
+            class A(metaclass=behaviormetaclass):
+                pass
 
         self.assertEqual(
             getattr(A, '__plumbing_instructions__', 'No behavior'), 'No behavior'
         )
 
-        class B(Behavior, metaclass=behaviormetaclass):
-            pass
+        with self.assertWarns(DeprecationWarning):
+
+            class B(Behavior, metaclass=behaviormetaclass):
+                pass
 
         self.assertEqual(
             getattr(B, '__plumbing_instructions__', None) and 'Behavior', 'Behavior'
         )
+
+    def test_behavior_without_metaclass(self):
+        class Behavior1(Behavior):
+            pass
+
+        self.assertIs(type(Behavior1), type)
+
+    def test_behavior_docstring_not_plumbed(self):
+        class Behavior1(Behavior):
+            pass
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            pass
+
+        self.assertIsNone(Plumbing.__doc__)
+
+    def test_non_behavior_base_untouched(self):
+        class Mixin:
+            pass
+
+        class Behavior1(Behavior, Mixin):
+            a = default(1)
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            pass
+
+        self.assertEqual(Plumbing.a, 1)
+        self.assertNotIn('__plumbing_instructions__', Mixin.__dict__)
+
+    def test_builtin_base(self):
+        class Behavior1(Behavior, dict):
+            a = default(1)
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            pass
+
+        self.assertEqual(Plumbing.a, 1)
 
 
 class TestPlumber(unittest.TestCase):

@@ -30,6 +30,17 @@ Changes
   configuration.
   [rnix]
 
+- ``Behavior`` collects the instructions of its subclasses in
+  ``__init_subclass__``, behaviors have no custom metaclass any more.
+  ``behaviormetaclass`` is deprecated and does nothing but warn. The private
+  ``_Behavior`` marker class is removed.
+  [rnix]
+
+- Behaviors may subclass non behavior classes, including builtin types. Before,
+  an empty instruction list was set on these classes, which failed for builtin
+  types.
+  [rnix]
+
 
 2.0.1 (2026-10-31)
 ------------------
