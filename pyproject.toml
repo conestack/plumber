@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "plumber"
-version = "2.0.2.dev0"
+version = "3.0.0.dev0"
 description = "An alternative to mixin-based extension of classes."
 dynamic = ["readme"]
 requires-python = ">=3.10"
@@ -58,9 +58,8 @@ line-length = 90
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP"]
-# UP008: zero-argument ``super()`` breaks on ``@plumbing`` decorated classes.
 # UP031: ``%`` formatting is kept.
-ignore = ["UP008", "UP031"]
+ignore = ["UP031"]
 
 [tool.ruff.lint.isort]
 force-single-line = true

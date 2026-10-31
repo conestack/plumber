@@ -1,4 +1,6 @@
 from .exceptions import PlumbingCollision
+from functools import partial
+from functools import reduce
 
 
 try:
@@ -9,6 +11,7 @@ try:
 except ImportError:  # pragma: no cover
     ZOPE_INTERFACE_AVAILABLE = False
 import re
+import types
 
 
 ###############################################################################
@@ -448,34 +451,86 @@ class Stage2Instruction(Instruction):
         raise NotImplementedError  # pragma: no cover
 
 
-def entrancefor(plumbing_method, next_):
-    """An entrance for a plumbing method, given next_.
+def labeled(func, label):
+    """Copy of ``func`` which tracebacks show as ``label``.
 
-    The entrance returned is a closure with signature: (self, *args, **kw), it
-    wraps a call of plumbing_method curried with next_.
+    The original function stays untouched, it may be plumbed into several
+    plumbing classes.
+    """
+    if not isinstance(func, types.FunctionType):
+        return func
+    copy = types.FunctionType(
+        func.__code__.replace(co_name=label),
+        func.__globals__,
+        func.__name__,
+        func.__defaults__,
+        func.__closure__,
+    )
+    copy.__kwdefaults__ = func.__kwdefaults__
+    copy.__qualname__ = func.__qualname__
+    copy.__doc__ = func.__doc__
+    copy.__dict__.update(func.__dict__)
+    return copy
+
+
+def chainfor(layers, endpoint, cls, name):
+    """Chain plumbing functions with an endpoint.
+
+    The chain is built once at class creation time. Each link is a
+    ``functools.partial`` passing the rest of the chain as ``next_``, which
+    neither costs a Python frame nor shows up in tracebacks.
+
+    :param layers: List of ``(instruction, function)`` tuples, outermost first.
+    :param endpoint: Innermost callable, or ``None``.
+    :param cls: The plumbing class.
+    :param name: The attribute name of the pipeline.
+    :return: The outermost link of the chain.
+    """
+    next_ = endpoint
+    for instruction, func in reversed(layers):
+        next_ = partial(layerfor(instruction, func, cls, name), next_)
+    return next_
+
+
+def layerfor(instruction, func, cls, name):
+    """Copy of plumbing function ``func`` labeled with its behavior and the
+    plumbing class.
+    """
+    behavior = instruction.__parent__.__name__
+    return labeled(func, '%s.%s [plumbing %s]' % (behavior, name, cls.__name__))
+
+
+def entrancefor(func, next_, cls, name, behaviors):
+    """Entrance method of a method pipeline.
+
+    Calls the outermost plumbing function directly. Tracebacks show it as
+    ``Plumbing.name [Behavior1 -> Behavior2]``, pytest hides it.
+
+    :param func: The outermost plumbing function.
+    :param next_: The rest of the pipeline.
+    :param cls: The plumbing class.
+    :param name: The attribute name of the pipeline.
+    :param behaviors: Names of the behaviors in the pipeline, outermost first.
+    :return: Function with signature ``(self, *args, **kw)``.
     """
 
     def entrance(self, *args, **kw):
-        return plumbing_method(next_, self, *args, **kw)
+        __tracebackhide__ = True
+        return func(next_, self, *args, **kw)
 
-    entrance.__doc__ = plumb_str(plumbing_method.__doc__, next_.__doc__)
-    entrance.__name__ = plumbing_method.__name__
+    label = '%s.%s [%s]' % (cls.__name__, name, ' -> '.join(behaviors))
+    entrance.__code__ = entrance.__code__.replace(co_name=label)
+    entrance.__qualname__ = '%s.%s' % (cls.__qualname__, name)
+    entrance.__module__ = cls.__module__
     return entrance
-
-
-def plumbingfor(plumbing_method, next_):
-    """A plumbing method combining two plumbing methods."""
-
-    def plumbing(next__, self, *args, **kw):
-        return plumbing_method(entrancefor(next_, next__), self, *args, **kw)
-
-    plumbing.__doc__ = plumb_str(plumbing_method.__doc__, next_.__doc__)
-    plumbing.__name__ = plumbing_method.__name__
-    return plumbing
 
 
 class plumb(Stage2Instruction):
     """Plumbing of strings, methods and properties.
+
+    Merged ``plumb`` instructions keep the merged instructions in ``stack``,
+    outermost first. The pipeline is built when the instruction is applied to
+    the plumbing class.
 
     XXX: support getter, setter, deleter to enable:
 
@@ -486,6 +541,10 @@ class plumb(Stage2Instruction):
         @foo.setter
         def foo
     """
+
+    def __init__(self, item, name=None, stack=None):
+        super().__init__(item, name=name)
+        self.stack = stack if stack is not None else (self,)
 
     def __add__(self, right):
         """Add function to pipeline.
@@ -521,7 +580,7 @@ class plumb(Stage2Instruction):
             raise PlumbingCollision(self, right)
         if not self.ok(self.payload, right.payload):
             raise PlumbingCollision(self, right)
-        return plumb(self.plumb(plumbingfor, self.payload, right.payload), name=self.name)
+        return plumb(self.item, name=self.name, stack=self.stack + right.stack)
 
     def ok(self, p1, p2):
         """Check whether we can merge two payloads.
@@ -544,36 +603,54 @@ class plumb(Stage2Instruction):
             return callable(p2)
         return False
 
-    def plumb(self, plbfunc, p1, p2):
-        if isinstance(p1, str):
-            return plumb_str(p1, p2)
-        if isinstance(p1, property):
-            # XXX: This should be split up into instructions during part
-            # parsing to enable two stages and all instructions
-            propfuncs = []
-            for x in 'fget', 'fset', 'fdel':
-                p1func = getattr(p1, x)
-                p2func = getattr(p2, x)
-                if p2func is None:
-                    propfuncs.append(p1func)
-                elif type(p2func) is override:
-                    propfuncs.append(p2func.payload)
-                else:
-                    propfuncs.append(plbfunc(p1func, p2func))
-            propfuncs.append(plumb_str(p1.__doc__, p2.__doc__))
-            return p1.__class__(*propfuncs)
-        if callable(p1):
-            return plbfunc(p1, p2)
-        # Should never happen
-        raise RuntimeError('Unknown plumbing case.')  # pragma: no cover
-
     def __call__(self, cls):
         # Check for a method on the plumbing class itself.
-        next_ = getattr(cls, self.name)
-        if not self.ok(self.payload, next_):
+        endpoint = getattr(cls, self.name)
+        if not self.ok(self.payload, endpoint):
             raise PlumbingCollision(self, cls)
-        entrance = self.plumb(entrancefor, self.payload, next_)
-        setattr(cls, self.name, entrance)
+        setattr(cls, self.name, self.pipeline(cls, endpoint))
+
+    def pipeline(self, cls, endpoint):
+        payloads = [instruction.payload for instruction in self.stack]
+        if isinstance(self.payload, str):
+            return plumb_str(reduce(plumb_str, payloads), endpoint)
+        docs = [payload.__doc__ for payload in payloads]
+        doc = plumb_str(reduce(plumb_str, docs), endpoint.__doc__)
+        if isinstance(self.payload, property):
+            accessors = [
+                self.accessor(cls, accessor, getattr(endpoint, accessor))
+                for accessor in ('fget', 'fset', 'fdel')
+            ]
+            return self.payload.__class__(*accessors, doc)
+        (outermost, func), *inner = [(i, i.payload) for i in self.stack]
+        func = layerfor(outermost, func, cls, self.name)
+        next_ = chainfor(inner, endpoint, cls, self.name)
+        behaviors = [instruction.__parent__.__name__ for instruction in self.stack]
+        entrance = entrancefor(func, next_, cls, self.name, behaviors)
+        entrance.__doc__ = doc
+        entrance.__name__ = self.payload.__name__
+        return entrance
+
+    def accessor(self, cls, accessor, endpoint):
+        """Chain the property accessors named ``accessor``.
+
+        Behaviors not defining the accessor are skipped. An ``override``
+        accessor becomes the endpoint and discards the accessors of preceding
+        behaviors. Without endpoint, the innermost accessor is used as is.
+        """
+        layers = []
+        for instruction in self.stack:
+            func = getattr(instruction.payload, accessor)
+            if func is None:
+                continue
+            if type(func) is override:
+                layers = []
+                endpoint = func.payload
+                continue
+            layers.append((instruction, func))
+        if endpoint is None and layers:
+            endpoint = layers.pop()[1]
+        return chainfor(layers, endpoint, cls, self.name)
 
 
 class plumbifexists(plumb):
@@ -581,7 +658,7 @@ class plumbifexists(plumb):
 
     def __call__(self, cls):
         try:
-            super(plumbifexists, self).__call__(cls)
+            super().__call__(cls)
         except AttributeError:
             pass
 

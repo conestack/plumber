@@ -1,10 +1,55 @@
 Changes
 =======
 
-2.0.2 (unreleased)
+3.0.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Build plumbing pipelines once at class creation time instead of creating
+  closures and joining docstrings on every call. The entrance method calls the
+  outermost plumbing function directly, each ``next_`` is a
+  ``functools.partial`` of the rest of the pipeline. Calling a method plumbed
+  by 5 behaviors takes about a tenth of the time, a method plumbed by a single
+  behavior is as fast as before.
+  [rnix]
+
+- Tracebacks show the plumbing class and behaviors: the entrance frame reads
+  ``Plumbing.foo [Behavior1 -> Behavior2]``, plumbing method frames read
+  ``Behavior1.foo [plumbing Plumbing]``. pytest hides the entrance frame.
+  Entrance methods get ``__qualname__`` and ``__module__`` of the plumbing
+  class.
+  [rnix]
+
+- Plumb property accessors independently. Behaviors not defining an accessor
+  are skipped instead of failing at class creation.
+  [rnix]
+
+- Zero argument ``super()`` and ``__class__`` work in classes decorated with
+  ``plumbing``. The decorator points the ``__class__`` cell of the class body
+  to the class it creates.
+  [rnix]
+
+- Use zero argument ``super()`` and drop the ``UP008`` exception from the ruff
+  configuration.
+  [rnix]
+
+- ``Behavior`` collects the instructions of its subclasses in
+  ``__init_subclass__``, behaviors have no custom metaclass any more.
+  ``behaviormetaclass`` is deprecated and does nothing but warn. The private
+  ``_Behavior`` marker class is removed.
+  [rnix]
+
+- Behaviors may subclass non behavior classes, including builtin types. Before,
+  an empty instruction list was set on these classes, which failed for builtin
+  types.
+  [rnix]
+
+- Speed up plumbing class creation: ``parse_behaviors`` only compares
+  instructions of the same name to skip already seen ones, instead of the
+  whole history. ``derived_members`` uses the ``__mro__`` of the bases instead
+  of visiting shared bases repeatedly, its ``attrs`` argument is removed.
+  Creating a plumbing class with 12 ``node`` behaviors takes about a third
+  less time.
+  [rnix]
 
 
 2.0.1 (2026-10-31)

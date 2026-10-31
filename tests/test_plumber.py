@@ -14,7 +14,9 @@ from plumber.instructions import payload
 from plumber.instructions import plumb_str
 from zope.interface import implementer
 from zope.interface import Interface
+import functools
 import inspect
+import traceback
 import unittest
 
 
@@ -226,19 +228,63 @@ class TestInstructions(unittest.TestCase):
 
 class TestBehavior(unittest.TestCase):
     def test_behaviormetaclass(self):
-        class A(metaclass=behaviormetaclass):
-            pass
+        with self.assertWarns(DeprecationWarning):
+
+            class A(metaclass=behaviormetaclass):
+                pass
 
         self.assertEqual(
             getattr(A, '__plumbing_instructions__', 'No behavior'), 'No behavior'
         )
 
-        class B(Behavior, metaclass=behaviormetaclass):
-            pass
+        with self.assertWarns(DeprecationWarning):
+
+            class B(Behavior, metaclass=behaviormetaclass):
+                pass
 
         self.assertEqual(
             getattr(B, '__plumbing_instructions__', None) and 'Behavior', 'Behavior'
         )
+
+    def test_behavior_without_metaclass(self):
+        class Behavior1(Behavior):
+            pass
+
+        self.assertIs(type(Behavior1), type)
+
+    def test_behavior_docstring_not_plumbed(self):
+        class Behavior1(Behavior):
+            pass
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            pass
+
+        self.assertIsNone(Plumbing.__doc__)
+
+    def test_non_behavior_base_untouched(self):
+        class Mixin:
+            pass
+
+        class Behavior1(Behavior, Mixin):
+            a = default(1)
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            pass
+
+        self.assertEqual(Plumbing.a, 1)
+        self.assertNotIn('__plumbing_instructions__', Mixin.__dict__)
+
+    def test_builtin_base(self):
+        class Behavior1(Behavior, dict):
+            a = default(1)
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            pass
+
+        self.assertEqual(Plumbing.a, 1)
 
 
 class TestPlumber(unittest.TestCase):
@@ -251,6 +297,56 @@ class TestPlumber(unittest.TestCase):
 
         self.assertTrue('foo' in plumber.derived_members((B,)))
         self.assertFalse('bar' in plumber.derived_members((B,)))
+
+    def test_derived_members_diamond(self):
+        class A:
+            a = 1
+
+        class B(A):
+            b = 1
+
+        class C(A):
+            c = 1
+
+        class D(B, C):
+            pass
+
+        members = plumber.derived_members((D,))
+        self.assertTrue({'a', 'b', 'c', '__init__'} <= members)
+
+    def test_inherited_instruction_applied_once(self):
+        class Behavior1(Behavior):
+            @plumb
+            def foo(next_, self):
+                return 'Behavior1 ' + next_(self)
+
+        class Behavior2(Behavior1):
+            pass
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            def foo(self):
+                return 'foo'
+
+        self.assertEqual(Plumbing().foo(), 'Behavior1 foo')
+
+    def test_equal_instructions_applied_once(self):
+        def foo(next_, self):
+            return 'foo ' + next_(self)
+
+        class Behavior1(Behavior):
+            bar = plumb(foo)
+
+        class Behavior2(Behavior):
+            bar = plumb(foo)
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            def bar(self):
+                return 'bar'
+
+        self.assertEqual(Plumbing().bar(), 'foo bar')
+        self.assertEqual(len(Plumbing.__plumbing_stacks__.history), 4)
 
 
 class TestMetaclassHooks(unittest.TestCase):
@@ -343,6 +439,82 @@ class TestPlumberBasics(unittest.TestCase):
 
         self.assertEqual(Plumbing.__plumbing__, (Behavior1,))
         self.assertTrue(Plumbing().a)
+
+
+class TestPlumbingDecorator(unittest.TestCase):
+    class Base:
+        def foo(self):
+            return 'Base'
+
+        @classmethod
+        def bar(cls):
+            return 'Base'
+
+        @property
+        def baz(self):
+            return 'Base'
+
+    def test_zero_argument_super_in_method(self):
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            def foo(self):
+                return 'Plumbing ' + super().foo()
+
+        self.assertEqual(Plumbing().foo(), 'Plumbing Base')
+
+    def test_zero_argument_super_in_classmethod(self):
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            @classmethod
+            def bar(cls):
+                return 'Plumbing ' + super().bar()
+
+        self.assertEqual(Plumbing.bar(), 'Plumbing Base')
+
+    def test_zero_argument_super_in_property(self):
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            @property
+            def baz(self):
+                return 'Plumbing ' + super().baz
+
+        self.assertEqual(Plumbing().baz, 'Plumbing Base')
+
+    def test_zero_argument_super_in_decorated_method(self):
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kw):
+                return func(*args, **kw)
+
+            return wrapper
+
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            @decorator
+            def foo(self):
+                return 'Plumbing ' + super().foo()
+
+        self.assertEqual(Plumbing().foo(), 'Plumbing Base')
+
+    def test_dunder_class_refers_to_plumbing_class(self):
+        @plumbing(Behavior)
+        class Plumbing:
+            @staticmethod
+            def cls():
+                return __class__
+
+        self.assertIs(Plumbing.cls(), Plumbing)
+
+    def test_foreign_class_cell_untouched(self):
+        class Other(self.Base):
+            def foo(self):
+                return 'Other ' + super().foo()
+
+        @plumbing(Behavior)
+        class Plumbing(self.Base):
+            foo = Other.foo
+
+        self.assertEqual(Other().foo(), 'Other Base')
 
 
 class TestPlumberStage1(unittest.TestCase):
@@ -781,6 +953,176 @@ class TestPlumberStage2(unittest.TestCase):
         ob = WithSlots()
         ob.somewhing_which_writes_to_foo('foo')
         self.assertEqual(ob.foo, 'foo')
+
+    def test_pipeline_built_at_class_creation(self):
+        nexts = []
+
+        class Behavior1(Behavior):
+            @plumb
+            def foo(next_, self):
+                nexts.append(next_)
+                return next_(self)
+
+        class Behavior2(Behavior):
+            @plumb
+            def foo(next_, self):
+                return next_(self)
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            def foo(self):
+                return 'foo'
+
+        plb = Plumbing()
+        self.assertEqual(plb.foo(), 'foo')
+        self.assertEqual(plb.foo(), 'foo')
+        self.assertIs(nexts[0], nexts[1])
+
+    def test_entrance_metadata(self):
+        class Behavior1(Behavior):
+            @plumb
+            def foo(next_, self):
+                return next_(self)  # pragma: no cover
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            def foo(self):
+                pass  # pragma: no cover
+
+        self.assertEqual(Plumbing.foo.__name__, 'foo')
+        self.assertEqual(Plumbing.foo.__qualname__, Plumbing.__qualname__ + '.foo')
+        self.assertEqual(Plumbing.foo.__module__, __name__)
+
+    def _raising_plumbing(self):
+        class Behavior1(Behavior):
+            @plumb
+            def foo(next_, self):
+                return next_(self)
+
+        class Behavior2(Behavior):
+            @plumb
+            def foo(next_, self):
+                return next_(self)
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            def foo(self):
+                raise ValueError('foo')
+
+        try:
+            Plumbing().foo()
+        except ValueError as e:
+            return Behavior1, e.__traceback__
+
+    def test_traceback_shows_plumbing_and_behaviors(self):
+        _, tb = self._raising_plumbing()
+        self.assertEqual(
+            [frame.name for frame in traceback.extract_tb(tb)][1:],
+            [
+                'Plumbing.foo [Behavior1 -> Behavior2]',
+                'Behavior1.foo [plumbing Plumbing]',
+                'Behavior2.foo [plumbing Plumbing]',
+                'foo',
+            ],
+        )
+
+    def test_traceback_entrance_hidden_by_pytest(self):
+        _, tb = self._raising_plumbing()
+        entrance_frame = tb.tb_next.tb_frame
+        self.assertTrue(entrance_frame.f_locals['__tracebackhide__'])
+
+    def test_plumbing_functions_untouched(self):
+        Behavior1, _ = self._raising_plumbing()
+        self.assertEqual(Behavior1.__dict__['foo'].payload.__code__.co_name, 'foo')
+
+    def test_callable_object_as_plumbing_function(self):
+        class PlumbingCallable:
+            __name__ = 'foo'
+
+            def __call__(self, next_, plumbing_self):
+                return 'callable ' + next_(plumbing_self)
+
+        class Behavior1(Behavior):
+            foo = plumb(PlumbingCallable())
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            def foo(self):
+                return 'foo'
+
+        self.assertEqual(Plumbing().foo(), 'callable foo')
+
+    def test_subclass_plumbing_wraps_base_pipeline(self):
+        class Behavior1(Behavior):
+            @plumb
+            def foo(next_, self):
+                return 'Behavior1 ' + next_(self)
+
+        class Behavior2(Behavior):
+            @plumb
+            def foo(next_, self):
+                return 'Behavior2 ' + next_(self)
+
+        @plumbing(Behavior1)
+        class Base:
+            def foo(self):
+                return 'Base'
+
+        @plumbing(Behavior2)
+        class Sub(Base):
+            pass
+
+        self.assertEqual(Sub().foo(), 'Behavior2 Behavior1 Base')
+
+    def test_property_pipelines_per_accessor(self):
+        class Behavior1(Behavior):
+            @plumb
+            @property
+            def foo(next_, self):
+                return 'Behavior1 ' + next_(self)
+
+        class Behavior2(Behavior):
+            def set_foo(next_, self, value):
+                next_(self, value.upper())
+
+            foo = plumb(property(None, set_foo))
+
+        class Behavior3(Behavior):
+            @plumb
+            @property
+            def foo(next_, self):
+                return 'Behavior3 ' + next_(self)
+
+        @plumbing(Behavior1, Behavior2, Behavior3)
+        class Plumbing:
+            def get_foo(self):
+                return self._foo
+
+            def set_foo(self, value):
+                self._foo = value
+
+            foo = property(get_foo, set_foo)
+
+        plb = Plumbing()
+        plb.foo = 'foo'
+        self.assertEqual(plb.foo, 'Behavior1 Behavior3 FOO')
+
+    def test_property_accessor_without_endpoint(self):
+        class Behavior1(Behavior):
+            def set_foo(self, value):
+                self._foo = value
+
+            foo = plumb(property(None, set_foo))
+
+        @plumbing(Behavior1)
+        class Plumbing:
+            @property
+            def foo(self):
+                return self._foo
+
+        plb = Plumbing()
+        plb.foo = 'foo'
+        self.assertEqual(plb.foo, 'foo')
 
     def test_zope_interface(self):
         class IBase(Interface):
