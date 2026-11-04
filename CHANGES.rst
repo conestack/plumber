@@ -12,6 +12,10 @@ Changes
   behavior is as fast as before.
   [rnix]
 
+- ``next_`` provides ``__name__`` and ``__doc__`` of the next pipeline step in the
+  ``functools.partial`` links as well, as it did with the closures before.
+  [rnix]
+
 - Tracebacks show the plumbing class and behaviors: the entrance frame reads
   ``Plumbing.foo [Behavior1 -> Behavior2]``, plumbing method frames read
   ``Behavior1.foo [plumbing Plumbing]``. pytest hides the entrance frame.

@@ -1052,6 +1052,104 @@ class TestPlumberStage2(unittest.TestCase):
 
         self.assertEqual(Plumbing().foo(), 'callable foo')
 
+    def _seen_next(self, plumbing_doc=None, behavior_doc=None):
+        """Plumb two behaviors, return the ``next_`` each of them gets."""
+        seen = {}
+
+        class Behavior1(Behavior):
+            @plumb
+            def foo(next_, self):
+                seen['Behavior1'] = next_
+                return next_(self)
+
+        class Behavior2(Behavior):
+            @plumb
+            def foo(next_, self):
+                seen['Behavior2'] = next_
+                return next_(self)
+
+        Behavior2.__dict__['foo'].payload.__doc__ = behavior_doc
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            def foo(self):
+                return 'foo'
+
+            foo.__doc__ = plumbing_doc
+
+        Plumbing().foo()
+        return seen
+
+    def test_next_provides_name_and_doc(self):
+        seen = self._seen_next('Plumbing doc.', 'Behavior2 doc.')
+        link = seen['Behavior1']
+        self.assertIsInstance(link, functools.partial)
+        self.assertEqual(link.__name__, 'foo')
+        self.assertEqual(link.__doc__, 'Plumbing doc.\n\nBehavior2 doc.')
+        # innermost next_ is the plumbing method itself
+        self.assertNotIsInstance(seen['Behavior2'], functools.partial)
+        self.assertEqual(seen['Behavior2'].__name__, 'foo')
+        self.assertEqual(seen['Behavior2'].__doc__, 'Plumbing doc.')
+
+    def test_next_without_docstrings_has_no_doc(self):
+        # Not the docstring of ``functools.partial``
+        self.assertIsNone(self._seen_next()['Behavior1'].__doc__)
+
+    def test_next_signature_hides_next_argument(self):
+        link = self._seen_next()['Behavior1']
+        self.assertEqual(str(inspect.signature(link)), '(self)')
+
+    def test_next_name_of_callable_object_without_name(self):
+        seen = {}
+
+        class PlumbingCallable:
+            def __call__(self, next_, plumbing_self):
+                return 'callable ' + next_(plumbing_self)
+
+        class Behavior1(Behavior):
+            @plumb
+            def foo(next_, self):
+                seen['next_'] = next_
+                return next_(self)
+
+        class Behavior2(Behavior):
+            foo = plumb(PlumbingCallable())
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            def foo(self):
+                return 'foo'
+
+        self.assertEqual(Plumbing().foo(), 'callable foo')
+        self.assertEqual(seen['next_'].__name__, 'foo')
+
+    def test_next_of_property_accessor_provides_name_and_doc(self):
+        seen = {}
+
+        class Behavior1(Behavior):
+            @plumb
+            @property
+            def foo(next_, self):
+                seen['next_'] = next_
+                return next_(self)
+
+        class Behavior2(Behavior):
+            @plumb
+            @property
+            def foo(next_, self):
+                """Behavior2 doc."""
+                return next_(self)
+
+        @plumbing(Behavior1, Behavior2)
+        class Plumbing:
+            @property
+            def foo(self):
+                return 'foo'
+
+        self.assertEqual(Plumbing().foo, 'foo')
+        self.assertEqual(seen['next_'].__name__, 'foo')
+        self.assertEqual(seen['next_'].__doc__, 'Behavior2 doc.')
+
     def test_subclass_plumbing_wraps_base_pipeline(self):
         class Behavior1(Behavior):
             @plumb

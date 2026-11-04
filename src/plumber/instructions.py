@@ -478,7 +478,10 @@ def chainfor(layers, endpoint, cls, name):
 
     The chain is built once at class creation time. Each link is a
     ``functools.partial`` passing the rest of the chain as ``next_``, which
-    neither costs a Python frame nor shows up in tracebacks.
+    neither costs a Python frame nor shows up in tracebacks. Each link gets
+    ``__name__`` and ``__doc__`` of what it stands for, ``functools.update_wrapper``
+    is not an option, its ``__wrapped__`` makes ``inspect.signature`` report
+    ``next_`` as parameter.
 
     :param layers: List of ``(instruction, function)`` tuples, outermost first.
     :param endpoint: Innermost callable, or ``None``.
@@ -488,7 +491,11 @@ def chainfor(layers, endpoint, cls, name):
     """
     next_ = endpoint
     for instruction, func in reversed(layers):
-        next_ = partial(layerfor(instruction, func, cls, name), next_)
+        link = partial(layerfor(instruction, func, cls, name), next_)
+        # A plumbed callable does not need to be a function
+        link.__name__ = getattr(func, '__name__', name)
+        link.__doc__ = plumb_str(func.__doc__, next_.__doc__)
+        next_ = link
     return next_
 
 
