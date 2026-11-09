@@ -1,7 +1,7 @@
 Changes
 =======
 
-3.0.0 (unreleased)
+3.0.0 (2026-11-09)
 ------------------
 
 - Build plumbing pipelines once at class creation time instead of creating
